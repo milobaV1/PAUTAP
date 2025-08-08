@@ -12,21 +12,23 @@ import { QuestionBankModule } from './modules/question-bank/question-bank.module
 import { SessionModule } from './modules/session/session.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { AdminSeeder } from './core/seeds/admin.seeder';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync(typeormConfigAsync),
-    UsersModule,
-    CourseContentModule,
     AuthModule,
+    CourseContentModule,
     CertificateModule,
     QuestionBankModule,
     SessionModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    AdminSeeder,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
