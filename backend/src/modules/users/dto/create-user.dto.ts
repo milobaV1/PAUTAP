@@ -6,6 +6,7 @@ import {
   IsString,
   IsUUID,
   IsBoolean,
+  IsNumber,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -50,6 +51,6 @@ export class CreateUserDto {
     description: 'UUID of the assigned role',
   })
   @IsNotEmpty()
-  @IsUUID()
-  role_id: string;
+  @IsNumber()
+  role_id: number;
 }

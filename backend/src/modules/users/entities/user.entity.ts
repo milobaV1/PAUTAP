@@ -16,6 +16,7 @@ import { ContentProgress } from 'src/modules/course-content/entities/content-pro
 import { SessionAnswer } from 'src/modules/question-bank/entities/session-answer.entity';
 import { UserQuestionHistory } from 'src/modules/question-bank/entities/user-question-history.entity';
 import { Certificate } from 'src/modules/certificate/entities/certificate.entity';
+import { Difficulty } from 'src/core/enums/question.enum';
 
 @Entity()
 export class User {
@@ -28,7 +29,7 @@ export class User {
   @Column()
   last_name: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
   @Column({ default: true })
@@ -36,6 +37,9 @@ export class User {
 
   @Column()
   password: string;
+
+  @Column({ type: 'enum', enum: Difficulty, default: Difficulty.BEGINNER })
+  level: Difficulty;
 
   @CreateDateColumn()
   created_at: Date;
@@ -63,7 +67,7 @@ export class User {
     () => UserQuestionHistory,
     (questionHistory) => questionHistory.user,
   )
-  questionHistory: UserQuestionHistory[];
+  question_history: UserQuestionHistory[];
 
   @OneToMany(() => Certificate, (certificate) => certificate.user)
   certificates: Certificate[];

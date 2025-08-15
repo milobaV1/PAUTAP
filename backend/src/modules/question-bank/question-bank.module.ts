@@ -6,6 +6,7 @@ import { QuestionBank } from './entities/question-bank.entity';
 import { SessionAnswer } from './entities/session-answer.entity';
 import { TrainingSession } from '../session/entities/training-session.entity';
 import { User } from '../users/entities/user.entity';
+import { Role } from '../users/entities/role.entity';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { User } from '../users/entities/user.entity';
       QuestionBank,
       SessionAnswer,
       TrainingSession,
+      Role,
       User,
     ]),
   ],

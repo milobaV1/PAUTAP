@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -10,6 +11,7 @@ import {
 } from 'typeorm';
 import { Department } from './department.entity';
 import { User } from './user.entity';
+import { QuestionBank } from 'src/modules/question-bank/entities/question-bank.entity';
 
 @Entity()
 export class Role {
@@ -33,4 +35,7 @@ export class Role {
 
   @OneToMany(() => User, (user) => user.role)
   users: User[];
+
+  @ManyToMany(() => QuestionBank, (question) => question.roles)
+  questions: QuestionBank[];
 }

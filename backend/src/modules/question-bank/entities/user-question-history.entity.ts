@@ -36,11 +36,11 @@ export class UserQuestionHistory {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @ManyToOne(() => User, (user) => user.questionHistory)
+  @ManyToOne(() => User, (user) => user.question_history)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => QuestionBank, (question) => question.questionHistory)
+  @ManyToOne(() => QuestionBank, (question) => question.question_history)
   @JoinColumn({ name: 'question_id' })
   question: QuestionBank;
 }

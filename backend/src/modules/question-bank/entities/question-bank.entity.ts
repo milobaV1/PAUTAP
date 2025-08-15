@@ -1,10 +1,15 @@
+import { Difficulty } from 'src/core/enums/question.enum';
 import { CRISP } from 'src/core/enums/training.enum';
 import { SessionAnswer } from 'src/modules/question-bank/entities/session-answer.entity';
 import { UserQuestionHistory } from 'src/modules/question-bank/entities/user-question-history.entity';
+import { Session } from 'src/modules/session/entities/session.entity';
+import { Role } from 'src/modules/users/entities/role.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -22,16 +27,13 @@ export class QuestionBank {
   question_text: string;
 
   @Column({ type: 'jsonb' })
-  options: any;
+  options: string[];
 
   @Column()
-  correct_answer: string;
+  correct_answer: number;
 
-  @Column()
-  difficulty_level: string;
-
-  @Column({ type: 'varchar', array: true })
-  target_roles: string[];
+  @Column({ type: 'enum', enum: Difficulty })
+  difficulty_level: Difficulty;
 
   @Column({ default: 0 })
   usage_count: number;
@@ -52,5 +54,16 @@ export class QuestionBank {
     () => UserQuestionHistory,
     (questionHistory) => questionHistory.question,
   )
-  questionHistory: UserQuestionHistory[];
+  question_history: UserQuestionHistory[];
+
+  @ManyToMany(() => Role, (role) => role.questions)
+  @JoinTable({
+    name: 'question_roles',
+    joinColumn: { name: 'question_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+  })
+  roles: Role[];
+
+  @ManyToMany(() => Session, (session) => session.questions)
+  sessions: Session[];
 }

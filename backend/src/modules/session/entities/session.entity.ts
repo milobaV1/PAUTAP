@@ -1,4 +1,5 @@
 import { SessionStatus } from 'src/core/enums/session.enum';
+import { QuestionBank } from 'src/modules/question-bank/entities/question-bank.entity';
 import { TrainingSession } from 'src/modules/session/entities/training-session.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import {
@@ -6,6 +7,8 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -16,13 +19,14 @@ export class Session {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'jsonb' })
-  selected_questions: string[];
-
-  @Column({ type: 'enum', enum: SessionStatus })
+  @Column({
+    type: 'enum',
+    enum: SessionStatus,
+    default: SessionStatus.NOT_STARTED,
+  })
   status: SessionStatus;
 
-  @Column()
+  @Column({ default: 0 })
   total_score: number;
 
   @Column()
@@ -45,4 +49,8 @@ export class Session {
   )
   @JoinColumn({ name: 'training_session_id' })
   training_session: TrainingSession;
+
+  @ManyToMany(() => QuestionBank, (question) => question.sessions)
+  @JoinTable()
+  questions: QuestionBank[];
 }

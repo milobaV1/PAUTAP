@@ -20,7 +20,7 @@ import { User } from './entities/user.entity';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post('/create-user')
+  @Post()
   @ApiOperation({
     summary: 'Create a new user',
     description: 'Registers a new user in the system with a role assigned.',

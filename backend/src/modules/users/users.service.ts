@@ -22,26 +22,45 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const existingUser = await this.findOne('email', createUserDto.email);
-    if (existingUser)
-      throw new BadRequestException(
-        `User with email: ${createUserDto.email} exists`,
-      );
-    const newUser = this.userRepo.create(createUserDto);
-    const savedUser = await this.userRepo.save(newUser);
-    return `User ${savedUser.id} has been created`;
+    const { role_id, ...rest } = createUserDto;
+    try {
+      const existingUser = await this.findOne('email', createUserDto.email);
+      if (existingUser) {
+        throw new BadRequestException(
+          `User with email: ${createUserDto.email} exists`,
+        );
+      }
+
+      const role = await this.roleRepo.findOne({ where: { id: role_id } });
+      if (!role) {
+        throw new NotFoundException(`Role with id ${role_id} not found`);
+      }
+
+      const user = this.userRepo.create({ ...rest, role });
+      const savedUser = await this.userRepo.save(user);
+
+      return `User ${savedUser.id} has been created`;
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new BadRequestException(
+          `User with email: ${createUserDto.email} already exists`,
+        );
+      }
+      throw error;
+    }
   }
 
   async findAll() {
-    const user = await this.userRepo.find({
+    const users = await this.userRepo.find({
       relations: ['sessions', 'certificates'],
     });
-    return user;
+    return users;
   }
 
   async findOne(searchParam: 'id' | 'email', searchValue: string) {
     const user = await this.userRepo.findOne({
       where: { [searchParam]: searchValue },
+      relations: ['sessions', 'certificates'],
     });
     return user;
   }
