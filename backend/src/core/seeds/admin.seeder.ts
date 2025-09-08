@@ -1,7 +1,7 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { Department } from 'src/modules/users/entities/department.entity';
-import { Role } from 'src/modules/users/entities/role.entity';
-import { User } from 'src/modules/users/entities/user.entity';
+import { Department } from 'src/modules_2/users/entities/department.entity';
+import { Role } from 'src/modules_2/users/entities/role.entity';
+import { User } from 'src/modules_2/users/entities/user.entity';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
@@ -33,7 +33,7 @@ export class AdminSeeder implements OnApplicationBootstrap {
     console.log('🌱 No users found. Seeding initial data...');
 
     let superDepartment = await departmentRepo.findOne({
-      where: { name: 'super' },
+      where: { name: 'Super' },
     });
 
     if (!superDepartment) {

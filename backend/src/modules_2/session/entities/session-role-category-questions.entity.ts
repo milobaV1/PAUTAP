@@ -1,0 +1,116 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  Index,
+  Unique,
+} from 'typeorm';
+import { Session } from './session.entity';
+import { Role } from 'src/modules_2/users/entities/role.entity';
+import { QuestionBank } from 'src/modules_2/question-bank/entities/question-bank.entity';
+import { CRISP } from 'src/core/enums/training.enum';
+import { UserAnswer } from './user-answers.entity';
+
+// Session Role Questions - Pre-defined question sets per role per session
+// @Entity('session_role_questions')
+// @Index(['session', 'role', 'crispCategory'])
+// @Unique(['session', 'role', 'crispCategory', 'questionOrder'])
+// export class SessionRoleQuestion {
+//   @PrimaryGeneratedColumn()
+//   id: number;
+
+//   @Column({
+//     type: 'enum',
+//     enum: CRISP,
+//   })
+//   crispCategory: CRISP;
+
+//   @Column()
+//   questionOrder: number;
+
+//   @CreateDateColumn()
+//   createdAt: Date;
+
+//   @UpdateDateColumn()
+//   updatedAt: Date;
+
+//   // Relations
+//   @ManyToOne(() => Session)
+//   @JoinColumn({ name: 'sessionId' })
+//   session: Session;
+
+//   @ManyToOne(() => Role)
+//   @JoinColumn({ name: 'roleId' })
+//   role: Role;
+
+//   @ManyToOne(() => QuestionBank)
+//   @JoinColumn({ name: 'questionId' })
+//   question: QuestionBank;
+// }
+
+// import {
+//   Entity,
+//   PrimaryGeneratedColumn,
+//   Column,
+//   CreateDateColumn,
+//   UpdateDateColumn,
+//   ManyToOne,
+//   JoinColumn,
+//   Index,
+//   Unique,
+// } from 'typeorm';
+
+@Entity('session_role_question_categories')
+@Unique(['sessionId', 'roleId', 'crispCategory'])
+@Index(['sessionId', 'roleId'])
+export class SessionRoleCategoryQuestion {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  sessionId: string;
+
+  @Column()
+  roleId: number;
+
+  @Column({
+    type: 'enum',
+    enum: CRISP,
+  })
+  crispCategory: CRISP;
+
+  @Column('simple-json') // Stores array of question IDs
+  questionIds: string[];
+
+  @Column({ default: 10 })
+  questionsCount: number;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  // Relations
+
+  @OneToMany(() => UserAnswer, (answer) => answer.sessionRoleCategoryQuestion)
+  userAnswers: UserAnswer[];
+
+  @ManyToOne(() => Session)
+  @JoinColumn({ name: 'sessionId' })
+  session: Session;
+
+  @ManyToOne(() => Role)
+  @JoinColumn({ name: 'roleId' })
+  role: Role;
+
+  // Helper method to get randomized questions
+  getRandomizedQuestions(): string[] {
+    return [...this.questionIds].sort(() => Math.random() - 0.5);
+  }
+}

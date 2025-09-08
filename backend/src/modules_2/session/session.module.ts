@@ -1,0 +1,40 @@
+import { Module } from '@nestjs/common';
+import { SessionService } from './session.service';
+import { SessionController } from './session.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Session } from './entities/session.entity';
+import { SessionRoleCategoryQuestion } from './entities/session-role-category-questions.entity';
+import { UserAnswer } from './entities/user-answers.entity';
+import { UserSessionProgress } from './entities/user-session-progress.entity';
+import { QuestionUsage } from '../question-bank/entities/question-usage.entity';
+import { SessionManagementService } from './session-management.service';
+import { ProgressService } from './progress.service';
+import { AnswerService } from './answer.service';
+import { ResultService } from './result.service';
+import { Certificate } from '../certificate/entities/certificate.entity';
+import { QuestionBank } from '../question-bank/entities/question-bank.entity';
+import { Role } from '../users/entities/role.entity';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      Session,
+      SessionRoleCategoryQuestion,
+      UserAnswer,
+      UserSessionProgress,
+      QuestionUsage,
+      Certificate,
+      QuestionBank,
+      Role,
+    ]),
+  ],
+  controllers: [SessionController],
+  providers: [
+    SessionService,
+    SessionManagementService,
+    ProgressService,
+    AnswerService,
+    ResultService,
+  ],
+})
+export class SessionModule {}

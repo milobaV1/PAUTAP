@@ -4,26 +4,52 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeormConfigAsync } from './infrastructure/database/database.config';
-import { UsersModule } from './modules/users/users.module';
-import { CourseContentModule } from './modules/course-content/course-content.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { CertificateModule } from './modules/certificate/certificate.module';
-import { QuestionBankModule } from './modules/question-bank/question-bank.module';
-import { SessionModule } from './modules/session/session.module';
+// import { UsersModule } from './modules/users/users.module';
+// import { CourseContentModule } from './modules/course-content/course-content.module';
+// import { AuthModule } from './modules/auth/auth.module';
+// import { CertificateModule } from './modules/certificate/certificate.module';
+// import { QuestionBankModule } from './modules/question-bank/question-bank.module';
+// import { SessionModule } from './modules/session/session.module';
 import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from './modules_2/auth/guards/jwt-auth.guard';
 import { AdminSeeder } from './core/seeds/admin.seeder';
+import { AuthModule } from './modules_2/auth/auth.module';
+import { UsersModule } from './modules_2/users/users.module';
+import { QuestionBankModule } from './modules_2/question-bank/question-bank.module';
+import { SessionModule } from './modules_2/session/session.module';
+import { CertificateModule } from './modules_2/certificate/certificate.module';
+import { CacheModule } from '@nestjs/cache-manager';
+import { createKeyv, Keyv } from '@keyv/redis';
+import { CacheableMemory } from 'cacheable';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync(typeormConfigAsync),
+    // AuthModule,
+    // CourseContentModule,
+    // CertificateModule,
+    // QuestionBankModule,
+    // SessionModule,
+    // UsersModule,
     AuthModule,
-    CourseContentModule,
     CertificateModule,
     QuestionBankModule,
     SessionModule,
     UsersModule,
+    CacheModule.registerAsync({
+      isGlobal: true,
+      useFactory: async () => {
+        return {
+          stores: [
+            new Keyv({
+              store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
+            }),
+            createKeyv('redis://redis2:6379'),
+          ],
+        };
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [

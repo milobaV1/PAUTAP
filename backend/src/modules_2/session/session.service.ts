@@ -1,0 +1,939 @@
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  CompleteSessionDto,
+  CreateSessionDto,
+  StartSessionDto,
+  SyncSessionDto,
+} from './dto/create-session.dto';
+import { UpdateSessionDto } from './dto/update-session.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Session } from './entities/session.entity';
+import { DataSource, In, Repository } from 'typeorm';
+import { SessionRoleCategoryQuestion } from './entities/session-role-category-questions.entity';
+import { UserAnswer } from './entities/user-answers.entity';
+import { UserSessionProgress } from './entities/user-session-progress.entity';
+import { QuestionUsage } from '../question-bank/entities/question-usage.entity';
+import { Role } from '../users/entities/role.entity';
+import { CRISP } from 'src/core/enums/training.enum';
+import { QuestionBank } from '../question-bank/entities/question-bank.entity';
+import { QuestionUsageDto } from '../question-bank/dto/question-usage.dto';
+import { User } from '../users/entities/user.entity';
+import { ProgressStatus } from 'src/core/enums/user.enum';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { type Cache } from 'cache-manager';
+import {
+  SessionCompletionResult,
+  CompletionMetrics,
+  AnswerBatch,
+  ProgressState,
+  SyncResult,
+  ProgressSummary,
+  ValidatedAnswer,
+} from 'src/core/interfaces/session.interface';
+import KeyvRedis from '@keyv/redis';
+import { Certificate } from '../certificate/entities/certificate.entity';
+
+@Injectable()
+export class SessionService {
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @InjectRepository(Certificate)
+    private certificateRepo: Repository<Certificate>,
+    @InjectRepository(Session)
+    private sessionRepo: Repository<Session>,
+    @InjectRepository(SessionRoleCategoryQuestion)
+    private sessionRoleCategoryRepo: Repository<SessionRoleCategoryQuestion>,
+    @InjectRepository(UserAnswer)
+    private userAnswerRepo: Repository<UserAnswer>,
+    @InjectRepository(UserSessionProgress)
+    private userSessionProgressRepo: Repository<UserSessionProgress>,
+    @InjectRepository(QuestionBank)
+    private questionRepo: Repository<QuestionBank>,
+    @InjectRepository(Role)
+    private roleRepo: Repository<Role>,
+    private dataSource: DataSource,
+  ) {}
+
+  async createSession(createSessionDto: CreateSessionDto) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const session = await queryRunner.manager.save(Session, createSessionDto);
+      const roles = await this.roleRepo.find();
+
+      await this.generateQuestionsForAllRoles(
+        session.id,
+        roles,
+        queryRunner.manager,
+      );
+
+      await queryRunner.manager.update(Session, session.id, {
+        questionsGenerated: true,
+      });
+
+      await queryRunner.commitTransaction();
+      return session;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async findAllSessions() {
+    const sessions = await this.sessionRepo.find({
+      relations: ['roleCategoryQuestions'],
+    });
+    return sessions;
+  }
+
+  async findOneSession(id: string) {
+    const session = await this.sessionRepo.findOne({
+      where: { id },
+      relations: ['roleCategoryQuestions'],
+    });
+    if (!session) throw new NotFoundException('Session not found');
+    return session;
+  }
+
+  async findOneSessionWithUserSessionProgress(
+    sessionId: string,
+    userId: string,
+  ) {
+    const session = await this.sessionRepo
+      .createQueryBuilder('session')
+      .leftJoinAndSelect(
+        'session.UserSessionProgress',
+        'UserSessionProgress',
+        'UserSessionProgress.userId = :userId',
+        { userId },
+      )
+      .leftJoinAndSelect(
+        'session.roleCategoryQuestions',
+        'roleCategoryQuestions',
+      )
+      .where('session.id = :sessionId', { sessionId })
+      .getOne();
+
+    if (!session) throw new NotFoundException('Session not found');
+
+    const UserSessionProgressOne = session.userProgress?.[0] || null;
+
+    return {
+      ...session,
+      UserSessionProgress: undefined,
+      UserSessionProgressOne,
+    };
+  }
+
+  // async startOrResumeSession(
+  //   sessionId: string,
+  //   roleId: number,
+  //   userId: string,
+  // ) {
+  //   // 1) Validate session
+  //   const session = await this.getSession(sessionId);
+
+  //   // 2) Ensure or create progress
+  //   let progress = await this.getOrCreateProgress(sessionId, roleId, userId);
+  //   if (!progress) throw new Error('No progress');
+
+  //   // 3) Load role categories (cached if possible)
+  //   const roleCategories = await this.getCategoriesCached(sessionId, roleId);
+
+  //   // 4) Load user answers for these categories
+  //   const existingAnswers = await this.getUserAnswers(userId, roleCategories);
+
+  //   // 5) Build snapshot (answered/remaining)
+  //   const byCategory = this.buildCategorySnapshot(
+  //     roleCategories,
+  //     existingAnswers,
+  //   );
+
+  //   // 6) Update progress (status, part, scores)
+  //   this.updateProgressFromSnapshot(progress, byCategory);
+  //   await this.userSessionProgressRepo.save(progress);
+
+  //   // 7) Return clean result
+  //   return this.formatResult(session, progress, byCategory);
+  // }
+
+  async startOrResumeSession(
+    sessionId: string,
+    startSessionDto: StartSessionDto,
+  ) {
+    const { userId, roleId } = startSessionDto;
+    // ... existing code until return statement
+    const session = await this.getSession(sessionId);
+
+    // 2) Ensure or create progress
+    let progress = await this.getOrCreateProgress(sessionId, roleId, userId);
+    if (!progress) throw new Error('No progress');
+
+    // 3) Load role categories (cached if possible)
+    const roleCategories = await this.getCategoriesCached(sessionId, roleId);
+
+    // 4) Load user answers for these categories
+    const existingAnswers = await this.getUserAnswers(userId, roleCategories);
+
+    // 5) Build snapshot (answered/remaining)
+    const byCategory = this.buildCategorySnapshot(
+      roleCategories,
+      existingAnswers,
+    );
+
+    // 6) Update progress (status, part, scores)
+    this.updateProgressFromSnapshot(progress, byCategory);
+    await this.userSessionProgressRepo.save(progress);
+    // 7) Return data needed for frontend store initialization
+    return {
+      session,
+      progress,
+      questionsByCategory: this.formatQuestionsForFrontend(byCategory),
+      syncInterval: 180000, // 3 minutes in ms
+      autoSyncTriggers: ['categoryComplete', 'timeInterval', 'pageHide'],
+    };
+  }
+  update(id: number, updateSessionDto: UpdateSessionDto) {
+    return `This action updates a #${id} session`;
+  }
+
+  remove(id: number) {
+    return `This action removes a #${id} session`;
+  }
+
+  private async generateQuestionsForAllRoles(
+    sessionId: string,
+    roles: Role[],
+    manager: any,
+  ): Promise<void> {
+    const crispCategories: CRISP[] = [
+      CRISP.C,
+      CRISP.R,
+      CRISP.I,
+      CRISP.S,
+      CRISP.P,
+    ];
+    const sessionRoleCategoryQuestions: Partial<SessionRoleCategoryQuestion>[] =
+      [];
+    const questionUsageUpdates: QuestionUsageDto[] = [];
+
+    for (const role of roles) {
+      for (const category of crispCategories) {
+        const selectedQuestions = await this.selectQuestionsForRoleAndCategory(
+          role.id,
+          category,
+          manager,
+        );
+        sessionRoleCategoryQuestions.push({
+          sessionId,
+          roleId: role.id,
+          crispCategory: category,
+          questionIds: selectedQuestions,
+          questionsCount: selectedQuestions.length,
+        });
+        selectedQuestions.forEach((questionId) => {
+          questionUsageUpdates.push({ questionId, roleId: role.id });
+        });
+      }
+    }
+
+    await manager.save(
+      SessionRoleCategoryQuestion,
+      sessionRoleCategoryQuestions,
+    );
+
+    await this.updateQuestionUsageBatch(
+      questionUsageUpdates,
+      sessionId,
+      manager,
+    );
+  }
+
+  private async selectQuestionsForRoleAndCategory(
+    roleId: number,
+    category: CRISP,
+    manager: any,
+  ): Promise<string[]> {
+    const questions = await manager
+      .createQueryBuilder(QuestionBank, 'q')
+      .leftJoin('q.roles', 'qr')
+      .leftJoin('q.usages', 'qu', 'qu.roleId = :roleId', { roleId })
+      .select(['q.id', 'COALESCE(qu.usageCount, 0) as usageCount'])
+      .where('qr.id = :roleId', { roleId })
+      .andWhere('q.crispCategory = :category', { category })
+      .orderBy('COALESCE(qu.usageCount, 0)', 'ASC')
+      .addOrderBy('RANDOM()') // Secondary randomization
+      .limit(10)
+      .getRawMany();
+
+    return questions.map((q) => q.q_id);
+  }
+
+  private async updateQuestionUsageBatch(
+    updates: QuestionUsageDto[],
+    sessionId: string,
+    manager: any,
+  ): Promise<void> {
+    const usageMap = new Map<string, QuestionUsageDto>();
+    updates.forEach((update) => {
+      const key = `${update.questionId}-${update.roleId}`;
+      usageMap.set(key, update);
+    });
+    const usageUpdates = Array.from(usageMap.values()).map(
+      ({ questionId, roleId }) => ({
+        questionId,
+        roleId,
+        usageCount: () => 'COALESCE(usage_count, 0) + 1',
+        lastUsedAt: new Date(),
+        lastUsedInSessionId: sessionId,
+      }),
+    );
+    await manager
+      .createQueryBuilder()
+      .insert()
+      .into(QuestionUsage)
+      .values(usageUpdates)
+      .orUpdate(
+        ['usageCount', 'lastUsedAt', 'lastUsedInSessionId'],
+        ['questionId', 'roleId'],
+      )
+      .execute();
+  }
+
+  private async getSession(sessionId: string): Promise<Session> {
+    const session = await this.sessionRepo.findOne({
+      where: { id: sessionId },
+    });
+    if (!session) throw new NotFoundException('Session not found');
+    return session;
+  }
+
+  private async getOrCreateProgress(
+    sessionId: string,
+    roleId: number,
+    userId: string,
+  ) {
+    let progress = await this.userSessionProgressRepo.findOne({
+      where: { user: { id: userId }, session: { id: sessionId } },
+      relations: ['user', 'session', 'role'],
+    });
+
+    if (!progress) {
+      progress = this.userSessionProgressRepo.create({
+        user: { id: userId } as User,
+        session: { id: sessionId } as Session,
+        role: { id: roleId } as Role,
+        status: ProgressStatus.IN_PROGRESS,
+        startedAt: new Date(),
+        lastActiveAt: new Date(),
+        currentCategory: CRISP.C,
+        currentQuestionIndex: 0,
+      });
+      return this.userSessionProgressRepo.save(progress);
+    }
+    progress.lastActiveAt = new Date();
+    if (!progress.role || progress.role.id !== roleId)
+      throw new Error('Role must match'); //Not sure which
+  }
+
+  private async getCategoriesCached(sessionId: string, roleId: number) {
+    const cacheKey = `session:${sessionId}:role:${roleId}:categories`;
+
+    //Try reading from the cache first
+    const cached =
+      await this.cacheManager.get<SessionRoleCategoryQuestion[]>(cacheKey);
+    if (cached) return cached;
+
+    //If there is nothing in the cache, get from the db
+    const roleCategories = await this.sessionRoleCategoryRepo.find({
+      where: { sessionId, roleId },
+    });
+    if (!roleCategories.length)
+      throw new NotFoundException('No questions for this session + role');
+
+    //Save the result in the cache
+    await this.cacheManager.set(cacheKey, roleCategories);
+
+    return roleCategories;
+  }
+
+  private async getUserAnswers(
+    userId: string,
+    roleCategories: SessionRoleCategoryQuestion[],
+  ) {
+    const rcIds = roleCategories.map((rc) => rc.id);
+    return this.userAnswerRepo.find({
+      where: {
+        user: { id: userId },
+        sessionRoleCategoryQuestion: { id: In(rcIds) },
+      },
+      relations: ['question', 'sessionRoleCategoryQuestion'],
+    });
+  }
+
+  private buildCategorySnapshot(
+    roleCategories: SessionRoleCategoryQuestion[],
+    answers: UserAnswer[],
+  ) {
+    const answersByRcId = new Map<number, UserAnswer[]>();
+    for (const ans of answers) {
+      const list = answersByRcId.get(ans.sessionRoleCategoryQuestion.id) || [];
+      list.push(ans);
+      answersByRcId.set(ans.sessionRoleCategoryQuestion.id, list);
+    }
+
+    return roleCategories.map((rc) => {
+      const answeredForRc = answersByRcId.get(rc.id) || [];
+      const answeredIds = answeredForRc.map((a) => String(a.question.id));
+
+      const requiredIds = rc.questionIds.slice(0, rc.questionsCount);
+      const remainingIds = requiredIds.filter(
+        (qid) => !answeredIds.includes(qid),
+      );
+      const correctCount = answeredForRc.filter((a) => a.isCorrect).length;
+
+      return {
+        rc,
+        category: rc.crispCategory,
+        requiredIds,
+        answeredIds,
+        remainingIds,
+        correctlyAnsweredCount: correctCount,
+      };
+    });
+  }
+
+  private updateProgressFromSnapshot(
+    progress: UserSessionProgress,
+    snapshot: any[],
+  ) {
+    const totalRequired = snapshot.reduce(
+      (sum, c) => sum + c.requiredIds.length,
+      0,
+    );
+    const totalAnswered = snapshot.reduce(
+      (sum, c) => sum + c.answeredIds.length,
+      0,
+    );
+    const totalCorrect = snapshot.reduce(
+      (sum, c) => sum + c.correctlyAnsweredCount,
+      0,
+    );
+
+    progress.totalQuestions = totalRequired;
+    progress.answeredQuestions = totalAnswered;
+    progress.correctlyAnsweredQuestions = totalCorrect;
+
+    const next = snapshot.find((c) => c.remainingIds.length > 0);
+    if (next) {
+      progress.currentCategory = next.category as CRISP;
+      progress.currentQuestionIndex = next.requiredIds.indexOf(
+        next.remainingIds[0],
+      );
+      progress.status = ProgressStatus.IN_PROGRESS;
+    } else {
+      progress.currentCategory = undefined;
+      progress.currentQuestionIndex = 0;
+      progress.status = ProgressStatus.COMPLETED;
+      progress.completedAt = new Date();
+    }
+  }
+
+  private formatResult(
+    session: Session,
+    progress: UserSessionProgress,
+    snapshot: any[],
+  ) {
+    const questionsByCategory = snapshot.map((c) => ({
+      category: c.category,
+      answered: c.answeredIds,
+      remaining: c.remainingIds,
+      requiredCount: c.requiredIds.length,
+    }));
+
+    return { session, progress, questionsByCategory };
+  }
+
+  async completeSession(
+    sessionId: string,
+    completeSessionDto: CompleteSessionDto,
+  ): Promise<SessionCompletionResult> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    const { userId } = completeSessionDto;
+
+    try {
+      // 1) Get final progress state
+      const progress = await queryRunner.manager.findOne(UserSessionProgress, {
+        where: { userId, sessionId },
+        relations: ['user', 'session', 'role'],
+      });
+
+      if (!progress || progress.status !== 'completed') {
+        throw new BadRequestException('Session not completed');
+      }
+
+      // 2) Calculate final scores and performance metrics
+      const completionData = await this.calculateCompletionMetrics(
+        userId,
+        sessionId,
+        queryRunner.manager,
+      );
+
+      // 3) Update progress with final metrics
+      await queryRunner.manager.update(UserSessionProgress, progress.id, {
+        completedAt: new Date(),
+        ...completionData.finalScores,
+      });
+
+      // 4) Generate certificate/completion record
+      const certificate = await this.generateCompletionCertificate(
+        progress,
+        completionData,
+      );
+
+      // 5) Trigger notifications/events
+      // await this.triggerCompletionEvents(progress, completionData);
+
+      // 6) Clean up temporary data
+      await this.cleanupSessionData(userId, sessionId);
+
+      await queryRunner.commitTransaction();
+
+      return {
+        success: true,
+        finalScore: completionData.overallScore,
+        categoryScores: completionData.categoryScores,
+        certificate,
+        completionTime: completionData.timeSpent,
+        rank: completionData.roleRank,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  private async calculateCompletionMetrics(
+    userId: string,
+    sessionId: string,
+    manager: any,
+  ): Promise<CompletionMetrics> {
+    // Get all user answers for this session
+    const answers = await manager
+      .createQueryBuilder(UserAnswer, 'ua')
+      .leftJoin('ua.sessionRoleCategoryQuestion', 'srcq')
+      .leftJoin('ua.question', 'q')
+      .where('ua.userId = :userId', { userId })
+      .andWhere('srcq.sessionId = :sessionId', { sessionId })
+      .select([
+        'ua.isCorrect',
+        'ua.answeredAt',
+        'q.crispCategory',
+        'srcq.crispCategory',
+      ])
+      .getRawMany();
+
+    // Calculate category-wise scores
+    const categoryScores = this.calculateCategoryScores(answers);
+
+    // Calculate overall score
+    const totalCorrect = answers.filter((a) => a.ua_isCorrect).length;
+    const overallScore = (totalCorrect / answers.length) * 100;
+
+    // Calculate time spent
+    const timeSpent = this.calculateTimeSpent(answers);
+
+    // Get user's rank among peers with same role
+    const roleRank = await this.calculateRoleRank(
+      userId,
+      sessionId,
+      overallScore,
+      manager,
+    );
+
+    return {
+      overallScore,
+      categoryScores,
+      timeSpent,
+      roleRank,
+      finalScores: {
+        overallScore,
+        ...categoryScores,
+      },
+    };
+  }
+
+  private calculateCategoryScores(answers: any[]): Record<string, number> {
+    const categories = [CRISP.C, CRISP.R, CRISP.I, CRISP.S, CRISP.P];
+    const scores: Record<string, number> = {};
+
+    categories.forEach((category) => {
+      const categoryAnswers = answers.filter(
+        (a) => a.srcq_crispCategory === category,
+      );
+      const correct = categoryAnswers.filter((a) => a.ua_isCorrect).length;
+      scores[`${category.toLowerCase()}Score`] =
+        categoryAnswers.length > 0
+          ? (correct / categoryAnswers.length) * 100
+          : 0;
+    });
+
+    return scores;
+  }
+
+  private calculateTimeSpent(answers: any[]): number {
+    if (answers.length === 0) return 0;
+
+    const startTime = new Date(answers[0].ua_answeredAt);
+    const endTime = new Date(answers[answers.length - 1].ua_answeredAt);
+
+    return Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60)); // Minutes
+  }
+
+  private async calculateRoleRank(
+    userId: string,
+    sessionId: string,
+    userScore: number,
+    manager: any,
+  ): Promise<number> {
+    const betterScores = await manager
+      .createQueryBuilder(UserSessionProgress, 'up')
+      .where('up.sessionId = :sessionId', { sessionId })
+      .andWhere(
+        'up.roleId = (SELECT roleId FROM user_progress WHERE userId = :userId AND sessionId = :sessionId)',
+        { userId, sessionId },
+      )
+      .andWhere('up.status = :status', { status: 'completed' })
+      .andWhere(
+        '(up.correctlyAnsweredQuestions * 100.0 / up.answeredQuestions) > :userScore',
+        { userScore },
+      )
+      .getCount();
+
+    return betterScores + 1; // Rank (1 = best)
+  }
+
+  private async generateCompletionCertificate(
+    progress: UserSessionProgress,
+    metrics: CompletionMetrics,
+  ): Promise<string> {
+    // Generate certificate ID or URL
+    const certificateId = `CERT_${progress.sessionId}_${progress.userId}_${Date.now()}`;
+
+    // Store certificate data (could be separate table)
+    await this.certificateRepo.save({
+      id: certificateId,
+      userId: progress.userId,
+      sessionId: progress.sessionId,
+      roleId: progress.roleId,
+      score: metrics.overallScore,
+      completedAt: new Date(),
+      issuedAt: new Date(),
+    });
+
+    return certificateId;
+  }
+
+  // private async triggerCompletionEvents(
+  //   progress: UserSessionProgress,
+  //   metrics: CompletionMetrics
+  // ): Promise<void> {
+  //   // Fire async events (don't await to avoid blocking)
+  //   Promise.all([
+  //     this.notificationService.sendCompletionEmail(progress.userId, progress.sessionId, metrics),
+  //     this.analyticsService.trackCompletion(progress, metrics),
+  //     this.leaderboardService.updateRankings(progress.sessionId, progress.roleId)
+  //   ]).catch(error => {
+  //     this.logger.error('Completion events failed', error);
+  //   });
+  // }
+
+  private async cleanupSessionData(
+    userId: string,
+    sessionId: string,
+  ): Promise<void> {
+    const patterns = [
+      `session:${sessionId}:role:*:categories`,
+      `user:${userId}:session:${sessionId}:*`,
+    ];
+
+    // cacheManager is a Keyv instance with multiple stores
+    const keyvStores = (this.cacheManager as any).stores;
+
+    // Find the Redis store
+    const redisStore = keyvStores.find((s: any) => s instanceof KeyvRedis);
+    if (!redisStore) return;
+
+    const redisClient = redisStore.redis; // raw ioredis client
+
+    for (const pattern of patterns) {
+      const keys: string[] = await redisClient.keys(pattern);
+      if (keys.length > 0) {
+        await redisClient.del(...keys);
+      }
+    }
+  }
+
+  // NEW: Replace answerQuestion with this sync function
+  async syncUserProgress(
+    sessionId: string,
+    syncSessionDto: SyncSessionDto,
+  ): Promise<SyncResult> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    const { userId, answerBatch, currentState } = syncSessionDto;
+    try {
+      // 1) Get current progress
+      const progress = await queryRunner.manager.findOne(UserSessionProgress, {
+        where: { userId, sessionId },
+        relations: ['role'],
+      });
+
+      if (!progress) {
+        throw new NotFoundException('User progress not found');
+      }
+
+      // 2) Validate and process answer batch
+      const validatedAnswers = await this.validateAnswerBatch(
+        answerBatch,
+        progress,
+        queryRunner.manager,
+      );
+
+      // 3) Save new answers (avoid duplicates)
+      await this.saveAnswerBatch(validatedAnswers, queryRunner.manager);
+
+      // 4) Update progress state
+      await queryRunner.manager.update(UserSessionProgress, progress.id, {
+        currentCategory: currentState.currentCategory ?? undefined,
+        currentQuestionIndex: currentState.currentQuestionIndex,
+        answeredQuestions: progress.answeredQuestions + validatedAnswers.length,
+        correctlyAnsweredQuestions:
+          progress.correctlyAnsweredQuestions +
+          validatedAnswers.filter((a) => a.isCorrect).length,
+        lastActiveAt: new Date(),
+        status: currentState.status || progress.status,
+      });
+
+      await queryRunner.commitTransaction();
+
+      return {
+        success: true,
+        syncedAnswers: validatedAnswers.length,
+        currentProgress: await this.getProgressSummary(userId, sessionId),
+        nextSyncRecommended: this.calculateNextSyncTime(
+          validatedAnswers.length,
+        ),
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+  private async validateAnswerBatch(
+    answerBatch: AnswerBatch[],
+    progress: UserSessionProgress,
+    manager: any,
+  ): Promise<ValidatedAnswer[]> {
+    const validated: ValidatedAnswer[] = [];
+
+    // Get existing answers to avoid duplicates
+    const existingAnswers = await manager.find(UserAnswer, {
+      where: {
+        userId: progress.userId,
+        sessionRoleCategoryQuestion: { sessionId: progress.sessionId },
+      },
+      select: ['questionId'],
+    });
+    const existingQuestionIds = new Set(
+      existingAnswers.map((a) => a.questionId),
+    );
+
+    // Get questions for validation
+    const questionIds = answerBatch.map((a) => a.questionId);
+    const questions = await this.getQuestionsCached(questionIds);
+    const questionMap = new Map(questions.map((q) => [q.id, q]));
+
+    for (const answer of answerBatch) {
+      // Skip if already answered
+      if (existingQuestionIds.has(answer.questionId)) {
+        continue;
+      }
+
+      const question = questionMap.get(answer.questionId);
+      if (!question) {
+        continue; // Invalid question ID
+      }
+
+      // Get the category data for this answer
+      const categoryData = await this.getCategoryForQuestion(
+        progress.sessionId,
+        progress.roleId,
+        answer.questionId,
+        manager,
+      );
+
+      if (!categoryData) {
+        continue; // Question not in user's assigned set
+      }
+
+      validated.push({
+        userId: progress.userId,
+        questionId: answer.questionId,
+        sessionRoleCategoryQuestionId: categoryData.id,
+        userAnswer: answer.userAnswer,
+        isCorrect: this.checkAnswer(question.correctAnswer, answer.userAnswer),
+        answeredAt: answer.answeredAt,
+      });
+    }
+
+    return validated;
+  }
+
+  // NEW: Batch save answers
+  private async saveAnswerBatch(
+    answers: ValidatedAnswer[],
+    manager: any,
+  ): Promise<void> {
+    if (answers.length === 0) return;
+
+    // Use batch insert for efficiency
+    await manager.save(UserAnswer, answers);
+  }
+
+  // MODIFY: Update existing function to include next question data
+
+  // NEW: Format questions for frontend consumption
+  private formatQuestionsForFrontend(snapshot: any[]) {
+    return snapshot.map((categoryData) => ({
+      category: categoryData.category,
+      questions: categoryData.rc.questionIds.map((qId, index) => ({
+        id: qId,
+        order: index,
+        isAnswered: categoryData.answeredIds.includes(String(qId)),
+      })),
+      totalQuestions: categoryData.requiredIds.length,
+      answeredCount: categoryData.answeredIds.length,
+    }));
+  }
+
+  // NEW: Get progress summary for sync response
+  private async getProgressSummary(
+    userId: string,
+    sessionId: string,
+  ): Promise<ProgressSummary> {
+    const progress = await this.userSessionProgressRepo.findOne({
+      where: { userId, sessionId },
+    });
+
+    if (!progress) throw new NotFoundException('Progress not found');
+
+    return {
+      currentCategory: progress.currentCategory,
+      currentQuestionIndex: progress.currentQuestionIndex,
+      totalAnswered: progress.answeredQuestions,
+      totalCorrect: progress.correctlyAnsweredQuestions,
+      progressPercentage: progress.getProgressPercentage(),
+      status: progress.status,
+    };
+  }
+
+  // NEW: Calculate when next sync should happen
+  private calculateNextSyncTime(answersProcessed: number): number {
+    // More frequent syncs if user is active
+    if (answersProcessed > 5) return 120000; // 2 minutes
+    if (answersProcessed > 0) return 180000; // 3 minutes
+    return 300000; // 5 minutes if no new answers
+  }
+
+  // NEW: Get category data for a specific question
+  private async getCategoryForQuestion(
+    sessionId: string,
+    roleId: number,
+    questionId: string,
+    manager: any,
+  ): Promise<SessionRoleCategoryQuestion | null> {
+    const categories = await manager.find(SessionRoleCategoryQuestion, {
+      where: { sessionId, roleId },
+    });
+
+    return (
+      categories.find((cat) => cat.questionIds.includes(Number(questionId))) ||
+      null
+    );
+  }
+
+  private async getQuestionsCached(
+    questionIds: string[],
+  ): Promise<QuestionBank[]> {
+    if (!questionIds || questionIds.length === 0) {
+      return [];
+    }
+
+    const results: QuestionBank[] = [];
+    const uncachedIds: string[] = [];
+
+    // First pass: check cache for all questions
+    for (const questionId of questionIds) {
+      const cacheKey = `question:${questionId}`;
+      const cached = await this.cacheManager.get<QuestionBank>(cacheKey);
+
+      if (cached) {
+        results.push(cached);
+      } else {
+        uncachedIds.push(questionId);
+      }
+    }
+
+    // Second pass: fetch uncached questions from database
+    if (uncachedIds.length > 0) {
+      const uncachedQuestions = await this.questionRepo.find({
+        where: { id: In(uncachedIds) },
+      });
+
+      // Check if all requested questions were found
+      const foundIds = uncachedQuestions.map((q) => q.id);
+      const missingIds = uncachedIds.filter((id) => !foundIds.includes(id));
+
+      if (missingIds.length > 0) {
+        throw new BadRequestException(
+          `Questions not found: ${missingIds.join(', ')}`,
+        );
+      }
+
+      // Cache the newly fetched questions and add to results
+      for (const question of uncachedQuestions) {
+        const cacheKey = `question:${question.id}`;
+        await this.cacheManager.set(cacheKey, question);
+        results.push(question);
+      }
+    }
+
+    // Sort results to match the order of input questionIds
+    const questionMap = new Map(results.map((q) => [q.id, q]));
+    return questionIds.map((id) => questionMap.get(id)!);
+  }
+
+  /**
+   * Normalize and check if answer is correct
+   */
+  private checkAnswer(correctAnswer: number, userAnswer: number): boolean {
+    return correctAnswer === userAnswer;
+  }
+}
