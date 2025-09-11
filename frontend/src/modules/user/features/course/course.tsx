@@ -96,15 +96,15 @@ Developing ethical competence is a lifelong journey requiring ongoing self-refle
     const isLastLesson = !courseNavigation.nextLesson;
 
     if (isLastLesson) {
-      // Navigate to course assessment after completing final lesson
-      //   onNavigate("assessment-taking", {
+      // Navigate to course session after completing final lesson
+      //   onNavigate("session-taking", {
       //     moduleId: courseId,
       //     courseId: courseId,
-      //     assessmentId: courseId,
+      //     sessionId: courseId,
       //   });
       navigate({
-        to: "/program/$id/course/$courseId/assessment/$assessmentId",
-        params: { id, courseId, assessmentId: courseId },
+        to: "/program/$id/course/$courseId/session/$sessionId",
+        params: { id, courseId, sessionId: courseId },
       });
     } else {
       // Continue to next lesson
@@ -269,7 +269,7 @@ Developing ethical competence is a lifelong journey requiring ongoing self-refle
                     </>
                   ) : (
                     <>
-                      Take Assessment
+                      Take session
                       <CheckCircle className="w-4 h-4 ml-2" />
                     </>
                   )}

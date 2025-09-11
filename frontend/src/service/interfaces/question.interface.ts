@@ -2,15 +2,15 @@ import type { CRISP } from "../enums/crisp.enum";
 import type { Difficulty } from "../enums/difficulty.enum";
 
 export interface addQuestionDto {
-  crisp_category?: CRISP;
+  crispCategory: CRISP;
 
-  question_text: string;
+  questionText: string;
 
   options: string[];
 
-  correct_answer: number;
+  correctAnswer: number;
 
-  difficulty_level?: Difficulty;
+  difficultyLevel?: Difficulty;
 
-  role_ids?: number[];
+  roles?: number[];
 }

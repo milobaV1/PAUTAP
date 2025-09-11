@@ -60,7 +60,11 @@ export class UsersService {
   async findOne(searchParam: 'id' | 'email', searchValue: string) {
     const user = await this.userRepo.findOne({
       where: { [searchParam]: searchValue },
-      relations: ['sessions', 'certificates'],
+      relations: [
+        //'sessions',
+        'role',
+        'certificates',
+      ],
     });
     return user;
   }

@@ -40,8 +40,8 @@ export function Certificates() {
     },
     {
       id: 2,
-      title: "Student Assessment Excellence",
-      course: "Student Assessment Strategies",
+      title: "Student session Excellence",
+      course: "Student session Strategies",
       completedDate: "2024-12-10",
       score: 88,
       instructor: "Dr. James Wilson",
@@ -49,7 +49,7 @@ export function Certificates() {
       credentialId: "PAU-SAS-2024-001189",
       status: "issued",
       type: "course",
-      skills: ["Assessment Design", "Rubric Creation", "Feedback Strategies"],
+      skills: ["session Design", "Rubric Creation", "Feedback Strategies"],
     },
     {
       id: 3,
@@ -88,7 +88,7 @@ export function Certificates() {
       type: "pathway",
       skills: [
         "Digital Teaching",
-        "Assessment",
+        "session",
         "Classroom Management",
         "Technology Integration",
         "Student Engagement",
@@ -108,7 +108,7 @@ export function Certificates() {
     {
       id: 2,
       name: "Perfect Score",
-      description: "Achieve 100% on any assessment",
+      description: "Achieve 100% on any session",
       icon: "🎯",
       earned: true,
       earnedDate: "2024-12-31",

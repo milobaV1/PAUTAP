@@ -71,9 +71,9 @@ export function ModuleDetail() {
       lessons: 3,
       completed: true,
       locked: false,
-      hasAssessment: true,
-      assessmentCompleted: true,
-      assessmentScore: 85,
+      hassession: true,
+      sessionCompleted: true,
+      sessionScore: 85,
     },
     {
       id: 2,
@@ -84,9 +84,9 @@ export function ModuleDetail() {
       lessons: 4,
       completed: true,
       locked: false,
-      hasAssessment: true,
-      assessmentCompleted: true,
-      assessmentScore: 92,
+      hassession: true,
+      sessionCompleted: true,
+      sessionScore: 92,
     },
     {
       id: 3,
@@ -98,8 +98,8 @@ export function ModuleDetail() {
       completed: false,
       locked: false,
       current: true,
-      hasAssessment: true,
-      assessmentCompleted: false,
+      hassession: true,
+      sessionCompleted: false,
     },
     {
       id: 4,
@@ -110,8 +110,8 @@ export function ModuleDetail() {
       lessons: 4,
       completed: false,
       locked: false,
-      hasAssessment: true,
-      assessmentCompleted: false,
+      hassession: true,
+      sessionCompleted: false,
     },
     {
       id: 5,
@@ -122,8 +122,8 @@ export function ModuleDetail() {
       lessons: 6,
       completed: false,
       locked: false,
-      hasAssessment: true,
-      assessmentCompleted: false,
+      hassession: true,
+      sessionCompleted: false,
     },
   ];
 
@@ -251,7 +251,7 @@ export function ModuleDetail() {
                   <CardTitle>Module Curriculum</CardTitle>
                   <CardDescription>
                     {module.totalCourses} courses • Each course includes lessons
-                    and an assessment
+                    and an session
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -267,8 +267,8 @@ export function ModuleDetail() {
                         </h4>
                         <p className="text-sm text-blue-700">
                           Complete all lessons in a course to unlock its
-                          assessment. Assessments become available after
-                          finishing the final lesson of each course.
+                          session. sessions become available after finishing the
+                          final lesson of each course.
                         </p>
                       </div>
                     </div>
@@ -325,10 +325,10 @@ export function ModuleDetail() {
                                 Current
                               </Badge>
                             )}
-                            {course.hasAssessment && (
+                            {course.hassession && (
                               <Badge variant="outline" className="text-xs">
                                 <FileCheck className="w-3 h-3 mr-1" />
-                                Assessment
+                                session
                               </Badge>
                             )}
                           </div>
@@ -344,10 +344,10 @@ export function ModuleDetail() {
                               <Clock className="w-3 h-3 mr-1" />
                               {course.duration}
                             </span>
-                            {course.assessmentCompleted && (
+                            {course.sessionCompleted && (
                               <span className="flex items-center text-green-600">
                                 <CheckCircle className="w-3 h-3 mr-1" />
-                                Assessment: {course.assessmentScore}%
+                                session: {course.sessionScore}%
                               </span>
                             )}
                           </div>
@@ -404,7 +404,7 @@ export function ModuleDetail() {
                       <li className="flex items-start">
                         <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
                         <span>
-                          Assessment methods for online learning environments
+                          session methods for online learning environments
                         </span>
                       </li>
                     </ul>
@@ -506,9 +506,7 @@ export function ModuleDetail() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Assessments
-                </span>
+                <span className="text-sm text-muted-foreground">sessions</span>
                 <span className="flex items-center text-sm font-medium">
                   <FileCheck className="w-4 h-4 mr-1 text-blue-600" />
                   {module.totalCourses} Required

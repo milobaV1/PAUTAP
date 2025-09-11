@@ -82,6 +82,14 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a user by ID' })
+  @ApiResponse({ status: 200, description: 'Successfully fetched the user.' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  findUserById(@Param('id') id: string) {
+    return this.usersService.findOne('id', id);
+  }
+
   // @Get(':id')
   // findOne(@Param('id') id: string) {
   //   return this.usersService.findOne(+id);

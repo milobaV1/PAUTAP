@@ -94,6 +94,165 @@ export class SessionService {
     return sessions;
   }
 
+  async findAllIncompleteSessions(userId: string) {
+    // Get all completed sessions for a user
+    const completedSessions = await this.sessionRepo
+      .createQueryBuilder('session')
+      .innerJoin('session.userProgress', 'progress')
+      .where('progress.userId = :userId', { userId })
+      .andWhere('progress.status = :status', {
+        status: ProgressStatus.COMPLETED,
+      })
+      .getMany();
+
+    return completedSessions;
+  }
+
+  // async getUserSessionWithStatuses(userId: string, userRoleId: string) {
+  //   // Get all active sessions and LEFT JOIN with user progress
+  //   const sessionsWithProgress = await this.sessionRepo
+  //     .createQueryBuilder('session')
+  //     .leftJoinAndSelect(
+  //       'session.userProgress',
+  //       'progress',
+  //       'progress.userId = :userId',
+  //       { userId },
+  //     )
+  //     .leftJoinAndSelect('progress.role', 'role')
+  //     .leftJoinAndSelect(
+  //       'session.roleCategoryQuestions',
+  //       'roleCategoryQuestions',
+  //       'roleCategoryQuestions.roleId = :roleId',
+  //       { roleId: userRoleId },
+  //     )
+  //     .where('session.isActive = :isActive', { isActive: true })
+  //     .orderBy('session.createdAt', 'DESC')
+  //     .getMany();
+
+  //   return sessionsWithProgress.map((session) => {
+  //     const progress = session.userProgress?.[0]; // Get the user's progress if exists
+
+  //     return {
+  //       sessionId: session.id,
+  //       sessionTitle: session.title,
+  //       sessionDescription: session.description,
+  //       sessionDifficulty: session.difficulty,
+  //       sessionCreatedAt: session.createdAt,
+  //       questionsGenerated: session.questionsGenerated,
+  //       totalQuestionsAvailable:
+  //         session.roleCategoryQuestions?.reduce(
+  //           (sum, rcq) => sum + rcq.questionsCount,
+  //           0,
+  //         ) || 0,
+
+  //       // Progress data - null if user hasn't started
+  //       status: progress?.status || ProgressStatus.NOT_STARTED,
+  //       currentCategory: progress?.currentCategory || null,
+  //       progressPercentage: progress?.getProgressPercentage() || 0,
+  //       accuracyPercentage: progress?.getAccuracyPercentage() || 0,
+  //       totalQuestions: progress?.totalQuestions || 0,
+  //       answeredQuestions: progress?.answeredQuestions || 0,
+  //       correctlyAnsweredQuestions: progress?.correctlyAnsweredQuestions || 0,
+
+  //       // Timestamps
+  //       startedAt: progress?.startedAt || null,
+  //       lastActiveAt: progress?.lastActiveAt || null,
+  //       completedAt: progress?.completedAt || null,
+
+  //       // Helper flags
+  //       isStarted: !!progress,
+  //       isCompleted: progress?.isCompleted() || false,
+  //       canStart: session.questionsGenerated && session.isActive,
+  //     };
+  //   });
+  // }
+  async getUserSessionWithStatuses(userId: string, userRoleId: number) {
+    // Get all active sessions and LEFT JOIN with user progress and role category questions
+    const sessionsWithProgress = await this.sessionRepo
+      .createQueryBuilder('session')
+      .leftJoinAndSelect(
+        'session.userProgress',
+        'progress',
+        'progress.userId = :userId',
+        { userId },
+      )
+      .leftJoinAndSelect('progress.role', 'role')
+      .leftJoinAndSelect(
+        'session.roleCategoryQuestions',
+        'roleCategoryQuestions',
+        'roleCategoryQuestions.roleId = :roleId',
+        { roleId: userRoleId },
+      )
+      .leftJoinAndSelect(
+        'roleCategoryQuestions.userAnswers',
+        'userAnswers',
+        'userAnswers.userId = :userId',
+        { userId },
+      )
+      .where('session.isActive = :isActive', { isActive: true })
+      .orderBy('session.createdAt', 'DESC')
+      .getMany();
+
+    // Map sessions with complete data including questions
+    return await Promise.all(
+      sessionsWithProgress.map(async (session) => {
+        const progress = session.userProgress?.[0]; // Get the user's progress if exists
+
+        // Get actual questions for each category
+        const categories = await Promise.all(
+          (session.roleCategoryQuestions || []).map(async (rcq) => {
+            const questions = await this.questionRepo.find({
+              where: { id: In(rcq.questionIds) },
+            });
+
+            return {
+              categoryId: rcq.id,
+              category: rcq.crispCategory,
+              questionsCount: rcq.questionsCount,
+              questionIds: rcq.questionIds,
+              questions: questions,
+              userAnswers: rcq.userAnswers || [],
+            };
+          }),
+        );
+
+        return {
+          sessionId: session.id,
+          sessionTitle: session.title,
+          sessionDescription: session.description,
+          sessionDifficulty: session.difficulty,
+          sessionCreatedAt: session.createdAt,
+          questionsGenerated: session.questionsGenerated,
+
+          // Progress data - null if user hasn't started
+          status: progress?.status || ProgressStatus.NOT_STARTED,
+          currentCategory: progress?.currentCategory || null,
+          progressPercentage: progress?.getProgressPercentage() || 0,
+          accuracyPercentage: progress?.getAccuracyPercentage() || 0,
+          totalQuestions: progress?.totalQuestions || 0,
+          answeredQuestions: progress?.answeredQuestions || 0,
+          correctlyAnsweredQuestions: progress?.correctlyAnsweredQuestions || 0,
+
+          // Timestamps
+          startedAt: progress?.startedAt || null,
+          lastActiveAt: progress?.lastActiveAt || null,
+          completedAt: progress?.completedAt || null,
+
+          // Categories with questions
+          categories: categories,
+          totalQuestionsAvailable: categories.reduce(
+            (sum, cat) => sum + cat.questionsCount,
+            0,
+          ),
+
+          // Helper flags
+          isStarted: !!progress,
+          isCompleted: progress?.isCompleted() || false,
+          canStart: session.questionsGenerated && session.isActive,
+        };
+      }),
+    );
+  }
   async findOneSession(id: string) {
     const session = await this.sessionRepo.findOne({
       where: { id },
@@ -277,6 +436,37 @@ export class SessionService {
     return questions.map((q) => q.q_id);
   }
 
+  // private async updateQuestionUsageBatch(
+  //   updates: QuestionUsageDto[],
+  //   sessionId: string,
+  //   manager: any,
+  // ): Promise<void> {
+  //   const usageMap = new Map<string, QuestionUsageDto>();
+  //   updates.forEach((update) => {
+  //     const key = `${update.questionId}-${update.roleId}`;
+  //     usageMap.set(key, update);
+  //   });
+  //   const usageUpdates = Array.from(usageMap.values()).map(
+  //     ({ questionId, roleId }) => ({
+  //       questionId,
+  //       roleId,
+  //       usageCount: () => 'COALESCE("usageCount", 0) + 1',
+  //       lastUsedAt: new Date(),
+  //       lastUsedInSessionId: sessionId,
+  //     }),
+  //   );
+  //   await manager
+  //     .createQueryBuilder()
+  //     .insert()
+  //     .into(QuestionUsage)
+  //     .values(usageUpdates)
+  //     .orUpdate(
+  //       ['usageCount', 'lastUsedAt', 'lastUsedInSessionId'],
+  //       ['questionId', 'roleId'],
+  //     )
+  //     .execute();
+  // }
+
   private async updateQuestionUsageBatch(
     updates: QuestionUsageDto[],
     sessionId: string,
@@ -284,28 +474,42 @@ export class SessionService {
   ): Promise<void> {
     const usageMap = new Map<string, QuestionUsageDto>();
     updates.forEach((update) => {
-      const key = `${update.questionId}-${update.roleId}`;
-      usageMap.set(key, update);
+      if (update.questionId && update.roleId) {
+        const key = `${update.questionId}-${update.roleId}`;
+        usageMap.set(key, update);
+      }
     });
+
     const usageUpdates = Array.from(usageMap.values()).map(
       ({ questionId, roleId }) => ({
         questionId,
         roleId,
-        usageCount: () => 'COALESCE(usage_count, 0) + 1',
+        usageCount: 1, // Set default value for new rows
         lastUsedAt: new Date(),
         lastUsedInSessionId: sessionId,
       }),
     );
-    await manager
-      .createQueryBuilder()
-      .insert()
-      .into(QuestionUsage)
-      .values(usageUpdates)
-      .orUpdate(
-        ['usageCount', 'lastUsedAt', 'lastUsedInSessionId'],
-        ['questionId', 'roleId'],
-      )
-      .execute();
+
+    if (usageUpdates.length > 0) {
+      await manager
+        .createQueryBuilder()
+        .insert()
+        .into('question_usage')
+        .values(usageUpdates)
+        .orUpdate(
+          ['usageCount', 'lastUsedAt', 'lastUsedInSessionId', 'updatedAt'],
+          ['questionId', 'roleId'],
+          {
+            skipUpdateIfNoValuesChanged: true,
+            upsertType: 'on-conflict-do-update',
+            rawUpdateValues: {
+              usageCount: 'COALESCE(question_usage."usageCount", 0) + 1',
+              updatedAt: 'DEFAULT',
+            },
+          },
+        )
+        .execute();
+    }
   }
 
   private async getSession(sessionId: string): Promise<Session> {
@@ -687,6 +891,19 @@ export class SessionService {
     }
   }
 
+  private formatQuestionsForFrontend(snapshot: any[]) {
+    return snapshot.map((categoryData) => ({
+      category: categoryData.category,
+      questions: categoryData.rc.questionIds.map((qId, index) => ({
+        id: qId,
+        order: index,
+        isAnswered: categoryData.answeredIds.includes(String(qId)),
+      })),
+      totalQuestions: categoryData.requiredIds.length,
+      answeredCount: categoryData.answeredIds.length,
+    }));
+  }
+
   // NEW: Replace answerQuestion with this sync function
   async syncUserProgress(
     sessionId: string,
@@ -703,6 +920,8 @@ export class SessionService {
         relations: ['role'],
       });
 
+      console.log('This is the progress before syncing: ', progress);
+
       if (!progress) {
         throw new NotFoundException('User progress not found');
       }
@@ -713,6 +932,8 @@ export class SessionService {
         progress,
         queryRunner.manager,
       );
+
+      console.log('Validated Answers: ', validatedAnswers);
 
       // 3) Save new answers (avoid duplicates)
       await this.saveAnswerBatch(validatedAnswers, queryRunner.manager);
@@ -751,24 +972,34 @@ export class SessionService {
     progress: UserSessionProgress,
     manager: any,
   ): Promise<ValidatedAnswer[]> {
+    console.log('Answer Batch received for validating: ', answerBatch);
+    console.log('Progress received for validating: ', progress);
     const validated: ValidatedAnswer[] = [];
 
     // Get existing answers to avoid duplicates
+
     const existingAnswers = await manager.find(UserAnswer, {
       where: {
-        userId: progress.userId,
+        user: { id: progress.userId },
         sessionRoleCategoryQuestion: { sessionId: progress.sessionId },
       },
-      select: ['questionId'],
+      select: ['question'],
     });
+
+    console.log('existing Answers: ', existingAnswers);
     const existingQuestionIds = new Set(
       existingAnswers.map((a) => a.questionId),
     );
 
+    console.log('existing questions ids: ', existingQuestionIds);
+
     // Get questions for validation
     const questionIds = answerBatch.map((a) => a.questionId);
+    console.log('new question ids: ', questionIds);
     const questions = await this.getQuestionsCached(questionIds);
+    console.log('new question: ', questions);
     const questionMap = new Map(questions.map((q) => [q.id, q]));
+    console.log('new question map: ', questionMap);
 
     for (const answer of answerBatch) {
       // Skip if already answered
@@ -787,6 +1018,11 @@ export class SessionService {
         progress.roleId,
         answer.questionId,
         manager,
+      );
+
+      console.log(
+        `Get category data for the question ${answer.questionId}: `,
+        categoryData,
       );
 
       if (!categoryData) {
@@ -813,25 +1049,20 @@ export class SessionService {
   ): Promise<void> {
     if (answers.length === 0) return;
 
-    // Use batch insert for efficiency
-    await manager.save(UserAnswer, answers);
+    await manager
+      .createQueryBuilder()
+      .insert()
+      .into(UserAnswer)
+      .values(answers)
+      .orUpdate(
+        ['userAnswer', 'isCorrect', 'answeredAt'], // columns to update on conflict
+        ['userId', 'questionId', 'sessionRoleCategoryQuestionId'], // conflict target columns
+      )
+      .execute();
   }
-
   // MODIFY: Update existing function to include next question data
 
   // NEW: Format questions for frontend consumption
-  private formatQuestionsForFrontend(snapshot: any[]) {
-    return snapshot.map((categoryData) => ({
-      category: categoryData.category,
-      questions: categoryData.rc.questionIds.map((qId, index) => ({
-        id: qId,
-        order: index,
-        isAnswered: categoryData.answeredIds.includes(String(qId)),
-      })),
-      totalQuestions: categoryData.requiredIds.length,
-      answeredCount: categoryData.answeredIds.length,
-    }));
-  }
 
   // NEW: Get progress summary for sync response
   private async getProgressSummary(
@@ -873,9 +1104,10 @@ export class SessionService {
       where: { sessionId, roleId },
     });
 
+    console.log(`Get categories for the question ${questionId}: `, categories);
+
     return (
-      categories.find((cat) => cat.questionIds.includes(Number(questionId))) ||
-      null
+      categories.find((cat) => cat.questionIds.includes(questionId)) || null
     );
   }
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 
 import {
@@ -13,6 +15,14 @@ import {
   BookOpen,
   BarChart3,
 } from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -47,8 +57,12 @@ import { CRISP } from "@/service/enums/crisp.enum";
 import { Difficulty } from "@/service/enums/difficulty.enum";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { roles } from "@/lib/roles";
+import { getRoleIds, roles } from "@/lib/roles";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { addQuestionDto } from "@/service/interfaces/question.interface";
+import { AddQuestion, useAddQuestion } from "./api/add-quetion";
+
+//
 
 const questionSchema = z
   .object({
@@ -73,12 +87,10 @@ const questionSchema = z
       .array(
         z.object({
           text: z.string().min(4, "Option cannot be empty"),
-          isCorrect: z.boolean(),
         })
       )
       .optional(),
-    correctAnswer: z.string().optional(), // For true/false questions
-    // keyPoints: z.string().optional(), // For short-answer and essay questions
+    correctAnswer: z.number().optional(), // index of correct option
     explanation: z
       .string()
       .max(500, "Explanation must not exceed 500 characters")
@@ -101,8 +113,13 @@ const questionSchema = z
         if (!data.options || data.options.length < 2) {
           return false;
         }
-        const correctAnswers = data.options.filter((opt) => opt.isCorrect);
-        return correctAnswers.length === 1;
+        if (
+          data.correctAnswer === undefined ||
+          data.correctAnswer < 0 ||
+          data.correctAnswer >= data.options.length
+        ) {
+          return false;
+        }
       }
       return true;
     },
@@ -162,10 +179,9 @@ export function QuestionManagement() {
     },
     {
       id: 3,
-      question:
-        "What are the key components of an effective assessment rubric?",
+      question: "What are the key components of an effective session rubric?",
       type: "Multiple Choice",
-      course: "Assessment Strategies",
+      course: "session Strategies",
       difficulty: "Medium",
       correctAnswer: "Clear criteria, performance levels, descriptors",
       options: [
@@ -200,13 +216,13 @@ export function QuestionManagement() {
     },
     {
       id: 5,
-      question: "True or False: Formative assessments should always be graded.",
+      question: "True or False: Formative sessions should always be graded.",
       type: "True/False",
-      course: "Assessment Strategies",
+      course: "session Strategies",
       difficulty: "Easy",
       correctAnswer: "False",
       explanation:
-        "Formative assessments are primarily for feedback and learning, not grading.",
+        "Formative sessions are primarily for feedback and learning, not grading.",
       usageCount: 267,
       successRate: 78,
       created: "2024-01-07",
@@ -218,7 +234,7 @@ export function QuestionManagement() {
     { value: "all", label: "All Courses" },
     { value: "digital-teaching-methods", label: "Digital Teaching Methods" },
     { value: "educational-leadership", label: "Educational Leadership" },
-    { value: "assessment-strategies", label: "Assessment Strategies" },
+    { value: "session-strategies", label: "session Strategies" },
     { value: "research-methods", label: "Research Methods" },
   ];
 
@@ -296,29 +312,47 @@ export function QuestionManagement() {
     activeQuestions: questions.filter((q) => q.usageCount > 0).length,
   };
 
+  const {
+    mutate: addQuestion,
+    isPending,
+    isError,
+    error,
+    isSuccess,
+  } = useAddQuestion();
+
   const form = useForm<z.infer<typeof questionSchema>>({
     resolver: zodResolver(questionSchema),
+    mode: "onSubmit",
     defaultValues: {
       crispType: CRISP.C,
       difficulty: Difficulty.BEGINNER,
       questionType: "multiple-choice",
       questionText: "",
-      options: [
-        { text: "", isCorrect: false },
-        { text: "", isCorrect: false },
-        { text: "", isCorrect: false },
-        { text: "", isCorrect: false },
-      ],
-      correctAnswer: undefined,
-      //keyPoints: undefined,
+      options: [{ text: "" }, { text: "" }, { text: "" }, { text: "" }],
+      correctAnswer: 0, // default to first option
+      // keyPoints: undefined, // if you add it back later
       explanation: "",
       roles: [],
     },
   });
 
-  async function handleSubmit(values: z.infer<typeof questionSchema>) {
+  async function onSubmit(values: z.infer<typeof questionSchema>) {
+    console.log("button clicked");
     console.log(values);
-    const { questionType, roles, explanation, ...data } = values;
+    const { questionType, roles, explanation, options, ...data } = values;
+
+    const roleIds = getRoleIds(roles);
+    const editedData: addQuestionDto = {
+      crispCategory: data.crispType,
+      difficultyLevel: data.difficulty,
+      questionText: data.questionText,
+      options: options ? options.map((opt) => opt.text) : [],
+      correctAnswer: values.correctAnswer ?? 0,
+      roles: roleIds,
+    };
+
+    return addQuestion(editedData);
+
     // const editedData = data as UserSignUpInterface;
     // console.log("This is the sign up data I am sending", editedData);
     // const response = await createUser(editedData);
@@ -332,7 +366,7 @@ export function QuestionManagement() {
         <div>
           <h1>Question Management</h1>
           <p className="text-muted-foreground mt-1">
-            Create and manage assessment questions for courses
+            Create and manage session questions for courses
           </p>
         </div>
         <Dialog open={showAddQuestion} onOpenChange={setShowAddQuestion}>
@@ -346,200 +380,231 @@ export function QuestionManagement() {
             <DialogHeader>
               <DialogTitle>Create New Question</DialogTitle>
               <DialogDescription>
-                Add a new assessment question to the question bank.
+                Add a new session question to the question bank.
               </DialogDescription>
             </DialogHeader>
-            <form
-              className="space-y-6"
-              onSubmit={form.handleSubmit(handleSubmit)}
-            >
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="crisp">CRISP Type</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="community">Community</SelectItem>
-                      <SelectItem value="respect">Respect</SelectItem>
-                      <SelectItem value="integrity">Integrity</SelectItem>
-                      <SelectItem value="service">Service</SelectItem>
-                      <SelectItem value="professionalism">
-                        Professionalism
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="difficulty">Difficulty Level</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select difficulty" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
-              {/* <div>
-                <Label htmlFor="questionType">Question Type</Label>
-                <RadioGroup
-                  value={questionType}
-                  onValueChange={setQuestionType}
-                  className="flex space-x-6 mt-2"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="multiple-choice" id="mc" />
-                    <Label htmlFor="mc">Multiple Choice</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="true-false" id="tf" />
-                    <Label htmlFor="tf">True/False</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="short-answer" id="sa" />
-                    <Label htmlFor="sa">Short Answer</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="essay" id="essay" />
-                    <Label htmlFor="essay">Essay</Label>
-                  </div>
-                </RadioGroup>
-              </div> */}
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                  console.log("validation failed", errors);
+                })}
+              >
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {/* CRISP Select */}
+                  <FormField
+                    control={form.control}
+                    name="crispType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CRISP Type</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="community">
+                                Community
+                              </SelectItem>
+                              <SelectItem value="respect">Respect</SelectItem>
+                              <SelectItem value="integrity">
+                                Integrity
+                              </SelectItem>
+                              <SelectItem value="service">Service</SelectItem>
+                              <SelectItem value="professionalism">
+                                Professionalism
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <div>
-                <Label htmlFor="questionText">Question</Label>
-                <Textarea
-                  id="questionText"
-                  placeholder="Enter your question here..."
-                  rows={3}
-                />
-              </div>
-
-              {questionType === "multiple-choice" && (
-                <div className="space-y-4">
-                  <Label>Answer Options</Label>
-                  {[1, 2, 3, 4].map((num) => (
-                    <div key={num} className="flex items-center space-x-3">
-                      <RadioGroup>
-                        <RadioGroupItem
-                          value={`option-${num}`}
-                          id={`option-${num}`}
-                        />
-                      </RadioGroup>
-                      <Input placeholder={`Option ${num}`} className="flex-1" />
-                      <Label
-                        htmlFor={`option-${num}`}
-                        className="text-sm text-muted-foreground"
-                      >
-                        Correct
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* {questionType === "true-false" && (
-                <div>
-                  <Label>Correct Answer</Label>
-                  <RadioGroup className="flex space-x-6 mt-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="true" id="true" />
-                      <Label htmlFor="true">True</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="false" id="false" />
-                      <Label htmlFor="false">False</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              )}
-
-              {(questionType === "short-answer" ||
-                questionType === "essay") && (
-                <div>
-                  <Label htmlFor="keyPoints">Key Points for Grading</Label>
-                  <Textarea
-                    id="keyPoints"
-                    placeholder="Enter key points that should be included in correct answers..."
-                    rows={4}
+                  {/* Difficulty Select */}
+                  <FormField
+                    control={form.control}
+                    name="difficulty"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Difficulty Level</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select difficulty" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="beginner">Beginner</SelectItem>
+                              <SelectItem value="intermediate">
+                                Intermediate
+                              </SelectItem>
+                              <SelectItem value="advanced">Advanced</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-              )} */}
-
-              <div>
-                <Label htmlFor="explanation">Explanation (Optional)</Label>
-                <Textarea
-                  id="explanation"
-                  placeholder="Provide an explanation for the correct answer..."
-                  rows={3}
+                {/* Question Text */}
+                <FormField
+                  control={form.control}
+                  name="questionText"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Question</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Enter your question here..."
+                          rows={3}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              {/* <div>
-                <Label htmlFor="roles">Roles</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select the roles this question applies to" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="facility_attendant">
-                      Facility Attendant
-                    </SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                    <SelectItem value="security">Security</SelectItem>
-                    <SelectItem value="front_desk">Front Desk</SelectItem>
-                    <SelectItem value="driver">Driver</SelectItem>
-                    <SelectItem value="cafeteria">Cafeteria</SelectItem>
-                    <SelectItem value="horticulture">Horticulture</SelectItem>
-                    <SelectItem value="admissions">Admissions</SelectItem>
-                    <SelectItem value="hr">HR</SelectItem>
-                    <SelectItem value="student_affairs">
-                      Student Affairs
-                    </SelectItem>
-                    <SelectItem value="lecturer">Lecturer</SelectItem>
-                    <SelectItem value="support_staff">Support Staff</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div> */}
-              <div>
-                <Label htmlFor="roles">Roles</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {roles.map((role) => (
-                    <div
-                      key={role.value}
-                      className="flex items-center space-x-2"
+
+                {/* Multiple Choice Options */}
+                <FormItem>
+                  <FormLabel>Answer Options</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      // Watch the selected correct answer index
+                      value={form.watch("correctAnswer")?.toString()}
+                      onValueChange={(val) => {
+                        form.setValue("correctAnswer", parseInt(val), {
+                          shouldValidate: true,
+                        });
+                      }}
                     >
-                      <Checkbox
-                        id={role.value}
-                        value={role.value}
-                        // ✅ if you're using react-hook-form
-                        {...form.register("roles")}
+                      {[0, 1, 2, 3].map((idx) => (
+                        <div key={idx} className="flex items-center space-x-3">
+                          {/* Radio button for choosing the correct answer */}
+                          <RadioGroupItem
+                            value={idx.toString()}
+                            id={`option-${idx}`}
+                          />
+
+                          {/* Input for option text */}
+                          <Input
+                            placeholder={`Option ${idx + 1}`}
+                            className="flex-1"
+                            {...form.register(`options.${idx}.text`)}
+                          />
+
+                          <FormLabel
+                            htmlFor={`option-${idx}`}
+                            className="text-sm cursor-pointer"
+                          >
+                            Correct
+                          </FormLabel>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                </FormItem>
+
+                {/* Explanation */}
+                <FormField
+                  control={form.control}
+                  name="explanation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Explanation (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Provide an explanation for the correct answer..."
+                          rows={3}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Roles Checkboxes */}
+                <FormItem>
+                  <FormLabel>Roles</FormLabel>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {roles.map((role) => (
+                      <FormField
+                        key={role.value}
+                        control={form.control}
+                        name="roles"
+                        render={({ field }) => {
+                          const checked =
+                            field.value?.includes(role.value) || false;
+                          return (
+                            <FormItem className="flex flex-row items-center space-x-2">
+                              <FormControl>
+                                <Checkbox
+                                  id={role.value}
+                                  checked={checked}
+                                  onCheckedChange={(isChecked) => {
+                                    if (isChecked) {
+                                      field.onChange([
+                                        ...field.value,
+                                        role.value,
+                                      ]);
+                                    } else {
+                                      field.onChange(
+                                        field.value.filter(
+                                          (val) => val !== role.value
+                                        )
+                                      );
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel
+                                htmlFor={role.value}
+                                className="text-sm text-muted-foreground"
+                              >
+                                {role.label}
+                              </FormLabel>
+                            </FormItem>
+                          );
+                        }}
                       />
-                      <label
-                        htmlFor={role.value}
-                        className="text-sm text-muted-foreground"
-                      >
-                        {role.label}
-                      </label>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </FormItem>
+                {isError && (
+                  <div className="text-red-600 text-sm">
+                    Error submitting question:{" "}
+                    {error?.message || "Unknown error"}
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex justify-end space-x-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAddQuestion(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="pau-gradient"
+                    disabled={isPending}
+                  >
+                    {isPending ? "Saving..." : "Create Question"}
+                  </Button>
                 </div>
-              </div>
-              <div className="flex justify-end space-x-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAddQuestion(false)}
-                >
-                  Cancel
-                </Button>
-                <Button className="pau-gradient">Create Question</Button>
-              </div>
-            </form>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
@@ -663,7 +728,7 @@ export function QuestionManagement() {
         <CardHeader>
           <CardTitle>Questions ({filteredQuestions.length})</CardTitle>
           <CardDescription>
-            Manage assessment questions and their performance
+            Manage session questions and their performance
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -1,4 +1,6 @@
 import {
+  BeforeInsert,
+  BeforeUpdate,
   Column,
   CreateDateColumn,
   Entity,
@@ -10,13 +12,10 @@ import {
 } from 'typeorm';
 import { Role } from './role.entity';
 import { Department } from './department.entity';
-import { Session } from 'src/modules_2/session/entities/session.entity';
-//import { TrainingSession } from 'src/modules/session/entities/training-session.entity';
-//import { ContentProgress } from 'src/modules/course-content/entities/content-progress.entity';
-//import { SessionAnswer } from 'src/modules_2/question-bank/entities/session-answer.entity';
 import { UserQuestionHistory } from 'src/modules_2/question-bank/entities/user-question-history.entity';
 import { Certificate } from 'src/modules_2/certificate/entities/certificate.entity';
 import { Difficulty } from 'src/core/enums/question.enum';
+import * as bcrypt from 'bcrypt';
 
 @Entity()
 export class User {
@@ -54,15 +53,6 @@ export class User {
   @JoinColumn({ name: 'role_id' })
   role: Role;
 
-  // @OneToMany(() => Session, (session) => session.user)
-  // sessions: Session[];
-
-  // @OneToMany(() => ContentProgress, (content_progress) => content_progress.user)
-  // content_progress: ContentProgress[];
-
-  // @OneToMany(() => SessionAnswer, (sessionAnswer) => sessionAnswer.user)
-  // sessionAnswers: SessionAnswer[];
-
   @OneToMany(
     () => UserQuestionHistory,
     (questionHistory) => questionHistory.user,
@@ -72,10 +62,31 @@ export class User {
   @OneToMany(() => Certificate, (certificate) => certificate.user)
   certificates: Certificate[];
 
-  // @OneToMany(() => Notification, (notification) => notification.user)
-  // notifications: Notification[];
+  @BeforeInsert()
+  async hashPassword() {
+    this.email = this.email.toLowerCase().trim();
+    this.password = await bcrypt.hash(this.password.trim(), 10);
+  }
+
+  @BeforeUpdate()
+  async hashNewPassword() {
+    this.email = this.email.toLowerCase().trim();
+    this.password = await bcrypt.hash(this.password.trim(), 10);
+  }
 
   get department(): Department {
     return this.role?.department;
   }
 }
+
+// @OneToMany(() => Session, (session) => session.user)
+// sessions: Session[];
+
+// @OneToMany(() => ContentProgress, (content_progress) => content_progress.user)
+// content_progress: ContentProgress[];
+
+// @OneToMany(() => SessionAnswer, (sessionAnswer) => sessionAnswer.user)
+// sessionAnswers: SessionAnswer[];
+
+// @OneToMany(() => Notification, (notification) => notification.user)
+// notifications: Notification[];

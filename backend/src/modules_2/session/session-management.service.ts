@@ -141,7 +141,7 @@ export class SessionManagementService {
       ({ questionId, roleId }) => ({
         questionId,
         roleId,
-        usageCount: () => 'COALESCE(usage_count, 0) + 1',
+        usageCount: () => 'COALESCE(usageCount, 0) + 1',
         lastUsedAt: new Date(),
         lastUsedInSessionId: sessionId,
       }),

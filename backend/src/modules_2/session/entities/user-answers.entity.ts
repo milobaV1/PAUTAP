@@ -12,10 +12,21 @@ import { SessionRoleCategoryQuestion } from './session-role-category-questions.e
 import { QuestionBank } from 'src/modules_2/question-bank/entities/question-bank.entity';
 
 @Entity('user_answers')
-@Index(['user', 'sessionRoleCategoryQuestion'], { unique: true })
+@Index(['userId', 'questionId', 'sessionRoleCategoryQuestionId'], {
+  unique: true,
+})
 export class UserAnswer {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column()
+  userId: string;
+
+  @Column()
+  questionId: string;
+
+  @Column()
+  sessionRoleCategoryQuestionId: number;
 
   @Column()
   userAnswer: number;
@@ -36,6 +47,6 @@ export class UserAnswer {
   question: QuestionBank;
 
   @ManyToOne(() => SessionRoleCategoryQuestion)
-  @JoinColumn({ name: 'sessionRoleQuestionCategoryId' })
+  @JoinColumn({ name: 'sessionRoleCategoryQuestionId' })
   sessionRoleCategoryQuestion: SessionRoleCategoryQuestion;
 }

@@ -1,12 +1,9 @@
+import { useAuthState } from "@/store/auth.store";
 import axios, {
   type AxiosInstance,
   AxiosError,
   type AxiosResponse,
 } from "axios";
-
-// export const axiosInstance = axios.create({
-//   baseURL: process.env.VITE_API_BASE_URL,
-// });
 
 export const axiosClient = (
   token: string | null = null,
@@ -25,9 +22,12 @@ export const axiosClient = (
   });
 
   client.interceptors.request.use((config: any) => {
-    const token = localStorage.getItem("ACCESS_TOKEN");
+    // Pull latest token from zustand store instead of localStorage
+    const authToken = useAuthState.getState().authToken;
     config.headers = config.headers || {};
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`;
+    }
 
     return config;
   });
@@ -40,7 +40,8 @@ export const axiosClient = (
       try {
         const { response } = error;
         if (response?.status === 401) {
-          localStorage.removeItem("ACCESS_TOKEN");
+          // Clear store on 401
+          useAuthState.getState().logOut();
         }
       } catch (e) {
         console.log(e);
@@ -48,5 +49,6 @@ export const axiosClient = (
       throw error;
     }
   );
+
   return client;
 };

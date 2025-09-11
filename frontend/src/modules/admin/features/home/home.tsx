@@ -80,7 +80,7 @@ export function AdminHome() {
     },
     {
       user: "Dr. Emily Rodriguez",
-      action: "earned Assessment Expert badge",
+      action: "earned session Expert badge",
       time: "2 days ago",
       type: "achievement",
     },
@@ -108,7 +108,7 @@ export function AdminHome() {
       status: "active",
     },
     {
-      title: "Assessment Strategies",
+      title: "session Strategies",
       enrollments: 156,
       completions: 124,
       rating: 4.6,

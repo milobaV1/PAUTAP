@@ -16,55 +16,6 @@ import { QuestionBank } from 'src/modules_2/question-bank/entities/question-bank
 import { CRISP } from 'src/core/enums/training.enum';
 import { UserAnswer } from './user-answers.entity';
 
-// Session Role Questions - Pre-defined question sets per role per session
-// @Entity('session_role_questions')
-// @Index(['session', 'role', 'crispCategory'])
-// @Unique(['session', 'role', 'crispCategory', 'questionOrder'])
-// export class SessionRoleQuestion {
-//   @PrimaryGeneratedColumn()
-//   id: number;
-
-//   @Column({
-//     type: 'enum',
-//     enum: CRISP,
-//   })
-//   crispCategory: CRISP;
-
-//   @Column()
-//   questionOrder: number;
-
-//   @CreateDateColumn()
-//   createdAt: Date;
-
-//   @UpdateDateColumn()
-//   updatedAt: Date;
-
-//   // Relations
-//   @ManyToOne(() => Session)
-//   @JoinColumn({ name: 'sessionId' })
-//   session: Session;
-
-//   @ManyToOne(() => Role)
-//   @JoinColumn({ name: 'roleId' })
-//   role: Role;
-
-//   @ManyToOne(() => QuestionBank)
-//   @JoinColumn({ name: 'questionId' })
-//   question: QuestionBank;
-// }
-
-// import {
-//   Entity,
-//   PrimaryGeneratedColumn,
-//   Column,
-//   CreateDateColumn,
-//   UpdateDateColumn,
-//   ManyToOne,
-//   JoinColumn,
-//   Index,
-//   Unique,
-// } from 'typeorm';
-
 @Entity('session_role_question_categories')
 @Unique(['sessionId', 'roleId', 'crispCategory'])
 @Index(['sessionId', 'roleId'])

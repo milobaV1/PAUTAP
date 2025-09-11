@@ -1,6 +1,6 @@
 export const Difficulty = {
   BEGINNER: "beginner",
-  INTERMIDIATE: "INTEMIDIATE",
+  INTERMEDIATE: "intermediate",
   ADVANCED: "advanced",
 } as const;
 

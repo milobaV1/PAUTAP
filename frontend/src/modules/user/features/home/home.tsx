@@ -74,9 +74,9 @@ export function Home() {
       points: 200,
     },
     {
-      title: "Assessment completed with 95%",
+      title: "session completed with 95%",
       time: "3 days ago",
-      type: "assessment",
+      type: "session",
       points: 150,
     },
   ];
@@ -97,7 +97,7 @@ export function Home() {
       instructor: "Prof. Michael Chen",
     },
     {
-      title: "Student Assessment Strategies",
+      title: "Student session Strategies",
       duration: "4 hours",
       deadline: "Due in 15 days",
       progress: 60,
@@ -244,7 +244,7 @@ export function Home() {
                       {activity.type === "trivia" && (
                         <Trophy className="w-5 h-5 text-[#2e3f6f]" />
                       )}
-                      {activity.type === "assessment" && (
+                      {activity.type === "session" && (
                         <Target className="w-5 h-5 text-[#2e3f6f]" />
                       )}
                     </div>
@@ -286,10 +286,10 @@ export function Home() {
               {/* <Button
                 variant="outline"
                 className="w-full justify-start"
-                onClick={() => handleNavigation("/assessments")}
+                onClick={() => handleNavigation("/sessions")}
               >
                 <Target className="w-4 h-4 mr-2" />
-                Pending Assessments
+                Pending sessions
               </Button> */}
               <Button
                 variant="outline"

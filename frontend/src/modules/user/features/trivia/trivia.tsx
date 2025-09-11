@@ -39,7 +39,7 @@ export function Trivia() {
       options: [
         "Building physical structures in classrooms",
         "Providing temporary support to help students achieve learning goals",
-        "Creating assessment rubrics",
+        "Creating session rubrics",
         "Organizing classroom furniture",
       ],
       correct: 1,

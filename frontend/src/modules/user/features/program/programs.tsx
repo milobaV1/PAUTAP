@@ -36,7 +36,7 @@ export function Program() {
     { value: "all", label: "All Categories" },
     { value: "pedagogy", label: "Pedagogy" },
     { value: "technology", label: "Educational Technology" },
-    { value: "assessment", label: "Assessment" },
+    { value: "session", label: "session" },
     { value: "leadership", label: "Leadership" },
     { value: "research", label: "Research Methods" },
   ];
@@ -98,8 +98,8 @@ export function Program() {
     },
     {
       id: 4,
-      title: "Student Assessment Strategies",
-      category: "assessment",
+      title: "Student session Strategies",
+      category: "session",
 
       duration: "4.5 hours",
       level: "Intermediate",
@@ -108,7 +108,7 @@ export function Program() {
       progress: 60,
       status: "in_progress",
       description:
-        "Develop comprehensive assessment methods that truly measure learning.",
+        "Develop comprehensive session methods that truly measure learning.",
       modules: 9,
       certificate: true,
       image:

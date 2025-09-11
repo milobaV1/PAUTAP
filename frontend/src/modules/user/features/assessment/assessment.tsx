@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -29,19 +29,51 @@ import {
   Briefcase,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+import { useAuthState } from "@/store/auth.store";
+import { useGetSessions } from "./api/get-sessions";
+import type {
+  getSessions,
+  UsersessionData,
+} from "@/service/interfaces/session.interface";
 
-interface AssessmentsProps {
+interface sessionsProps {
   onNavigate: (page: string, data?: any) => void;
 }
 
-export function Assessments() {
-  const [selectedAssessment, setSelectedAssessment] = useState<number | null>(
-    null
-  );
+export function sessions() {
+  const [selectedsession, setSelectedsession] = useState<number | null>(null);
 
   const navigate = useNavigate();
 
-  const assessmentCategories = [
+  const { decodedDto } = useAuthState();
+  const sessionData: getSessions = {
+    userId: decodedDto?.sub.id,
+    userRoleId: decodedDto?.sub.roleId,
+  };
+  const { data, isLoading, isError, error } = useGetSessions(sessionData);
+  console.log("Data: ", data);
+  const allSessions: UsersessionData[] = data || [];
+  console.log("Asll Sessions: ", allSessions);
+
+  const completedSessions = allSessions.filter(
+    (session) => session.isCompleted
+  );
+  const activeSessions = allSessions.filter((session) => !session.isCompleted);
+
+  // useEffect(() => {
+  //   const fetchsessions = async () => {
+  //     try {
+  //       const response = await getListings();
+  //       const editedResponse = response as ListingsResponse[];
+  //       setListings(editedResponse);
+  //     } catch (error) {
+  //       console.error("This is an error from the home page", error);
+  //     }
+  //   };
+  //   fetchListings();
+  // }, []);
+
+  const sessionCategories = [
     {
       id: "community",
       name: "Community",
@@ -79,10 +111,10 @@ export function Assessments() {
     },
   ];
 
-  const availableAssessments = [
+  const availablesessions = [
     {
       id: 1,
-      title: "Professional Ethics Assessment",
+      title: "Professional Ethics session",
       description:
         "Comprehensive evaluation of professional ethics and standards",
       totalQuestions: 50,
@@ -91,14 +123,14 @@ export function Assessments() {
       deadline: "2025-01-15",
       difficulty: "Intermediate",
       passingScore: 80,
-      categories: assessmentCategories,
+      categories: sessionCategories,
       questionsPerCategory: 10,
       progress: 0,
       status: "available",
     },
     {
       id: 2,
-      title: "Leadership & Values Assessment",
+      title: "Leadership & Values session",
       description: "Evaluation of leadership principles and core values",
       totalQuestions: 50,
       timeLimit: 75,
@@ -106,7 +138,7 @@ export function Assessments() {
       deadline: "2025-01-20",
       difficulty: "Advanced",
       passingScore: 85,
-      categories: assessmentCategories,
+      categories: sessionCategories,
       questionsPerCategory: 10,
       progress: 60,
       status: "in-progress",
@@ -114,75 +146,75 @@ export function Assessments() {
     {
       id: 3,
       title: "Community Service Evaluation",
-      description: "Assessment of community engagement and service commitment",
+      description: "session of community engagement and service commitment",
       totalQuestions: 50,
       timeLimit: 60,
       attempts: 3,
       deadline: "2025-01-25",
       difficulty: "Beginner",
       passingScore: 75,
-      categories: assessmentCategories,
+      categories: sessionCategories,
       questionsPerCategory: 10,
       progress: 0,
       status: "available",
     },
   ];
 
-  const completedAssessments = [
-    {
-      id: 4,
-      title: "Institutional Values Assessment",
-      score: 88,
-      maxScore: 100,
-      percentage: 88,
-      completedDate: "2024-12-15",
-      timeSpent: 65,
-      totalQuestions: 50,
-      correctAnswers: 44,
-      difficulty: "Intermediate",
-      status: "passed",
-      categoryScores: [
-        { category: "Community", score: 85, total: 10 },
-        { category: "Respect", score: 95, total: 10 },
-        { category: "Integrity", score: 80, total: 10 },
-        { category: "Service", score: 90, total: 10 },
-        { category: "Professionalism", score: 90, total: 10 },
-      ],
-    },
-    {
-      id: 5,
-      title: "Professional Development Assessment",
-      score: 72,
-      maxScore: 100,
-      percentage: 72,
-      completedDate: "2024-12-10",
-      timeSpent: 58,
-      totalQuestions: 50,
-      correctAnswers: 36,
-      difficulty: "Beginner",
-      status: "failed",
-      categoryScores: [
-        { category: "Community", score: 70, total: 10 },
-        { category: "Respect", score: 80, total: 10 },
-        { category: "Integrity", score: 65, total: 10 },
-        { category: "Service", score: 75, total: 10 },
-        { category: "Professionalism", score: 70, total: 10 },
-      ],
-    },
-  ];
+  // const completedsessions = [
+  //   {
+  //     id: 4,
+  //     title: "Institutional Values session",
+  //     score: 88,
+  //     maxScore: 100,
+  //     percentage: 88,
+  //     completedDate: "2024-12-15",
+  //     timeSpent: 65,
+  //     totalQuestions: 50,
+  //     correctAnswers: 44,
+  //     difficulty: "Intermediate",
+  //     status: "passed",
+  //     categoryScores: [
+  //       { category: "Community", score: 85, total: 10 },
+  //       { category: "Respect", score: 95, total: 10 },
+  //       { category: "Integrity", score: 80, total: 10 },
+  //       { category: "Service", score: 90, total: 10 },
+  //       { category: "Professionalism", score: 90, total: 10 },
+  //     ],
+  //   },
+  //   {
+  //     id: 5,
+  //     title: "Professional Development session",
+  //     score: 72,
+  //     maxScore: 100,
+  //     percentage: 72,
+  //     completedDate: "2024-12-10",
+  //     timeSpent: 58,
+  //     totalQuestions: 50,
+  //     correctAnswers: 36,
+  //     difficulty: "Beginner",
+  //     status: "failed",
+  //     categoryScores: [
+  //       { category: "Community", score: 70, total: 10 },
+  //       { category: "Respect", score: 80, total: 10 },
+  //       { category: "Integrity", score: 65, total: 10 },
+  //       { category: "Service", score: 75, total: 10 },
+  //       { category: "Professionalism", score: 70, total: 10 },
+  //     ],
+  //   },
+  // ];
 
   const stats = {
-    totalAvailable: availableAssessments.length,
-    totalCompleted: completedAssessments.length,
-    averageScore: Math.round(
-      completedAssessments.reduce((acc, curr) => acc + curr.percentage, 0) /
-        completedAssessments.length
-    ),
-    passRate: Math.round(
-      (completedAssessments.filter((a) => a.status === "passed").length /
-        completedAssessments.length) *
-        100
-    ),
+    totalAvailable: activeSessions.length,
+    totalCompleted: completedSessions.length,
+    // averageScore: Math.round(
+    //   completedsessions.reduce((acc, curr) => acc + curr.percentage, 0) /
+    //     completedsessions.length
+    // ),
+    // passRate: Math.round(
+    //   (completedsessions.filter((a) => a.status === "passed").length /
+    //     completedsessions.length) *
+    //     100
+    // ),
   };
 
   const getDaysUntilDeadline = (deadline: string) => {
@@ -202,11 +234,11 @@ export function Assessments() {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case "Beginner":
+      case "beginner":
         return "bg-green-100 text-green-800";
-      case "Intermediate":
+      case "intermediate":
         return "bg-yellow-100 text-yellow-800";
-      case "Advanced":
+      case "advanced":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -215,7 +247,7 @@ export function Assessments() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "available":
+      case "not_started":
         return "bg-blue-100 text-blue-800";
       case "in-progress":
         return "bg-orange-100 text-orange-800";
@@ -226,9 +258,9 @@ export function Assessments() {
     }
   };
 
-  const handleStartAssessment = (assessmentId: string) => {
-    //onNavigate("assessment-taking", { assessmentId });--
-    navigate({ to: "/assessment/$id", params: { id: assessmentId } });
+  const handleStartsession = (sessionId: string) => {
+    //onNavigate("session-taking", { sessionId });--
+    navigate({ to: "/session/$id", params: { id: sessionId } });
   };
 
   return (
@@ -236,29 +268,29 @@ export function Assessments() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1>Professional Assessments</h1>
+          <h1>Professional sessions</h1>
           <p className="text-muted-foreground mt-1">
             Evaluate your understanding of professional values and ethics
-            through comprehensive assessments
+            through comprehensive sessions
           </p>
         </div>
       </div>
 
-      {/* Assessment Categories Overview */}
+      {/* session Categories Overview */}
       <Card className="pau-shadow">
         <CardHeader>
           <CardTitle className="flex items-center">
             <Target className="w-5 h-5 mr-2 text-[#2e3f6f]" />
-            Assessment Categories
+            session Categories
           </CardTitle>
           <CardDescription>
-            Each assessment covers 5 core categories with 10 questions per
-            category (50 total questions)
+            Each session covers 5 core categories with 10 questions per category
+            (50 total questions)
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {assessmentCategories.map((category) => (
+            {sessionCategories.map((category) => (
               <div
                 key={category.id}
                 className="p-4 border rounded-lg text-center"
@@ -286,7 +318,7 @@ export function Assessments() {
       </Card>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
         <Card className="pau-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -323,7 +355,7 @@ export function Assessments() {
           </CardContent>
         </Card>
 
-        <Card className="pau-shadow">
+        {/* <Card className="pau-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -357,84 +389,89 @@ export function Assessments() {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
-      {/* Assessment Tabs */}
+      {/* session Tabs */}
       <Tabs defaultValue="available" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="available">
-            Available Assessments ({availableAssessments.length})
+            Available sessions ({activeSessions.length})
           </TabsTrigger>
           <TabsTrigger value="completed">
-            Completed ({completedAssessments.length})
+            Completed ({completedSessions.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="available" className="space-y-6 mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {availableAssessments.map((assessment) => {
-              const daysLeft = getDaysUntilDeadline(assessment.deadline);
+            {activeSessions.map((session) => {
+              //const daysLeft = getDaysUntilDeadline(session.deadline);
               return (
                 <Card
-                  key={assessment.id}
+                  key={session.sessionId}
                   className="pau-shadow hover:shadow-lg transition-shadow"
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="text-lg mb-2">
-                          {assessment.title}
+                          {session.sessionTitle}
                         </CardTitle>
                         <CardDescription>
-                          {assessment.description}
+                          {session.sessionDescription}
                         </CardDescription>
                       </div>
                       <div className="flex flex-col gap-2">
                         <Badge
-                          className={getDifficultyColor(assessment.difficulty)}
+                          className={getDifficultyColor(
+                            session.sessionDifficulty
+                          )}
                         >
-                          {assessment.difficulty}
+                          {session.sessionDifficulty}
                         </Badge>
-                        <Badge className={getStatusColor(assessment.status)}>
-                          {assessment.status === "in-progress"
-                            ? "In Progress"
-                            : "Available"}
+                        <Badge className={getStatusColor(session.status)}>
+                          {session.status === "in-progress"
+                            ? "in Progress"
+                            : "available"}
                         </Badge>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {assessment.progress > 0 && (
+                    {session.status == "in_progress" && (
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span>Progress</span>
-                          <span>{assessment.progress}%</span>
+                          <span>{session.progressPercentage}%</span>
                         </div>
-                        <Progress value={assessment.progress} className="h-2" />
+                        <Progress
+                          value={session.progressPercentage}
+                          className="h-2"
+                        />
                       </div>
                     )}
 
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center">
                         <FileCheck className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <span>{assessment.totalQuestions} questions</span>
+                        <span>{session.totalQuestionsAvailable} questions</span>
                       </div>
-                      <div className="flex items-center">
+                      {/* <div className="flex items-center">
                         <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <span>{assessment.timeLimit} minutes</span>
+                        <span>{session.timeLimit} minutes</span>
                       </div>
                       <div className="flex items-center">
                         <Target className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <span>{assessment.passingScore}% to pass</span>
+                        <span>{session.passingScore}% to pass</span>
                       </div>
                       <div className="flex items-center">
                         <Award className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <span>{assessment.attempts} attempts</span>
-                      </div>
+                        <span>{session.attempts} attempts</span>
+                      </div> */}
                     </div>
 
-                    <div className="p-3 bg-gray-50 rounded-lg">
+                    {/* <div className="p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Deadline:</span>
                         <span
@@ -448,20 +485,18 @@ export function Assessments() {
                               : `${daysLeft} days left`}
                         </span>
                       </div>
-                    </div>
+                    </div> */}
 
                     <div className="flex items-center justify-between pt-2">
                       <Button variant="outline">View Details</Button>
                       <Button
                         className="pau-gradient"
-                        onClick={() =>
-                          handleStartAssessment(assessment.id.toString())
-                        }
+                        onClick={() => handleStartsession(session.sessionId)}
                       >
                         <Play className="w-4 h-4 mr-2" />
-                        {assessment.progress > 0
+                        {session.status == "in_progress"
                           ? "Continue"
-                          : "Start Assessment"}
+                          : "Start session"}
                       </Button>
                     </div>
                   </CardContent>
@@ -473,58 +508,63 @@ export function Assessments() {
 
         <TabsContent value="completed" className="space-y-6 mt-6">
           <div className="space-y-4">
-            {completedAssessments.map((assessment) => (
-              <Card key={assessment.id} className="pau-shadow">
+            {completedSessions.map((session) => (
+              <Card key={session.sessionId} className="pau-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <h3 className="font-semibold mb-1">{assessment.title}</h3>
+                      <h3 className="font-semibold mb-1">
+                        {session.sessionTitle}
+                      </h3>
                       <div className="flex items-center space-x-2">
                         <Badge
-                          className={getDifficultyColor(assessment.difficulty)}
+                          className={getDifficultyColor(
+                            session.sessionDifficulty
+                          )}
                         >
-                          {assessment.difficulty}
+                          {session.sessionDifficulty}
                         </Badge>
                         <Badge
                           className={
-                            assessment.status === "passed"
+                            session.status === "passed"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
                           }
                         >
-                          {assessment.status === "passed" ? "Passed" : "Failed"}
+                          {session.status === "passed" ? "Passed" : "Failed"}
                         </Badge>
                       </div>
                     </div>
                     <div
-                      className={`text-3xl font-bold ${assessment.percentage >= 80 ? "text-green-600" : assessment.percentage >= 70 ? "text-blue-600" : "text-red-600"}`}
+                      className={`text-3xl font-bold ${session.accuracyPercentage >= 80 ? "text-green-600" : session.accuracyPercentage >= 70 ? "text-blue-600" : "text-red-600"}`}
                     >
-                      {assessment.percentage}%
+                      {session.accuracyPercentage}%
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <div className="text-xl font-bold text-gray-900">
-                        {assessment.correctAnswers}/{assessment.totalQuestions}
+                        {session.correctlyAnsweredQuestions}/
+                        {session.totalQuestions}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Correct Answers
                       </div>
                     </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    {/* <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <div className="text-xl font-bold text-gray-900">
-                        {assessment.timeSpent}m
+                        {session.timeSpent}m
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Time Spent
                       </div>
-                    </div>
+                    </div> */}
                     <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <div className="text-xl font-bold text-gray-900">
-                        {new Date(
-                          assessment.completedDate
-                        ).toLocaleDateString()}
+                        {session.completedAt
+                          ? new Date(session.completedAt).toLocaleDateString()
+                          : "N/A"}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Completed
@@ -532,7 +572,7 @@ export function Assessments() {
                     </div>
                     <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <div className="text-xl font-bold text-gray-900">
-                        {assessment.categoryScores.length}
+                        {session.categories.length}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Categories
@@ -541,10 +581,10 @@ export function Assessments() {
                   </div>
 
                   {/* Category Breakdown */}
-                  <div className="mb-4">
+                  {/* <div className="mb-4">
                     <h4 className="font-medium mb-3">Category Breakdown:</h4>
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                      {assessment.categoryScores.map((catScore, index) => (
+                      {session.categoryScores.map((catScore, index) => (
                         <div
                           key={index}
                           className="text-center p-3 border rounded-lg"
@@ -564,19 +604,19 @@ export function Assessments() {
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      {assessment.status === "passed" ? (
+                      {session.status === "passed" ? (
                         <CheckCircle className="w-5 h-5 text-green-600" />
                       ) : (
                         <AlertCircle className="w-5 h-5 text-red-600" />
                       )}
                       <span className="text-sm text-muted-foreground">
-                        {assessment.status === "passed"
-                          ? "Congratulations! You passed this assessment."
-                          : "You can retake this assessment to improve your score."}
+                        {session.status === "passed"
+                          ? "Congratulations! You passed this session."
+                          : "You can retake this session to improve your score."}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -584,9 +624,9 @@ export function Assessments() {
                         <BarChart3 className="w-4 h-4 mr-2" />
                         View Detailed Results
                       </Button>
-                      {assessment.status === "failed" && (
+                      {session.status === "failed" && (
                         <Button size="sm" className="pau-gradient">
-                          Retake Assessment
+                          Retake session
                         </Button>
                       )}
                     </div>
