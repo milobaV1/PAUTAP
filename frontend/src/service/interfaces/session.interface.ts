@@ -92,6 +92,19 @@ export interface UsersessionData {
   canStart: boolean;
 }
 
+export interface SessionCompletionResult {
+  success: boolean;
+  finalScore: number;
+  categoryScores: Record<string, number>;
+  certificateId: string;
+  completionTime: number;
+  rank: number;
+}
+
+export interface CompleteSessionPayload {
+  userId: string;
+}
+
 // export interface
 
 // status: "not_started" | "in_progress" | "completed" | string; // could refine to ProgressStatus enum

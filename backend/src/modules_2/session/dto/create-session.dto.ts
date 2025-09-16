@@ -80,6 +80,10 @@ export class SyncSessionDto {
     example: 'IN_PROGRESS',
   })
   currentState: ProgressState;
+
+  @IsOptional()
+  @IsEnum(['in_progress', 'completed', 'paused'])
+  status?: string;
 }
 
 export class CompleteSessionDto {

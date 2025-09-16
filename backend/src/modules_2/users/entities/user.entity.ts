@@ -16,6 +16,7 @@ import { UserQuestionHistory } from 'src/modules_2/question-bank/entities/user-q
 import { Certificate } from 'src/modules_2/certificate/entities/certificate.entity';
 import { Difficulty } from 'src/core/enums/question.enum';
 import * as bcrypt from 'bcrypt';
+import { TriviaLeaderboard } from 'src/modules_2/trivia/entities/trivia-leaderboard';
 
 @Entity()
 export class User {
@@ -61,6 +62,9 @@ export class User {
 
   @OneToMany(() => Certificate, (certificate) => certificate.user)
   certificates: Certificate[];
+
+  @OneToMany(() => TriviaLeaderboard, (leaderboard) => leaderboard.user)
+  leaderboard: TriviaLeaderboard[];
 
   @BeforeInsert()
   async hashPassword() {

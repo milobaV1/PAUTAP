@@ -12,7 +12,7 @@ export function Sidebar() {
 
   const navigation = [
     { name: "Dashboard", icon: Home, to: "/" },
-    { name: "Learning Modules", icon: BookOpen, to: "/program" },
+    { name: "Sessions", icon: BookOpen, to: "/session" },
     //{ name: "sessions", icon: FileCheck, to: "/sessions" },
     { name: "Monthly Trivia", icon: Trophy, to: "/trivia" },
     { name: "Certificates", icon: Award, to: "/certificate" },

@@ -13,7 +13,7 @@ export interface SessionCompletionResult {
   success: boolean;
   finalScore: number;
   categoryScores: Record<string, number>;
-  certificate: string;
+  certificateId: string;
   completionTime: number;
   rank: number;
 }
@@ -46,6 +46,8 @@ export interface SyncResult {
   syncedAnswers: number;
   currentProgress: ProgressSummary;
   nextSyncRecommended: number;
+  statusUpdated?: boolean; // Add this
+  newStatus?: string;
 }
 
 export interface ProgressSummary {
@@ -55,4 +57,6 @@ export interface ProgressSummary {
   totalCorrect: number;
   progressPercentage: number;
   status: string;
+  completedAt?: Date; // Add this
+  isComplete?: boolean; // Add this for convenience
 }

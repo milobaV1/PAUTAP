@@ -96,4 +96,26 @@ export class SessionController {
     return sessionStatuses;
   }
   // You can also add a GET endpoint to fetch session progress, etc.
+
+  @Patch(':sessionId/status')
+  async updateSessionStatus(
+    @Param('sessionId') sessionId: string,
+    @Body() body: { userId: string; status: string },
+  ) {
+    const { userId, status } = body;
+    return await this.sessionService.updateSessionStatus(
+      sessionId,
+      userId,
+      status,
+    );
+  }
+
+  // Optional: Add endpoint to get current progress
+  @Get(':sessionId/progress/:userId')
+  async getSessionProgress(
+    @Param('sessionId') sessionId: string,
+    @Param('userId') userId: string,
+  ) {
+    return await this.sessionService.getProgressSummary(userId, sessionId);
+  }
 }

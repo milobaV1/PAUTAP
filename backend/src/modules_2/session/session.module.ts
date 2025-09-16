@@ -14,6 +14,7 @@ import { ResultService } from './result.service';
 import { Certificate } from '../certificate/entities/certificate.entity';
 import { QuestionBank } from '../question-bank/entities/question-bank.entity';
 import { Role } from '../users/entities/role.entity';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { Role } from '../users/entities/role.entity';
       QuestionBank,
       Role,
     ]),
+    BullModule.registerQueue({ name: 'certificate' }),
   ],
   controllers: [SessionController],
   providers: [

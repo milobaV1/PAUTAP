@@ -21,6 +21,9 @@ import { CertificateModule } from './modules_2/certificate/certificate.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv, Keyv } from '@keyv/redis';
 import { CacheableMemory } from 'cacheable';
+import { BullModule } from '@nestjs/bullmq';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TriviaModule } from './modules_2/trivia/trivia.module';
 
 @Module({
   imports: [
@@ -37,6 +40,7 @@ import { CacheableMemory } from 'cacheable';
     QuestionBankModule,
     SessionModule,
     UsersModule,
+    TriviaModule,
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: async () => {
@@ -50,6 +54,14 @@ import { CacheableMemory } from 'cacheable';
         };
       },
     }),
+    BullModule.forRoot({
+      connection: {
+        host: 'redis2', // same container name as in docker-compose
+        port: 6379,
+      },
+    }),
+    //BullModule.registerQueue({ name: 'email' }, { name: 'leaderboard' }),
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [

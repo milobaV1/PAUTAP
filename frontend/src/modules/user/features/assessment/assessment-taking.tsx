@@ -339,9 +339,14 @@ import {
 } from "lucide-react";
 import { useProgressSync } from "./api/sync-session";
 import { useAuthState } from "@/store/auth.store";
+import { useNavigate } from "@tanstack/react-router";
+import { CRISP } from "@/service/enums/crisp.enum";
+import { toast } from "sonner";
+import { useCompleteSession } from "./api/submit-session";
 
 export function SessionTaking() {
   const { id, categoryId } = Route.useParams();
+  const completeSessionMutation = useCompleteSession();
 
   // Store state
   const {
@@ -351,11 +356,21 @@ export function SessionTaking() {
     setCurrentSession,
     setCurrentCategory,
     setCurrentQuestion,
+    resetCurrentQuestionIndex,
     currentQuestionIndex,
   } = useSessionStore();
 
   const { decodedDto } = useAuthState();
   const userId = decodedDto?.sub.id;
+  const navigate = useNavigate();
+
+  const CRISP_ORDER: CRISP[] = [CRISP.C, CRISP.R, CRISP.I, CRISP.S, CRISP.P];
+
+  const getNextCategory = (currentCategory: CRISP): CRISP | null => {
+    const currentIndex = CRISP_ORDER.indexOf(currentCategory);
+    const nextIndex = currentIndex + 1;
+    return nextIndex < CRISP_ORDER.length ? CRISP_ORDER[nextIndex] : null;
+  };
 
   const session = sessions.find((ss) => String(ss.sessionId) === String(id));
   const currentCategory = session?.categories.find(
@@ -376,15 +391,44 @@ export function SessionTaking() {
   // Sync hook
   const progressSync = useProgressSync();
 
+  // // Initialize session state on component mount
+  // useEffect(() => {
+  //   if (id && categoryId) {
+  //     setCurrentSession(id);
+  //     if (currentCategory?.category) {
+  //       setCurrentCategory(currentCategory.category);
+  //     }
+  //   }
+  // }, [id, categoryId, setCurrentSession, setCurrentCategory]);
+
   // Initialize session state on component mount
   useEffect(() => {
-    if (id && categoryId) {
+    if (id && categoryId && currentCategory) {
       setCurrentSession(id);
-      if (currentCategory?.category) {
-        setCurrentCategory(currentCategory.category);
+      setCurrentCategory(currentCategory.category);
+      resetCurrentQuestionIndex();
+
+      // Sync the category change immediately
+      if (userId) {
+        progressSync.mutate({
+          userId,
+          sessionId: id,
+          // currentState: {
+          //   currentCategory: currentCategory.category,
+          //   currentQuestionIndex: 0,
+          // },
+        });
       }
     }
-  }, [id, categoryId, setCurrentSession, setCurrentCategory]);
+  }, [
+    id,
+    categoryId,
+    currentCategory?.category,
+    userId,
+    setCurrentSession,
+    setCurrentCategory,
+    resetCurrentQuestionIndex,
+  ]);
 
   // Sync current question index with store
   useEffect(() => {
@@ -497,16 +541,133 @@ export function SessionTaking() {
     setCurrentQuestionState(index);
   };
 
-  const handleSubmitCategory = async () => {
-    // Final sync before submission
-    await progressSync.mutateAsync({
-      userId: userId ?? "", // Replace with actual user ID
-      sessionId: id,
-      status: "in_progress",
-    });
+  // const handleSubmitCategory = async () => {
+  //   // Final sync before submission
+  //   await progressSync.mutateAsync({
+  //     userId: userId ?? "", // Replace with actual user ID
+  //     sessionId: id,
+  //     status: "in_progress",
+  //   });
 
-    setShowConfirmSubmit(false);
-    // Navigate back to session details or next category
+  //   setShowConfirmSubmit(false);
+  //   // Navigate back to session details or next category
+  // };
+
+  const handleSubmitCategory = async () => {
+    try {
+      // Get current session data
+      const currentSession = sessions.find(
+        (ss) => String(ss.sessionId) === String(id)
+      );
+      if (!currentSession) return;
+
+      // Check if all questions in current category are answered
+      const currentCategoryQuestions = currentCategory?.questions || [];
+      const currentCategoryAnswers = Object.keys(localAnswers).filter(
+        (questionId) =>
+          currentCategoryQuestions.some((q) => q.id === questionId)
+      );
+
+      // Determine the status based on completion
+      let status = "in_progress";
+
+      // Check if this category is complete
+      const isCategoryComplete =
+        currentCategoryAnswers.length === currentCategoryQuestions.length;
+
+      if (isCategoryComplete) {
+        // Check if ALL categories are complete
+        const allCategoriesComplete = currentSession.categories.every((cat) => {
+          const categoryAnswers = Object.keys(localAnswers).filter(
+            (questionId) => cat.questions.some((q) => q.id === questionId)
+          );
+          return categoryAnswers.length === cat.questions.length;
+        });
+
+        if (allCategoriesComplete) {
+          status = "completed";
+        }
+      }
+
+      // Final sync before submission
+      await progressSync.mutateAsync({
+        userId: userId ?? "",
+        sessionId: id,
+        status,
+      });
+
+      setShowConfirmSubmit(false);
+
+      // If session is completed, navigate to session details
+      if (status === "completed") {
+        // navigate({
+        //   to: "/session/$id",
+        //   params: { id },
+        // });
+        // return;
+        const result = await completeSessionMutation.mutateAsync({
+          sessionId: id,
+          payload: { userId: userId ?? "" },
+        });
+
+        // Navigate to results page with data
+        navigate({
+          to: "/session/$id/result",
+          params: { id },
+          search: {
+            finalScore: result.finalScore,
+            categoryScores: JSON.stringify(result.categoryScores),
+            certificateId: result.certificateId,
+            completionTime: result.completionTime,
+          },
+        });
+      }
+
+      // Find next category
+      const nextCategory = getNextCategory(currentCategory.category);
+
+      if (nextCategory) {
+        // Find the next category data
+        const nextCategoryData = currentSession.categories.find(
+          (cat) => cat.category === nextCategory
+        );
+
+        if (nextCategoryData) {
+          toast(
+            `This is the category after switching. Category ${nextCategory}`
+          );
+          navigate({
+            to: "/session/$id/category/$categoryId",
+            params: {
+              id,
+              categoryId: nextCategoryData.categoryId.toString(),
+            },
+            replace: true,
+          });
+          setTimeout(() => {
+            setCurrentQuestionState(0);
+          }, 100);
+          toast(
+            `This is the category after switching. Category ${currentCategory}`
+          );
+        } else {
+          // No next category found, go back to category selection
+          navigate({
+            to: "/session/$id",
+            params: { id },
+          });
+        }
+      } else {
+        // No more categories, go back to session details
+        navigate({
+          to: "/session/$id",
+          params: { id },
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting category:", error);
+      // Handle error appropriately
+    }
   };
 
   const formatTime = (secs: number) => {

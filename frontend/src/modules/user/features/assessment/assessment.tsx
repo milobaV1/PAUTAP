@@ -60,19 +60,6 @@ export function sessions() {
   );
   const activeSessions = allSessions.filter((session) => !session.isCompleted);
 
-  // useEffect(() => {
-  //   const fetchsessions = async () => {
-  //     try {
-  //       const response = await getListings();
-  //       const editedResponse = response as ListingsResponse[];
-  //       setListings(editedResponse);
-  //     } catch (error) {
-  //       console.error("This is an error from the home page", error);
-  //     }
-  //   };
-  //   fetchListings();
-  // }, []);
-
   const sessionCategories = [
     {
       id: "community",
@@ -110,98 +97,6 @@ export function sessions() {
       description: "Maintaining professional conduct and excellence",
     },
   ];
-
-  const availablesessions = [
-    {
-      id: 1,
-      title: "Professional Ethics session",
-      description:
-        "Comprehensive evaluation of professional ethics and standards",
-      totalQuestions: 50,
-      timeLimit: 90,
-      attempts: 3,
-      deadline: "2025-01-15",
-      difficulty: "Intermediate",
-      passingScore: 80,
-      categories: sessionCategories,
-      questionsPerCategory: 10,
-      progress: 0,
-      status: "available",
-    },
-    {
-      id: 2,
-      title: "Leadership & Values session",
-      description: "Evaluation of leadership principles and core values",
-      totalQuestions: 50,
-      timeLimit: 75,
-      attempts: 2,
-      deadline: "2025-01-20",
-      difficulty: "Advanced",
-      passingScore: 85,
-      categories: sessionCategories,
-      questionsPerCategory: 10,
-      progress: 60,
-      status: "in-progress",
-    },
-    {
-      id: 3,
-      title: "Community Service Evaluation",
-      description: "session of community engagement and service commitment",
-      totalQuestions: 50,
-      timeLimit: 60,
-      attempts: 3,
-      deadline: "2025-01-25",
-      difficulty: "Beginner",
-      passingScore: 75,
-      categories: sessionCategories,
-      questionsPerCategory: 10,
-      progress: 0,
-      status: "available",
-    },
-  ];
-
-  // const completedsessions = [
-  //   {
-  //     id: 4,
-  //     title: "Institutional Values session",
-  //     score: 88,
-  //     maxScore: 100,
-  //     percentage: 88,
-  //     completedDate: "2024-12-15",
-  //     timeSpent: 65,
-  //     totalQuestions: 50,
-  //     correctAnswers: 44,
-  //     difficulty: "Intermediate",
-  //     status: "passed",
-  //     categoryScores: [
-  //       { category: "Community", score: 85, total: 10 },
-  //       { category: "Respect", score: 95, total: 10 },
-  //       { category: "Integrity", score: 80, total: 10 },
-  //       { category: "Service", score: 90, total: 10 },
-  //       { category: "Professionalism", score: 90, total: 10 },
-  //     ],
-  //   },
-  //   {
-  //     id: 5,
-  //     title: "Professional Development session",
-  //     score: 72,
-  //     maxScore: 100,
-  //     percentage: 72,
-  //     completedDate: "2024-12-10",
-  //     timeSpent: 58,
-  //     totalQuestions: 50,
-  //     correctAnswers: 36,
-  //     difficulty: "Beginner",
-  //     status: "failed",
-  //     categoryScores: [
-  //       { category: "Community", score: 70, total: 10 },
-  //       { category: "Respect", score: 80, total: 10 },
-  //       { category: "Integrity", score: 65, total: 10 },
-  //       { category: "Service", score: 75, total: 10 },
-  //       { category: "Professionalism", score: 70, total: 10 },
-  //     ],
-  //   },
-  // ];
 
   const stats = {
     totalAvailable: activeSessions.length,
@@ -281,7 +176,7 @@ export function sessions() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Target className="w-5 h-5 mr-2 text-[#2e3f6f]" />
-            session Categories
+            Session Categories
           </CardTitle>
           <CardDescription>
             Each session covers 5 core categories with 10 questions per category

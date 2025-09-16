@@ -34,6 +34,10 @@ export type SessionActions = {
     progress: Partial<ProgressSummary>
   ) => void;
   clearSession: () => void;
+
+  updateSessionStatus: (sessionId: string, status: string) => void;
+  markCategoryComplete: (sessionId: string, categoryId: string) => void;
+  resetCurrentQuestionIndex: () => void;
 };
 
 // ---------- Storage ----------
@@ -61,7 +65,9 @@ const initializer: StateCreator<SessionState & SessionActions> = (set) => ({
 
   setSessions: (sessions) => set({ sessions }),
   setCurrentSession: (sessionId) => set({ currentSessionId: sessionId }),
-  setCurrentCategory: (category) => set({ currentCategory: category }),
+  setCurrentCategory: (category) =>
+    set({ currentCategory: category, currentQuestionIndex: 0 }),
+
   setCurrentQuestion: (index) => set({ currentQuestionIndex: index }),
 
   addAnswer: (answer) =>
@@ -123,6 +129,32 @@ const initializer: StateCreator<SessionState & SessionActions> = (set) => ({
       localAnswers: {},
       unsyncedAnswers: [],
     }),
+  updateSessionStatus: (sessionId, status) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        String(s.sessionId) === String(sessionId) ? { ...s, status } : s
+      ),
+    })),
+
+  markCategoryComplete: (sessionId, categoryId) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        String(s.sessionId) === String(sessionId)
+          ? {
+              ...s,
+              categories: s.categories.map((cat) =>
+                String(cat.categoryId) === String(categoryId)
+                  ? { ...cat, isCompleted: true }
+                  : cat
+              ),
+            }
+          : s
+      ),
+    })),
+
+  resetCurrentQuestionIndex: () => set({ currentQuestionIndex: 0 }),
+
+  // Update the existing setCurrentCategory to also reset question index
 });
 
 // ---------- Persisted Store ----------

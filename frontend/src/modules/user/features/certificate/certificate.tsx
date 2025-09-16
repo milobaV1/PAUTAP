@@ -21,9 +21,14 @@ import {
   Target,
   Zap,
   Crown,
+  Eye,
 } from "lucide-react";
 
-export function Certificates() {
+interface CertificatesProps {
+  onNavigate?: (page: string, data?: any) => void;
+}
+
+export function Certificates({ onNavigate }: CertificatesProps = {}) {
   const certificates = [
     {
       id: 1,
@@ -40,8 +45,8 @@ export function Certificates() {
     },
     {
       id: 2,
-      title: "Student session Excellence",
-      course: "Student session Strategies",
+      title: "Student Assessment Excellence",
+      course: "Student Assessment Strategies",
       completedDate: "2024-12-10",
       score: 88,
       instructor: "Dr. James Wilson",
@@ -49,7 +54,7 @@ export function Certificates() {
       credentialId: "PAU-SAS-2024-001189",
       status: "issued",
       type: "course",
-      skills: ["session Design", "Rubric Creation", "Feedback Strategies"],
+      skills: ["Assessment Design", "Rubric Creation", "Feedback Strategies"],
     },
     {
       id: 3,
@@ -88,7 +93,7 @@ export function Certificates() {
       type: "pathway",
       skills: [
         "Digital Teaching",
-        "session",
+        "Assessment",
         "Classroom Management",
         "Technology Integration",
         "Student Engagement",
@@ -108,7 +113,7 @@ export function Certificates() {
     {
       id: 2,
       name: "Perfect Score",
-      description: "Achieve 100% on any session",
+      description: "Achieve 100% on any assessment",
       icon: "🎯",
       earned: true,
       earnedDate: "2024-12-31",
@@ -196,7 +201,7 @@ export function Certificates() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1>Certificates</h1>
+          <h1>Certificates & Achievements</h1>
           <p className="text-muted-foreground mt-1">
             Track your professional development milestones and download
             certificates
@@ -332,6 +337,18 @@ export function Certificates() {
                         <p>Credential ID: {certificate.credentialId}</p>
                       </div>
                       <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            onNavigate?.("certificate-viewer", {
+                              certificateId: certificate.id,
+                            })
+                          }
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          View
+                        </Button>
                         <Button size="sm" className="pau-gradient">
                           <Download className="w-3 h-3 mr-1" />
                           Download
@@ -350,17 +367,17 @@ export function Certificates() {
           {/* Quick Actions */}
           <Card className="pau-shadow">
             <CardHeader>
-              <CardTitle>Quick Action</CardTitle>
+              <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button variant="outline" className="w-full justify-start">
                 <Download className="w-4 h-4 mr-2" />
                 Download All Certificates
               </Button>
-              {/* <Button variant="outline" className="w-full justify-start">
+              <Button variant="outline" className="w-full justify-start">
                 <Zap className="w-4 h-4 mr-2" />
                 View Transcript
-              </Button> */}
+              </Button>
             </CardContent>
           </Card>
         </div>

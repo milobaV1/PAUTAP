@@ -2,6 +2,13 @@ FROM node:20
 
 WORKDIR /usr/src/app
 
+# Install Chrome dependencies
+RUN apt-get update && apt-get install -y \
+    wget gnupg ca-certificates \
+    fonts-liberation libasound2 libatk-bridge2.0-0 libdrm2 libxcomposite1 \
+    libxdamage1 libxrandr2 libgbm1 libxss1 libnss3 libxkbcommon0 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY package*.json ./
 
 RUN npm install -g npm@11.5.2

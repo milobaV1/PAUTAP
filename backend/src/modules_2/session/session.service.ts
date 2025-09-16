@@ -37,11 +37,14 @@ import {
 } from 'src/core/interfaces/session.interface';
 import KeyvRedis from '@keyv/redis';
 import { Certificate } from '../certificate/entities/certificate.entity';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class SessionService {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @InjectQueue('certificate') private readonly certificateQueue: Queue,
     @InjectRepository(Certificate)
     private certificateRepo: Repository<Certificate>,
     @InjectRepository(Session)
@@ -108,64 +111,6 @@ export class SessionService {
     return completedSessions;
   }
 
-  // async getUserSessionWithStatuses(userId: string, userRoleId: string) {
-  //   // Get all active sessions and LEFT JOIN with user progress
-  //   const sessionsWithProgress = await this.sessionRepo
-  //     .createQueryBuilder('session')
-  //     .leftJoinAndSelect(
-  //       'session.userProgress',
-  //       'progress',
-  //       'progress.userId = :userId',
-  //       { userId },
-  //     )
-  //     .leftJoinAndSelect('progress.role', 'role')
-  //     .leftJoinAndSelect(
-  //       'session.roleCategoryQuestions',
-  //       'roleCategoryQuestions',
-  //       'roleCategoryQuestions.roleId = :roleId',
-  //       { roleId: userRoleId },
-  //     )
-  //     .where('session.isActive = :isActive', { isActive: true })
-  //     .orderBy('session.createdAt', 'DESC')
-  //     .getMany();
-
-  //   return sessionsWithProgress.map((session) => {
-  //     const progress = session.userProgress?.[0]; // Get the user's progress if exists
-
-  //     return {
-  //       sessionId: session.id,
-  //       sessionTitle: session.title,
-  //       sessionDescription: session.description,
-  //       sessionDifficulty: session.difficulty,
-  //       sessionCreatedAt: session.createdAt,
-  //       questionsGenerated: session.questionsGenerated,
-  //       totalQuestionsAvailable:
-  //         session.roleCategoryQuestions?.reduce(
-  //           (sum, rcq) => sum + rcq.questionsCount,
-  //           0,
-  //         ) || 0,
-
-  //       // Progress data - null if user hasn't started
-  //       status: progress?.status || ProgressStatus.NOT_STARTED,
-  //       currentCategory: progress?.currentCategory || null,
-  //       progressPercentage: progress?.getProgressPercentage() || 0,
-  //       accuracyPercentage: progress?.getAccuracyPercentage() || 0,
-  //       totalQuestions: progress?.totalQuestions || 0,
-  //       answeredQuestions: progress?.answeredQuestions || 0,
-  //       correctlyAnsweredQuestions: progress?.correctlyAnsweredQuestions || 0,
-
-  //       // Timestamps
-  //       startedAt: progress?.startedAt || null,
-  //       lastActiveAt: progress?.lastActiveAt || null,
-  //       completedAt: progress?.completedAt || null,
-
-  //       // Helper flags
-  //       isStarted: !!progress,
-  //       isCompleted: progress?.isCompleted() || false,
-  //       canStart: session.questionsGenerated && session.isActive,
-  //     };
-  //   });
-  // }
   async getUserSessionWithStatuses(userId: string, userRoleId: number) {
     // Get all active sessions and LEFT JOIN with user progress and role category questions
     const sessionsWithProgress = await this.sessionRepo
@@ -436,37 +381,6 @@ export class SessionService {
     return questions.map((q) => q.q_id);
   }
 
-  // private async updateQuestionUsageBatch(
-  //   updates: QuestionUsageDto[],
-  //   sessionId: string,
-  //   manager: any,
-  // ): Promise<void> {
-  //   const usageMap = new Map<string, QuestionUsageDto>();
-  //   updates.forEach((update) => {
-  //     const key = `${update.questionId}-${update.roleId}`;
-  //     usageMap.set(key, update);
-  //   });
-  //   const usageUpdates = Array.from(usageMap.values()).map(
-  //     ({ questionId, roleId }) => ({
-  //       questionId,
-  //       roleId,
-  //       usageCount: () => 'COALESCE("usageCount", 0) + 1',
-  //       lastUsedAt: new Date(),
-  //       lastUsedInSessionId: sessionId,
-  //     }),
-  //   );
-  //   await manager
-  //     .createQueryBuilder()
-  //     .insert()
-  //     .into(QuestionUsage)
-  //     .values(usageUpdates)
-  //     .orUpdate(
-  //       ['usageCount', 'lastUsedAt', 'lastUsedInSessionId'],
-  //       ['questionId', 'roleId'],
-  //     )
-  //     .execute();
-  // }
-
   private async updateQuestionUsageBatch(
     updates: QuestionUsageDto[],
     sessionId: string,
@@ -701,10 +615,61 @@ export class SessionService {
       });
 
       // 4) Generate certificate/completion record
-      const certificate = await this.generateCompletionCertificate(
-        progress,
-        completionData,
-      );
+      // const certificate = await this.generateCompletionCertificate(
+      //   progress,
+      //   completionData,
+      // );
+      // const certificateId = `CERT_${progress.sessionId}_${progress.userId}_${Date.now()}`;
+      // await this.certificateQueue.add('generate', {
+      //   certificateId,
+      //   userId: progress.userId,
+      //   sessionId: progress.sessionId,
+      //   roleId: progress.roleId,
+      //   score: completionData.overallScore,
+      // });
+
+      const passingScore = 80;
+      const isEligibleForCertificate =
+        completionData.overallScore >= passingScore;
+
+      let certificateInfo: {
+        certificateId: string;
+        willBeGenerated: boolean;
+        passingScore: number;
+      } | null = null;
+
+      if (isEligibleForCertificate) {
+        const certificateId = `CERT_${progress.sessionId}_${progress.userId}_${Date.now()}`;
+
+        // Queue certificate generation only if eligible
+        await this.certificateQueue.add(
+          'generate',
+          {
+            certificateId,
+            userId: progress.userId,
+            sessionId: progress.sessionId,
+            roleId: progress.roleId,
+            score: completionData.overallScore,
+            completionData, // Pass the full completion data
+          },
+          {
+            // Queue options
+            attempts: 3, // Retry up to 3 times on failure
+            backoff: {
+              type: 'exponential',
+              delay: 5000, // Start with 5 second delay
+            },
+            removeOnComplete: 10, // Keep only 10 completed jobs
+            removeOnFail: 5, // Keep only 5 failed jobs for debugging
+          },
+        );
+
+        certificateInfo = {
+          certificateId,
+          willBeGenerated: true,
+          passingScore,
+        };
+      }
 
       // 5) Trigger notifications/events
       // await this.triggerCompletionEvents(progress, completionData);
@@ -718,7 +683,7 @@ export class SessionService {
         success: true,
         finalScore: completionData.overallScore,
         categoryScores: completionData.categoryScores,
-        certificate,
+        certificateId: certificateInfo?.certificateId ?? '',
         completionTime: completionData.timeSpent,
         rank: completionData.roleRank,
       };
@@ -851,20 +816,6 @@ export class SessionService {
     return certificateId;
   }
 
-  // private async triggerCompletionEvents(
-  //   progress: UserSessionProgress,
-  //   metrics: CompletionMetrics
-  // ): Promise<void> {
-  //   // Fire async events (don't await to avoid blocking)
-  //   Promise.all([
-  //     this.notificationService.sendCompletionEmail(progress.userId, progress.sessionId, metrics),
-  //     this.analyticsService.trackCompletion(progress, metrics),
-  //     this.leaderboardService.updateRankings(progress.sessionId, progress.roleId)
-  //   ]).catch(error => {
-  //     this.logger.error('Completion events failed', error);
-  //   });
-  // }
-
   private async cleanupSessionData(
     userId: string,
     sessionId: string,
@@ -904,7 +855,6 @@ export class SessionService {
     }));
   }
 
-  // NEW: Replace answerQuestion with this sync function
   async syncUserProgress(
     sessionId: string,
     syncSessionDto: SyncSessionDto,
@@ -912,7 +862,8 @@ export class SessionService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    const { userId, answerBatch, currentState } = syncSessionDto;
+    const { userId, answerBatch, currentState, status } = syncSessionDto;
+
     try {
       // 1) Get current progress
       const progress = await queryRunner.manager.findOne(UserSessionProgress, {
@@ -938,17 +889,48 @@ export class SessionService {
       // 3) Save new answers (avoid duplicates)
       await this.saveAnswerBatch(validatedAnswers, queryRunner.manager);
 
-      // 4) Update progress state
-      await queryRunner.manager.update(UserSessionProgress, progress.id, {
-        currentCategory: currentState.currentCategory ?? undefined,
+      // 4) Determine final status
+      let finalStatus = status || currentState.status || progress.status;
+
+      // If status is 'completed', check if all questions are actually answered
+      if (finalStatus === 'completed') {
+        const isActuallyComplete = await this.verifySessionCompletion(
+          userId,
+          sessionId,
+          queryRunner.manager,
+        );
+
+        if (!isActuallyComplete) {
+          console.warn(
+            'Session marked as completed but not all questions answered',
+          );
+          finalStatus = 'in_progress';
+        }
+      }
+
+      // 5) Update progress state
+      const updateData: any = {
+        currentCategory:
+          currentState.currentCategory ?? progress.currentCategory,
         currentQuestionIndex: currentState.currentQuestionIndex,
         answeredQuestions: progress.answeredQuestions + validatedAnswers.length,
         correctlyAnsweredQuestions:
           progress.correctlyAnsweredQuestions +
           validatedAnswers.filter((a) => a.isCorrect).length,
         lastActiveAt: new Date(),
-        status: currentState.status || progress.status,
-      });
+        status: finalStatus,
+      };
+
+      // Add completion timestamp if status is completed
+      if (finalStatus === 'completed' && progress.status !== 'completed') {
+        updateData.completedAt = new Date();
+      }
+
+      await queryRunner.manager.update(
+        UserSessionProgress,
+        progress.id,
+        updateData,
+      );
 
       await queryRunner.commitTransaction();
 
@@ -959,6 +941,129 @@ export class SessionService {
         nextSyncRecommended: this.calculateNextSyncTime(
           validatedAnswers.length,
         ),
+        statusUpdated: finalStatus !== progress.status,
+        newStatus: finalStatus,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  // Add this method to verify session completion
+  private async verifySessionCompletion(
+    userId: string,
+    sessionId: string,
+    manager: any,
+  ): Promise<boolean> {
+    // Get total questions assigned to this user for this session
+    const totalQuestionsQuery = await manager
+      .createQueryBuilder(SessionRoleCategoryQuestion, 'srcq')
+      .innerJoin(
+        UserSessionProgress,
+        'usp',
+        'usp.roleId = srcq.roleId AND usp.sessionId = srcq.sessionId',
+      )
+      .where('usp.userId = :userId', { userId })
+      .andWhere('usp.sessionId = :sessionId', { sessionId })
+      .getMany();
+
+    // Count total questions across all categories
+    const totalQuestions = totalQuestionsQuery.reduce(
+      (sum, category) => sum + (category.questionIds?.length || 0),
+      0,
+    );
+
+    // Get count of answered questions
+    const answeredCount = await manager
+      .createQueryBuilder(UserAnswer, 'ua')
+      .innerJoin(
+        SessionRoleCategoryQuestion,
+        'srcq',
+        'ua.sessionRoleCategoryQuestionId = srcq.id',
+      )
+      .innerJoin(
+        UserSessionProgress,
+        'usp',
+        'usp.roleId = srcq.roleId AND usp.sessionId = srcq.sessionId',
+      )
+      .where('ua.userId = :userId', { userId })
+      .andWhere('usp.sessionId = :sessionId', { sessionId })
+      .getCount();
+
+    console.log(
+      `Session completion check - Total: ${totalQuestions}, Answered: ${answeredCount}`,
+    );
+
+    return answeredCount >= totalQuestions && totalQuestions > 0;
+  }
+
+  // Add this new method for status-only updates
+  async updateSessionStatus(
+    sessionId: string,
+    userId: string,
+    status: string,
+  ): Promise<{
+    success: boolean;
+    newStatus: string;
+    currentProgress: ProgressSummary;
+  }> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Get current progress
+      const progress = await queryRunner.manager.findOne(UserSessionProgress, {
+        where: { userId, sessionId },
+      });
+
+      if (!progress) {
+        throw new NotFoundException('User progress not found');
+      }
+
+      // Verify completion if status is 'completed'
+      let finalStatus = status;
+      if (status === 'completed') {
+        const isActuallyComplete = await this.verifySessionCompletion(
+          userId,
+          sessionId,
+          queryRunner.manager,
+        );
+
+        if (!isActuallyComplete) {
+          console.warn(
+            'Attempted to mark session as completed but not all questions answered',
+          );
+          finalStatus = 'in_progress';
+        }
+      }
+
+      // Update status
+      const updateData: any = {
+        status: finalStatus,
+        lastActiveAt: new Date(),
+      };
+
+      // Add completion timestamp if newly completed
+      if (finalStatus === 'completed' && progress.status !== 'completed') {
+        updateData.completedAt = new Date();
+      }
+
+      await queryRunner.manager.update(
+        UserSessionProgress,
+        progress.id,
+        updateData,
+      );
+
+      await queryRunner.commitTransaction();
+
+      return {
+        success: true,
+        newStatus: finalStatus,
+        currentProgress: await this.getProgressSummary(userId, sessionId),
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -1060,12 +1165,9 @@ export class SessionService {
       )
       .execute();
   }
-  // MODIFY: Update existing function to include next question data
 
-  // NEW: Format questions for frontend consumption
-
-  // NEW: Get progress summary for sync response
-  private async getProgressSummary(
+  // Update your existing getProgressSummary method
+  async getProgressSummary(
     userId: string,
     sessionId: string,
   ): Promise<ProgressSummary> {
@@ -1082,6 +1184,8 @@ export class SessionService {
       totalCorrect: progress.correctlyAnsweredQuestions,
       progressPercentage: progress.getProgressPercentage(),
       status: progress.status,
+      completedAt: progress.completedAt,
+      isComplete: progress.status === 'completed',
     };
   }
 

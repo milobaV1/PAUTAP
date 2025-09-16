@@ -28,12 +28,20 @@ export const sessionApi = {
     const { data } = await client.post(`/session/${sessionId}/sync`, syncData);
     return data;
   },
+  updateOnlyStatus: async (sessionId: string, status: string) => {
+    const { data } = await client.patch(
+      `/sessions/${sessionId}/status`,
+      status
+    );
+    return data;
+  },
 };
 
 export const useProgressSync = () => {
   const {
     updateProgressFromSync,
     markAnswersSynced,
+    updateSessionStatus,
     unsyncedAnswers,
     currentCategory,
     currentQuestionIndex,
@@ -43,12 +51,25 @@ export const useProgressSync = () => {
     mutationFn: async ({
       userId,
       sessionId,
-      status = "IN_PROGRESS",
+      status = "in_progress",
     }: {
       userId: string;
       sessionId: string;
       status?: string;
     }) => {
+      if (unsyncedAnswers.length === 0) {
+        // If no unsynced answers but status update needed
+        if (status !== "in_progress") {
+          const response = await sessionApi.updateOnlyStatus(sessionId, status);
+
+          if (!response.ok) {
+            throw new Error("Failed to update session status");
+          }
+
+          return response.json();
+        }
+        return null;
+      }
       const syncData = {
         userId,
         answerBatch: unsyncedAnswers.map((answer) => ({
@@ -66,10 +87,32 @@ export const useProgressSync = () => {
       console.log("sync Data: ", syncData);
       return sessionApi.syncProgress(userId, sessionId, syncData);
     },
+    // onSuccess: (data, variables) => {
+    //   const syncedQuestionIds = unsyncedAnswers.map((a) => a.questionId);
+    //   markAnswersSynced(syncedQuestionIds);
+    //   updateProgressFromSync(variables.sessionId, data.currentProgress);
+    // },
     onSuccess: (data, variables) => {
-      const syncedQuestionIds = unsyncedAnswers.map((a) => a.questionId);
-      markAnswersSynced(syncedQuestionIds);
-      updateProgressFromSync(variables.sessionId, data.currentProgress);
+      if (unsyncedAnswers.length > 0) {
+        // Mark answers as synced
+        const syncedQuestionIds = unsyncedAnswers.map((a) => a.questionId);
+        markAnswersSynced(syncedQuestionIds);
+      }
+
+      // Update session status in store
+      if (variables.status) {
+        updateSessionStatus(variables.sessionId, variables.status);
+      }
+
+      // Update progress data if returned
+      if (data?.progressSummary) {
+        updateProgressFromSync(variables.sessionId, data.progressSummary);
+      }
+
+      console.log("✅ Progress synced successfully");
+    },
+    onError: (error) => {
+      console.error("❌ Failed to sync progress:", error);
     },
   });
 };

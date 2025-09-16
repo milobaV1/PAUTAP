@@ -1,44 +1,76 @@
+import { Session } from 'src/modules_2/session/entities/session.entity';
+import { UserSessionProgress } from 'src/modules_2/session/entities/user-session-progress.entity';
 import { User } from 'src/modules_2/users/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
+@Unique(['userId', 'sessionId']) // Ensures one certificate per user per session
+@Index(['certificateId']) // For quick lookups by certificate ID
 export class Certificate {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  user_id: string;
+  certificateId: string;
 
   @Column()
-  session_id: string;
+  userId: string;
 
   @Column()
-  certificate_type: string;
+  sessionId: string;
 
-  @Column({ type: 'jsonb' })
-  criteria_met: any;
+  @Column()
+  filePath: string;
+
+  @Column()
+  score: number;
+
+  // @Column({ type: 'jsonb' })
+  // criteriaMet: any;
 
   @Column({ type: 'timestamp', nullable: true })
-  valid_until: Date;
+  validUntil: Date;
 
   @CreateDateColumn()
-  created_at: Date;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updatedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.certificates)
-  @JoinColumn({ name: 'user_id' })
+  @ManyToOne(() => User, (user) => user.certificates, {
+    onDelete: 'CASCADE', // If user is deleted, remove their certificates
+  })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
-  // @ManyToOne(() => TrainingSession, (session) => session.certificates)
-  // training_session: TrainingSession;
+  @ManyToOne(() => Session, {
+    onDelete: 'RESTRICT', // Don't allow session deletion if certificates exist
+  })
+  @JoinColumn({ name: 'sessionId' })
+  session: Session;
+
+  // One-to-one with UserSessionProgress to link the completion record
+  @OneToOne(() => UserSessionProgress, {
+    nullable: true, // In case progress record is cleaned up
+  })
+  @JoinColumn({
+    name: 'userId',
+    referencedColumnName: 'userId',
+  })
+  @JoinColumn({
+    name: 'sessionId',
+    referencedColumnName: 'sessionId',
+  })
+  userProgress: UserSessionProgress;
 }

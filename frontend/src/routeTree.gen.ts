@@ -24,6 +24,7 @@ import { Route as userLayoutProgramIndexRouteImport } from './routes/(user)/_lay
 import { Route as userLayoutCertificateIndexRouteImport } from './routes/(user)/_layout/certificate/index'
 import { Route as userLayoutSessionIdIndexRouteImport } from './routes/(user)/_layout/session/$id/index'
 import { Route as userLayoutProgramIdIndexRouteImport } from './routes/(user)/_layout/program/$id/index'
+import { Route as userLayoutSessionIdResultRouteImport } from './routes/(user)/_layout/session/$id/result'
 import { Route as userLayoutSessionIdCategoryCategoryIdIndexRouteImport } from './routes/(user)/_layout/session/$id/category/$categoryId/index'
 import { Route as userLayoutProgramIdCourseCourseIdIndexRouteImport } from './routes/(user)/_layout/program/$id/course/$courseId/index'
 import { Route as userLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRouteImport } from './routes/(user)/_layout/program/$id/course/$courseId/assessment/$assessmentId'
@@ -107,6 +108,12 @@ const userLayoutProgramIdIndexRoute =
     path: '/program/$id/',
     getParentRoute: () => userLayoutRoute,
   } as any)
+const userLayoutSessionIdResultRoute =
+  userLayoutSessionIdResultRouteImport.update({
+    id: '/session/$id/result',
+    path: '/session/$id/result',
+    getParentRoute: () => userLayoutRoute,
+  } as any)
 const userLayoutSessionIdCategoryCategoryIdIndexRoute =
   userLayoutSessionIdCategoryCategoryIdIndexRouteImport.update({
     id: '/session/$id/category/$categoryId/',
@@ -137,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/trivia': typeof userLayoutTriviaIndexRoute
   '/admin/question': typeof AdminLayoutQuestionIndexRoute
   '/admin/user': typeof AdminLayoutUserIndexRoute
+  '/session/$id/result': typeof userLayoutSessionIdResultRoute
   '/program/$id': typeof userLayoutProgramIdIndexRoute
   '/session/$id': typeof userLayoutSessionIdIndexRoute
   '/program/$id/course/$courseId': typeof userLayoutProgramIdCourseCourseIdIndexRoute
@@ -153,6 +161,7 @@ export interface FileRoutesByTo {
   '/trivia': typeof userLayoutTriviaIndexRoute
   '/admin/question': typeof AdminLayoutQuestionIndexRoute
   '/admin/user': typeof AdminLayoutUserIndexRoute
+  '/session/$id/result': typeof userLayoutSessionIdResultRoute
   '/program/$id': typeof userLayoutProgramIdIndexRoute
   '/session/$id': typeof userLayoutSessionIdIndexRoute
   '/program/$id/course/$courseId': typeof userLayoutProgramIdCourseCourseIdIndexRoute
@@ -174,6 +183,7 @@ export interface FileRoutesById {
   '/(user)/_layout/trivia/': typeof userLayoutTriviaIndexRoute
   '/admin/_layout/question/': typeof AdminLayoutQuestionIndexRoute
   '/admin/_layout/user/': typeof AdminLayoutUserIndexRoute
+  '/(user)/_layout/session/$id/result': typeof userLayoutSessionIdResultRoute
   '/(user)/_layout/program/$id/': typeof userLayoutProgramIdIndexRoute
   '/(user)/_layout/session/$id/': typeof userLayoutSessionIdIndexRoute
   '/(user)/_layout/program/$id/course/$courseId/': typeof userLayoutProgramIdCourseCourseIdIndexRoute
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/trivia'
     | '/admin/question'
     | '/admin/user'
+    | '/session/$id/result'
     | '/program/$id'
     | '/session/$id'
     | '/program/$id/course/$courseId'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
     | '/trivia'
     | '/admin/question'
     | '/admin/user'
+    | '/session/$id/result'
     | '/program/$id'
     | '/session/$id'
     | '/program/$id/course/$courseId'
@@ -229,6 +241,7 @@ export interface FileRouteTypes {
     | '/(user)/_layout/trivia/'
     | '/admin/_layout/question/'
     | '/admin/_layout/user/'
+    | '/(user)/_layout/session/$id/result'
     | '/(user)/_layout/program/$id/'
     | '/(user)/_layout/session/$id/'
     | '/(user)/_layout/program/$id/course/$courseId/'
@@ -349,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof userLayoutProgramIdIndexRouteImport
       parentRoute: typeof userLayoutRoute
     }
+    '/(user)/_layout/session/$id/result': {
+      id: '/(user)/_layout/session/$id/result'
+      path: '/session/$id/result'
+      fullPath: '/session/$id/result'
+      preLoaderRoute: typeof userLayoutSessionIdResultRouteImport
+      parentRoute: typeof userLayoutRoute
+    }
     '/(user)/_layout/session/$id/category/$categoryId/': {
       id: '/(user)/_layout/session/$id/category/$categoryId/'
       path: '/session/$id/category/$categoryId'
@@ -379,6 +399,7 @@ interface userLayoutRouteChildren {
   userLayoutProgramIndexRoute: typeof userLayoutProgramIndexRoute
   userLayoutSessionIndexRoute: typeof userLayoutSessionIndexRoute
   userLayoutTriviaIndexRoute: typeof userLayoutTriviaIndexRoute
+  userLayoutSessionIdResultRoute: typeof userLayoutSessionIdResultRoute
   userLayoutProgramIdIndexRoute: typeof userLayoutProgramIdIndexRoute
   userLayoutSessionIdIndexRoute: typeof userLayoutSessionIdIndexRoute
   userLayoutProgramIdCourseCourseIdIndexRoute: typeof userLayoutProgramIdCourseCourseIdIndexRoute
@@ -392,6 +413,7 @@ const userLayoutRouteChildren: userLayoutRouteChildren = {
   userLayoutProgramIndexRoute: userLayoutProgramIndexRoute,
   userLayoutSessionIndexRoute: userLayoutSessionIndexRoute,
   userLayoutTriviaIndexRoute: userLayoutTriviaIndexRoute,
+  userLayoutSessionIdResultRoute: userLayoutSessionIdResultRoute,
   userLayoutProgramIdIndexRoute: userLayoutProgramIdIndexRoute,
   userLayoutSessionIdIndexRoute: userLayoutSessionIdIndexRoute,
   userLayoutProgramIdCourseCourseIdIndexRoute:

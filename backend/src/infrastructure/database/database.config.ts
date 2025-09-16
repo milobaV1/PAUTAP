@@ -8,6 +8,10 @@ import { SessionRoleCategoryQuestion } from 'src/modules_2/session/entities/sess
 import { Session } from 'src/modules_2/session/entities/session.entity';
 import { UserAnswer } from 'src/modules_2/session/entities/user-answers.entity';
 import { UserSessionProgress } from 'src/modules_2/session/entities/user-session-progress.entity';
+import { TriviaAnswer } from 'src/modules_2/trivia/entities/trivia-answer';
+import { TriviaLeaderboard } from 'src/modules_2/trivia/entities/trivia-leaderboard';
+import { TriviaParticipation } from 'src/modules_2/trivia/entities/trivia-participation.entity';
+import { Trivia } from 'src/modules_2/trivia/entities/trivia.entity';
 import { Department } from 'src/modules_2/users/entities/department.entity';
 import { Role } from 'src/modules_2/users/entities/role.entity';
 import { User } from 'src/modules_2/users/entities/user.entity';
@@ -56,6 +60,10 @@ export const typeormConfigAsync = {
       SessionRoleCategoryQuestion,
       UserSessionProgress,
       UserAnswer,
+      Trivia,
+      TriviaAnswer,
+      TriviaParticipation,
+      TriviaLeaderboard,
     ],
     synchronize: true, // disable in production
     autoLoadEntities: true,

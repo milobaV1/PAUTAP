@@ -27,7 +27,7 @@ import { useNavigate } from "@tanstack/react-router";
 export function CategorySelection() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const sessions = useSessionStore((state) => state.sessions);
+  const { sessions, localAnswers } = useSessionStore();
   console.log("Sessions from the store: ", sessions);
   const session = sessions.find((s) => String(s.sessionId) === String(id)) as
     | UsersessionData
@@ -53,8 +53,33 @@ export function CategorySelection() {
     });
   };
 
+  const totalQuestions = categories.reduce(
+    (sum, cat) => sum + cat.questionsCount,
+    0
+  );
+  const totalAnswered = Object.keys(localAnswers).length;
+  const overallProgress =
+    totalQuestions > 0 ? (totalAnswered / totalQuestions) * 100 : 0;
+  const isSessionComplete =
+    totalAnswered === totalQuestions && totalQuestions > 0;
+
   return (
     <div className="space-y-6">
+      {isSessionComplete && (
+        <Card className="pau-shadow bg-green-50 border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center space-x-3">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+              <h3 className="text-lg font-semibold text-green-800">
+                🎉 Session Completed!
+              </h3>
+            </div>
+            <p className="text-center text-green-700 mt-2">
+              You have successfully completed all categories in this session.
+            </p>
+          </CardContent>
+        </Card>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" className="mb-4">
@@ -140,9 +165,16 @@ export function CategorySelection() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
             {sortedCategories.map((category) => {
+              const categoryAnswers = Object.keys(localAnswers).filter(
+                (questionId) =>
+                  category.questions.some((q) => q.id === questionId)
+              );
               const isCompleted =
-                category.userAnswers.length === category.questionsCount;
-
+                categoryAnswers.length === category.questionsCount;
+              const completionPercentage =
+                category.questionsCount > 0
+                  ? (categoryAnswers.length / category.questionsCount) * 100
+                  : 0;
               return (
                 <Card
                   key={category.category}
@@ -171,13 +203,19 @@ export function CategorySelection() {
                         </div>
 
                         {/* Progress */}
-                        <div className="flex items-center justify-between text-sm mb-4 p-3 bg-gray-50 rounded-md">
-                          <span>
-                            Answered: {category.userAnswers.length} /{" "}
-                            {category.questionsCount}
-                          </span>
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center justify-between text-sm">
+                            <span>
+                              Answered: {categoryAnswers.length} /{" "}
+                              {category.questionsCount}
+                            </span>
+                            <span>{Math.round(completionPercentage)}%</span>
+                          </div>
+                          <Progress
+                            value={completionPercentage}
+                            className="h-2"
+                          />
                         </div>
-
                         {/* Action */}
                         <div className="flex items-center justify-between">
                           <div className="text-sm text-muted-foreground">
