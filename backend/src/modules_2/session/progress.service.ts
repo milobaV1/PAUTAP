@@ -56,7 +56,7 @@ export class ProgressService {
     );
 
     // 6) Update progress (status, part, scores)
-    this.updateProgressFromSnapshot(progress, byCategory);
+    //this.updateProgressFromSnapshot(progress, byCategory);
     await this.userProgressRepo.save(progress);
 
     // 7) Return clean result
@@ -166,41 +166,41 @@ export class ProgressService {
     });
   }
 
-  private updateProgressFromSnapshot(
-    progress: UserSessionProgress,
-    snapshot: any[],
-  ) {
-    const totalRequired = snapshot.reduce(
-      (sum, c) => sum + c.requiredIds.length,
-      0,
-    );
-    const totalAnswered = snapshot.reduce(
-      (sum, c) => sum + c.answeredIds.length,
-      0,
-    );
-    const totalCorrect = snapshot.reduce(
-      (sum, c) => sum + c.correctlyAnsweredCount,
-      0,
-    );
+  // private updateProgressFromSnapshot(
+  //   progress: UserSessionProgress,
+  //   snapshot: any[],
+  // ) {
+  //   const totalRequired = snapshot.reduce(
+  //     (sum, c) => sum + c.requiredIds.length,
+  //     0,
+  //   );
+  //   const totalAnswered = snapshot.reduce(
+  //     (sum, c) => sum + c.answeredIds.length,
+  //     0,
+  //   );
+  //   const totalCorrect = snapshot.reduce(
+  //     (sum, c) => sum + c.correctlyAnsweredCount,
+  //     0,
+  //   );
 
-    progress.totalQuestions = totalRequired;
-    progress.answeredQuestions = totalAnswered;
-    progress.correctlyAnsweredQuestions = totalCorrect;
+  //   progress.totalQuestions = totalRequired;
+  //   progress.answeredQuestions = totalAnswered;
+  //   progress.correctlyAnsweredQuestions = totalCorrect;
 
-    const next = snapshot.find((c) => c.remainingIds.length > 0);
-    if (next) {
-      progress.currentCategory = next.category as CRISP;
-      progress.currentQuestionIndex = next.requiredIds.indexOf(
-        next.remainingIds[0],
-      );
-      progress.status = ProgressStatus.IN_PROGRESS;
-    } else {
-      progress.currentCategory = undefined;
-      progress.currentQuestionIndex = 0;
-      progress.status = ProgressStatus.COMPLETED;
-      progress.completedAt = new Date();
-    }
-  }
+  //   const next = snapshot.find((c) => c.remainingIds.length > 0);
+  //   if (next) {
+  //     progress.currentCategory = next.category as CRISP;
+  //     progress.currentQuestionIndex = next.requiredIds.indexOf(
+  //       next.remainingIds[0],
+  //     );
+  //     progress.status = ProgressStatus.IN_PROGRESS;
+  //   } else {
+  //     progress.currentCategory = undefined;
+  //     progress.currentQuestionIndex = 0;
+  //     progress.status = ProgressStatus.COMPLETED;
+  //     progress.completedAt = new Date();
+  //   }
+  // }
 
   private formatResult(
     session: Session,

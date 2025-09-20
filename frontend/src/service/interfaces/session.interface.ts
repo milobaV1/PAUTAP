@@ -43,12 +43,10 @@ export interface UserAnswer {
 
 export interface Question {
   id: string;
-  crispCategory: CRISP;
   questionText: string;
   options: string[];
-  correctAnswer: number;
+  crispCategory: CRISP;
   difficultyLevel: Difficulty;
-  createdAt: string;
 }
 
 export interface Category {
@@ -137,3 +135,74 @@ export interface CompleteSessionPayload {
 //   isCompleted: boolean;
 //   canStart: boolean;
 // };
+
+export interface SessionSummary {
+  sessionId: string;
+  sessionTitle: string;
+  sessionDescription: string;
+  sessionDifficulty: Difficulty;
+  sessionCreatedAt: string;
+  questionsGenerated: boolean;
+
+  // Minimal progress data
+  status: "not_started" | "in_progress" | "completed" | string;
+  progressPercentage: number;
+  accuracyPercentage?: number;
+
+  // Timestamps
+  startedAt: string | null;
+  lastActiveAt: string | null;
+  completedAt: string | null;
+
+  // Helper flags
+  isStarted: boolean;
+  isCompleted: boolean;
+  canStart: boolean;
+
+  // Counts only - NO actual question data
+  totalQuestionsAvailable: number;
+  answeredQuestions?: number;
+  correctlyAnsweredQuestions?: number;
+}
+
+// NEW: Full session data from startOrResumeSession
+export interface FullSessionData {
+  session: {
+    id: string;
+    title: string;
+    description: string;
+    difficulty: Difficulty;
+    createdAt: string;
+    questionsGenerated: boolean;
+    isActive: boolean;
+  };
+  progress: {
+    status: "not_started" | "in_progress" | "completed" | string;
+    currentCategory: CRISP | null;
+    currentQuestionIndex: number;
+    totalQuestions: number;
+    answeredQuestions: number;
+    correctlyAnsweredQuestions: number;
+    progressPercentage: number;
+    accuracyPercentage: number;
+    startedAt: string | null;
+    lastActiveAt: string | null;
+    completedAt: string | null;
+  };
+  // questionsByCategory: Array<{
+  //   categoryId: string;
+  //   category: CRISP;
+  //   questions: Array<{
+  //     id: string;
+  //     text: string;
+  //     options: string[];
+  //     order: number;
+  //     isAnswered: boolean;
+  //   }>;
+  //   totalQuestions: number;
+  //   answeredCount: number;
+  // }>;
+  categories: Category[];
+  syncInterval: number;
+  autoSyncTriggers: string[];
+}

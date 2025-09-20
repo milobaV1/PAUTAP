@@ -1,11 +1,14 @@
 import { client } from "@/lib/api/client";
 import { getAxiosError } from "@/lib/api/error";
-import type { StartTriviaResponse } from "@/service/interfaces/trivia.interface";
+import type {
+  StartTriviaDto,
+  StartTriviaResponse,
+} from "@/service/interfaces/trivia.interface";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 
-export async function startTrivia(triviaId: string) {
+export async function startTrivia(data: StartTriviaDto) {
   try {
-    const response = await client.post(`/trivia/start`, { triviaId });
+    const response = await client.post(`/trivia/start`, data);
     return response.data as StartTriviaResponse;
   } catch (error) {
     const msg = getAxiosError(error);

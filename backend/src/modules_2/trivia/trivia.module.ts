@@ -9,6 +9,8 @@ import { TriviaLeaderboard } from './entities/trivia-leaderboard';
 import { User } from '../users/entities/user.entity';
 import { QuestionBank } from '../question-bank/entities/question-bank.entity';
 import { BullModule } from '@nestjs/bullmq';
+import { EmailModule } from '../email/email.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -20,9 +22,11 @@ import { BullModule } from '@nestjs/bullmq';
       User,
       QuestionBank,
     ]),
-    BullModule.registerQueue({ name: 'email' }, { name: 'leaderboard' }),
+    EmailModule,
+    UsersModule,
   ],
   controllers: [TriviaController],
   providers: [TriviaService],
+  exports: [TriviaService],
 })
 export class TriviaModule {}

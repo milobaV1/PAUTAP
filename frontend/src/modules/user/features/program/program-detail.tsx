@@ -30,7 +30,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Route } from "@/routes/(user)/_layout/program/$id";
+import { Route } from "@/routes/_auth/(user)/_layout/program/$id";
 import { useNavigate } from "@tanstack/react-router";
 
 export function ModuleDetail() {

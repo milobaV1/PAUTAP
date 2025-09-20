@@ -74,8 +74,16 @@ export function LoginPage() {
       const user = await getUser(payload.sub.id);
       if (user) setUser(user);
       if (payload.sub.roleId === 1) {
+        console.log(
+          "About to navigate to admin, current state:",
+          useAuthState.getState()
+        );
         navigate({ to: "/admin" });
       } else {
+        console.log(
+          "About to navigate to user route, current state:",
+          useAuthState.getState()
+        );
         navigate({ to: "/" });
       }
     }
@@ -187,7 +195,7 @@ export function LoginPage() {
                   name="remember"
                   render={({ field }) => (
                     <FormItem className="flex items-center justify-between">
-                      <label className="flex items-center space-x-2">
+                      {/* <label className="flex items-center space-x-2">
                         <input
                           type="checkbox"
                           checked={field.value}
@@ -197,10 +205,11 @@ export function LoginPage() {
                         <span className="text-sm text-gray-600">
                           Remember me
                         </span>
-                      </label>
+                      </label> */}
                       <Button
                         variant="link"
                         className="p-0 h-auto text-[#2e3f6f]"
+                        onClick={() => navigate({ to: "/forgot-password" })}
                       >
                         Forgot password?
                       </Button>

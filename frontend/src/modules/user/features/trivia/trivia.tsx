@@ -25,26 +25,29 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type {
-  CurrentTriviaResponse,
-  TriviaQuestion,
+import {
+  type CurrentTriviaResponse,
+  type StartTriviaDto,
+  type TriviaQuestion,
 } from "@/service/interfaces/trivia.interface";
 import { useGetLeaderboard } from "./api/get-leaderboard";
 import { useGetTrivia } from "./api/get-trivia";
 import { useStartTrivia } from "./api/start-trivia";
 import { useSubmitAnswer } from "./api/submit-answer";
 import { useSubmitTrivia } from "./api/submit-trivia";
+import { useAuthState } from "@/store/auth.store";
+import { getParticipationStatusMessage } from "@/utils/trivia-extension";
 
 export function Trivia() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
   const [participationId, setParticipationId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<
-    Record<string, { answer: string; timeSpent: number }>
+    Record<string, { answer: number; timeSpent: number }>
   >({});
   const [questionStartTime, setQuestionStartTime] = useState<number>(
     Date.now()
@@ -55,6 +58,9 @@ export function Trivia() {
   const startTriviaMutation = useStartTrivia();
   const submitAnswerMutation = useSubmitAnswer();
   const submitTriviaMutation = useSubmitTrivia();
+  const { decodedDto } = useAuthState();
+
+  console.log("Trivia data: ", triviaData);
 
   // Timer effect for trivia expiration
   useEffect(() => {
@@ -101,11 +107,14 @@ export function Trivia() {
 
   const startGame = async () => {
     if (!triviaData?.trivia?.id) return;
+    if (!decodedDto) return;
+    const data: StartTriviaDto = {
+      triviaId: triviaData.trivia.id,
+      userId: decodedDto?.sub.id,
+    };
 
     try {
-      const result = await startTriviaMutation.mutateAsync(
-        triviaData.trivia.id
-      );
+      const result = await startTriviaMutation.mutateAsync(data);
       setParticipationId(result.participation.id);
       setQuestions(result.questions);
       setGameStarted(true);
@@ -125,13 +134,18 @@ export function Trivia() {
     }
   };
 
-  const handleAnswerSelect = (answer: string) => {
+  const handleAnswerSelect = (answer: number) => {
     setSelectedAnswer(answer);
   };
 
   const handleNextQuestion = async () => {
-    if (!selectedAnswer || !participationId || !questions[currentQuestion])
+    if (
+      selectedAnswer === null ||
+      !participationId ||
+      !questions[currentQuestion]
+    ) {
       return;
+    }
 
     const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
     const currentQ = questions[currentQuestion];
@@ -214,20 +228,109 @@ export function Trivia() {
   }
 
   // No trivia available
+  // if (!triviaData?.trivia) {
+  //   return (
+  //     <Card className="pau-shadow text-center max-w-md mx-auto">
+  //       <CardContent className="p-12">
+  //         <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+  //         <h2 className="text-xl font-semibold text-gray-600 mb-2">
+  //           No Active Trivia
+  //         </h2>
+  //         <p className="text-muted-foreground">
+  //           {triviaData?.message ||
+  //             "Check back later for the next monthly challenge!"}
+  //         </p>
+  //       </CardContent>
+  //     </Card>
+  //   );
+  // }
+
   if (!triviaData?.trivia) {
     return (
-      <Card className="pau-shadow text-center max-w-md mx-auto">
-        <CardContent className="p-12">
-          <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-600 mb-2">
-            No Active Trivia
-          </h2>
-          <p className="text-muted-foreground">
-            {triviaData?.message ||
-              "Check back later for the next monthly challenge!"}
+      <div className="space-y-6">
+        <Card className="p-6 text-center">
+          <Trophy className="w-10 h-10 mx-auto text-gray-400" />
+          <h2 className="text-xl font-semibold mt-2">No Active Trivia</h2>
+          <p className="text-gray-600 mt-2">
+            There is currently no active trivia event. Please check back later.
           </p>
-        </CardContent>
-      </Card>
+        </Card>
+
+        {/* Leaderboard Section */}
+        {leaderboard && leaderboard.length > 0 && (
+          <Card className="pau-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Crown className="w-5 h-5 mr-2 text-yellow-500" />
+                Current Leaderboard
+              </CardTitle>
+              <CardDescription>
+                {new Date().toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}{" "}
+                standings
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {leaderboard.slice(0, 10).map((user, index) => (
+                  <div
+                    key={user.id}
+                    className={`flex items-center space-x-3 p-3 rounded-lg ${
+                      user.userId === triviaData?.userParticipation?.userId
+                        ? "bg-blue-50 border border-blue-200"
+                        : "bg-gray-50"
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        index === 0
+                          ? "bg-yellow-400 text-white"
+                          : index === 1
+                            ? "bg-gray-400 text-white"
+                            : index === 2
+                              ? "bg-orange-400 text-white"
+                              : "bg-gray-200 text-gray-700"
+                      }`}
+                    >
+                      {index < 3
+                        ? index === 0
+                          ? "🥇"
+                          : index === 1
+                            ? "🥈"
+                            : "🥉"
+                        : user.rank}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">
+                        {user.user.first_name} {user.user.last_name}
+                        {user.userId ===
+                          triviaData?.userParticipation?.userId && (
+                          <Badge className="ml-2 text-xs">You</Badge>
+                        )}
+                      </p>
+                      <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                        <span>{Math.round(user.averageScore)}% avg</span>
+                        <span>•</span>
+                        <span>{user.triviaCount} trivias</span>
+                        <span>•</span>
+                        <span>{user.user.role.department.name}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium">
+                        {Math.round(user.bestScore)}%
+                      </div>
+                      <div className="text-xs text-muted-foreground">Best</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     );
   }
 
@@ -411,11 +514,11 @@ export function Trivia() {
             {currentQ.options.map((option, index) => (
               <Button
                 key={index}
-                variant={selectedAnswer === option ? "default" : "outline"}
+                variant={selectedAnswer === index ? "default" : "outline"}
                 className={`w-full text-left p-4 h-auto justify-start ${
-                  selectedAnswer === option ? "pau-gradient" : ""
+                  selectedAnswer === index ? "pau-gradient" : ""
                 }`}
-                onClick={() => handleAnswerSelect(option)}
+                onClick={() => handleAnswerSelect(index)}
                 disabled={submitAnswerMutation.isPending}
               >
                 <span className="font-medium mr-3">
@@ -766,13 +869,17 @@ export function Trivia() {
               ? "Trivia Expired"
               : "Trivia Not Available"}
           </h2>
-          <p className="text-muted-foreground mb-6">
+          {/* <p className="text-muted-foreground mb-6">
             {triviaData.userParticipation?.status === "expired"
               ? "You ran out of time for this trivia challenge."
               : triviaData.userParticipation?.status === "completed" ||
                   triviaData.userParticipation?.status === "submitted"
                 ? "You have already completed this month's trivia."
                 : "This trivia is not currently active."}
+          </p> */}
+
+          <p className="text-muted-foreground mb-6">
+            {getParticipationStatusMessage(triviaData?.userParticipation)}
           </p>
 
           {triviaData.userParticipation && (

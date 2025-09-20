@@ -30,9 +30,10 @@ import {
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthState } from "@/store/auth.store";
-import { useGetSessions } from "./api/get-sessions";
+import { useGetSessions, useStartOrResumeSession } from "./api/get-sessions";
 import type {
   getSessions,
+  SessionSummary,
   UsersessionData,
 } from "@/service/interfaces/session.interface";
 
@@ -44,6 +45,7 @@ export function sessions() {
   const [selectedsession, setSelectedsession] = useState<number | null>(null);
 
   const navigate = useNavigate();
+  //const startSessionMutation = useStartOrResumeSession();
 
   const { decodedDto } = useAuthState();
   const sessionData: getSessions = {
@@ -52,8 +54,10 @@ export function sessions() {
   };
   const { data, isLoading, isError, error } = useGetSessions(sessionData);
   console.log("Data: ", data);
-  const allSessions: UsersessionData[] = data || [];
-  console.log("Asll Sessions: ", allSessions);
+  //const allSessions: UsersessionData[] = data || [];
+  const allSessions: SessionSummary[] = data || [];
+
+  console.log("All Sessions: ", allSessions);
 
   const completedSessions = allSessions.filter(
     (session) => session.isCompleted
@@ -318,13 +322,13 @@ export function sessions() {
                         </CardDescription>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <Badge
+                        {/* <Badge
                           className={getDifficultyColor(
                             session.sessionDifficulty
                           )}
                         >
                           {session.sessionDifficulty}
-                        </Badge>
+                        </Badge> */}
                         <Badge className={getStatusColor(session.status)}>
                           {session.status === "in-progress"
                             ? "in Progress"
@@ -412,14 +416,14 @@ export function sessions() {
                         {session.sessionTitle}
                       </h3>
                       <div className="flex items-center space-x-2">
-                        <Badge
+                        {/* <Badge
                           className={getDifficultyColor(
                             session.sessionDifficulty
                           )}
                         >
                           {session.sessionDifficulty}
-                        </Badge>
-                        <Badge
+                        </Badge> */}
+                        {/* <Badge
                           className={
                             session.status === "passed"
                               ? "bg-green-100 text-green-800"
@@ -427,21 +431,25 @@ export function sessions() {
                           }
                         >
                           {session.status === "passed" ? "Passed" : "Failed"}
-                        </Badge>
+                        </Badge> */}
                       </div>
                     </div>
-                    <div
-                      className={`text-3xl font-bold ${session.accuracyPercentage >= 80 ? "text-green-600" : session.accuracyPercentage >= 70 ? "text-blue-600" : "text-red-600"}`}
-                    >
-                      {session.accuracyPercentage}%
-                    </div>
+                    {session.accuracyPercentage ? (
+                      <div
+                        className={`text-3xl font-bold ${session.accuracyPercentage >= 80 ? "text-green-600" : session.accuracyPercentage >= 70 ? "text-blue-600" : "text-red-600"}`}
+                      >
+                        {session.accuracyPercentage}%
+                      </div>
+                    ) : (
+                      ""
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <div className="text-xl font-bold text-gray-900">
                         {session.correctlyAnsweredQuestions}/
-                        {session.totalQuestions}
+                        {session.totalQuestionsAvailable}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Correct Answers
@@ -467,7 +475,7 @@ export function sessions() {
                     </div>
                     <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <div className="text-xl font-bold text-gray-900">
-                        {session.categories.length}
+                        {/* {session.categories.length} */}5
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Categories
@@ -509,21 +517,25 @@ export function sessions() {
                         <AlertCircle className="w-5 h-5 text-red-600" />
                       )}
                       <span className="text-sm text-muted-foreground">
-                        {session.status === "passed"
+                        {/* {session.status === "passed"
                           ? "Congratulations! You passed this session."
-                          : "You can retake this session to improve your score."}
+                          : "You can retake this session to improve your score."} */}
+                        You can retake this session
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm">
+                      {/* <Button variant="outline" size="sm">
                         <BarChart3 className="w-4 h-4 mr-2" />
                         View Detailed Results
-                      </Button>
-                      {session.status === "failed" && (
+                      </Button> */}
+                      {/* {session.status === "failed" && (
                         <Button size="sm" className="pau-gradient">
                           Retake session
                         </Button>
-                      )}
+                      )} */}
+                      <Button size="sm" className="pau-gradient">
+                        Retake session
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

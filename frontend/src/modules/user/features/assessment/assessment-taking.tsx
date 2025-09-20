@@ -317,7 +317,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSessionStore } from "@/store/session.store";
-import { Route } from "@/routes/(user)/_layout/session/$id/category/$categoryId";
+import { Route } from "@/routes/_auth/(user)/_layout/session/$id/category/$categoryId";
 import {
   Card,
   CardContent,
@@ -350,7 +350,7 @@ export function SessionTaking() {
 
   // Store state
   const {
-    sessions,
+    currentSessionData,
     localAnswers,
     addAnswer,
     setCurrentSession,
@@ -358,7 +358,20 @@ export function SessionTaking() {
     setCurrentQuestion,
     resetCurrentQuestionIndex,
     currentQuestionIndex,
+    clearSession,
   } = useSessionStore();
+
+  // Ensure session data is loaded
+  useEffect(() => {
+    if (!currentSessionData) {
+      // Redirect back to session detail to load data
+      navigate({ to: "/session/$id", params: { id } });
+    }
+  }, [currentSessionData]);
+
+  if (!currentSessionData) {
+    return <div className="p-6">Loading...</div>;
+  }
 
   const { decodedDto } = useAuthState();
   const userId = decodedDto?.sub.id;
@@ -372,8 +385,8 @@ export function SessionTaking() {
     return nextIndex < CRISP_ORDER.length ? CRISP_ORDER[nextIndex] : null;
   };
 
-  const session = sessions.find((ss) => String(ss.sessionId) === String(id));
-  const currentCategory = session?.categories.find(
+  //const session = sessions.find((ss) => String(ss.sessionId) === String(id));
+  const currentCategory = currentSessionData?.categories.find(
     (c) => String(c.categoryId) === String(categoryId)
   );
   const questions = currentCategory?.questions || [];
@@ -495,7 +508,7 @@ export function SessionTaking() {
     return () => clearInterval(interval);
   }, [id, progressSync]);
 
-  if (!session || !currentCategory) {
+  if (!currentSessionData || !currentCategory) {
     return <div className="p-6">Loading session...</div>;
   }
 
@@ -556,10 +569,12 @@ export function SessionTaking() {
   const handleSubmitCategory = async () => {
     try {
       // Get current session data
-      const currentSession = sessions.find(
-        (ss) => String(ss.sessionId) === String(id)
-      );
-      if (!currentSession) return;
+      // const currentSession = sessions.find(
+      //   (ss) => String(ss.sessionId) === String(id)
+      // );
+      // if (!currentSession) return;
+
+      if (!currentSessionData) return;
 
       // Check if all questions in current category are answered
       const currentCategoryQuestions = currentCategory?.questions || [];
@@ -577,12 +592,14 @@ export function SessionTaking() {
 
       if (isCategoryComplete) {
         // Check if ALL categories are complete
-        const allCategoriesComplete = currentSession.categories.every((cat) => {
-          const categoryAnswers = Object.keys(localAnswers).filter(
-            (questionId) => cat.questions.some((q) => q.id === questionId)
-          );
-          return categoryAnswers.length === cat.questions.length;
-        });
+        const allCategoriesComplete = currentSessionData.categories.every(
+          (cat) => {
+            const categoryAnswers = Object.keys(localAnswers).filter(
+              (questionId) => cat.questions.some((q) => q.id === questionId)
+            );
+            return categoryAnswers.length === cat.questions.length;
+          }
+        );
 
         if (allCategoriesComplete) {
           status = "completed";
@@ -609,7 +626,7 @@ export function SessionTaking() {
           sessionId: id,
           payload: { userId: userId ?? "" },
         });
-
+        clearSession();
         // Navigate to results page with data
         navigate({
           to: "/session/$id/result",
@@ -628,7 +645,7 @@ export function SessionTaking() {
 
       if (nextCategory) {
         // Find the next category data
-        const nextCategoryData = currentSession.categories.find(
+        const nextCategoryData = currentSessionData.categories.find(
           (cat) => cat.category === nextCategory
         );
 

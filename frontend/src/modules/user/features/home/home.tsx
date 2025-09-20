@@ -54,33 +54,6 @@ export function Home() {
     },
   ];
 
-  const recentActivities = [
-    {
-      title: "Completed 'Digital Teaching Methods'",
-      time: "2 hours ago",
-      type: "course",
-      points: 100,
-    },
-    {
-      title: "Earned 'Innovation Leader' badge",
-      time: "1 day ago",
-      type: "achievement",
-      points: 50,
-    },
-    {
-      title: "Monthly Trivia - Perfect Score!",
-      time: "2 days ago",
-      type: "trivia",
-      points: 200,
-    },
-    {
-      title: "session completed with 95%",
-      time: "3 days ago",
-      type: "session",
-      points: 150,
-    },
-  ];
-
   const upcomingCourses = [
     {
       title: "Advanced Classroom Management",

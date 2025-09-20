@@ -111,8 +111,95 @@ export class SessionService {
     return completedSessions;
   }
 
+  // async getUserSessionWithStatuses(userId: string, userRoleId: number) {
+  //   // Get all active sessions and LEFT JOIN with user progress and role category questions
+  //   const sessionsWithProgress = await this.sessionRepo
+  //     .createQueryBuilder('session')
+  //     .leftJoinAndSelect(
+  //       'session.userProgress',
+  //       'progress',
+  //       'progress.userId = :userId',
+  //       { userId },
+  //     )
+  //     .leftJoinAndSelect('progress.role', 'role')
+  //     .leftJoinAndSelect(
+  //       'session.roleCategoryQuestions',
+  //       'roleCategoryQuestions',
+  //       'roleCategoryQuestions.roleId = :roleId',
+  //       { roleId: userRoleId },
+  //     )
+  //     .leftJoinAndSelect(
+  //       'roleCategoryQuestions.userAnswers',
+  //       'userAnswers',
+  //       'userAnswers.userId = :userId',
+  //       { userId },
+  //     )
+  //     .where('session.isActive = :isActive', { isActive: true })
+  //     .orderBy('session.createdAt', 'DESC')
+  //     .getMany();
+
+  //   // Map sessions with complete data including questions
+  //   return await Promise.all(
+  //     sessionsWithProgress.map(async (session) => {
+  //       const progress = session.userProgress?.[0]; // Get the user's progress if exists
+
+  //       // Get actual questions for each category
+  //       const categories = await Promise.all(
+  //         (session.roleCategoryQuestions || []).map(async (rcq) => {
+  //           const questions = await this.questionRepo.find({
+  //             where: { id: In(rcq.questionIds) },
+  //           });
+
+  //           return {
+  //             categoryId: rcq.id,
+  //             category: rcq.crispCategory,
+  //             questionsCount: rcq.questionsCount,
+  //             questionIds: rcq.questionIds,
+  //             questions: questions,
+  //             userAnswers: rcq.userAnswers || [],
+  //           };
+  //         }),
+  //       );
+
+  //       return {
+  //         sessionId: session.id,
+  //         sessionTitle: session.title,
+  //         sessionDescription: session.description,
+  //         sessionDifficulty: session.difficulty,
+  //         sessionCreatedAt: session.createdAt,
+  //         questionsGenerated: session.questionsGenerated,
+
+  //         // Progress data - null if user hasn't started
+  //         status: progress?.status || ProgressStatus.NOT_STARTED,
+  //         currentCategory: progress?.currentCategory || null,
+  //         progressPercentage: progress?.getProgressPercentage() || 0,
+  //         accuracyPercentage: progress?.getAccuracyPercentage() || 0,
+  //         totalQuestions: progress?.totalQuestions || 0,
+  //         answeredQuestions: progress?.answeredQuestions || 0,
+  //         correctlyAnsweredQuestions: progress?.correctlyAnsweredQuestions || 0,
+
+  //         // Timestamps
+  //         startedAt: progress?.startedAt || null,
+  //         lastActiveAt: progress?.lastActiveAt || null,
+  //         completedAt: progress?.completedAt || null,
+
+  //         // Categories with questions
+  //         categories: categories,
+  //         totalQuestionsAvailable: categories.reduce(
+  //           (sum, cat) => sum + cat.questionsCount,
+  //           0,
+  //         ),
+
+  //         // Helper flags
+  //         isStarted: !!progress,
+  //         isCompleted: progress?.isCompleted() || false,
+  //         canStart: session.questionsGenerated && session.isActive,
+  //       };
+  //     }),
+  //   );
+  // }
+  // UPDATED: Lightweight version - no questions, minimal data
   async getUserSessionWithStatuses(userId: string, userRoleId: number) {
-    // Get all active sessions and LEFT JOIN with user progress and role category questions
     const sessionsWithProgress = await this.sessionRepo
       .createQueryBuilder('session')
       .leftJoinAndSelect(
@@ -123,80 +210,62 @@ export class SessionService {
       )
       .leftJoinAndSelect('progress.role', 'role')
       .leftJoinAndSelect(
+        // Just JOIN, don't SELECT questions/answers
         'session.roleCategoryQuestions',
         'roleCategoryQuestions',
         'roleCategoryQuestions.roleId = :roleId',
         { roleId: userRoleId },
       )
-      .leftJoinAndSelect(
-        'roleCategoryQuestions.userAnswers',
-        'userAnswers',
-        'userAnswers.userId = :userId',
-        { userId },
-      )
       .where('session.isActive = :isActive', { isActive: true })
       .orderBy('session.createdAt', 'DESC')
       .getMany();
 
-    // Map sessions with complete data including questions
-    return await Promise.all(
-      sessionsWithProgress.map(async (session) => {
-        const progress = session.userProgress?.[0]; // Get the user's progress if exists
+    console.log('This is the session with progress: ', sessionsWithProgress);
 
-        // Get actual questions for each category
-        const categories = await Promise.all(
-          (session.roleCategoryQuestions || []).map(async (rcq) => {
-            const questions = await this.questionRepo.find({
-              where: { id: In(rcq.questionIds) },
-            });
+    return sessionsWithProgress.map((session) => {
+      const progress = session.userProgress?.[0];
 
-            return {
-              categoryId: rcq.id,
-              category: rcq.crispCategory,
-              questionsCount: rcq.questionsCount,
-              questionIds: rcq.questionIds,
-              questions: questions,
-              userAnswers: rcq.userAnswers || [],
-            };
-          }),
-        );
+      // Count questions without loading them
+      const totalQuestionsAvailable =
+        session.roleCategoryQuestions?.reduce(
+          (sum, rcq) => sum + rcq.questionsCount,
+          0,
+        ) || 0;
 
-        return {
-          sessionId: session.id,
-          sessionTitle: session.title,
-          sessionDescription: session.description,
-          sessionDifficulty: session.difficulty,
-          sessionCreatedAt: session.createdAt,
-          questionsGenerated: session.questionsGenerated,
+      console.log(
+        'This is the Total question count: ',
+        totalQuestionsAvailable,
+      );
 
-          // Progress data - null if user hasn't started
-          status: progress?.status || ProgressStatus.NOT_STARTED,
-          currentCategory: progress?.currentCategory || null,
-          progressPercentage: progress?.getProgressPercentage() || 0,
-          accuracyPercentage: progress?.getAccuracyPercentage() || 0,
-          totalQuestions: progress?.totalQuestions || 0,
-          answeredQuestions: progress?.answeredQuestions || 0,
-          correctlyAnsweredQuestions: progress?.correctlyAnsweredQuestions || 0,
+      return {
+        sessionId: session.id,
+        sessionTitle: session.title,
+        sessionDescription: session.description,
+        sessionDifficulty: session.difficulty,
+        sessionCreatedAt: session.createdAt,
+        questionsGenerated: session.questionsGenerated,
 
-          // Timestamps
-          startedAt: progress?.startedAt || null,
-          lastActiveAt: progress?.lastActiveAt || null,
-          completedAt: progress?.completedAt || null,
+        // Progress data - null if user hasn't started
+        status: progress?.status || ProgressStatus.NOT_STARTED,
+        progressPercentage: progress?.getProgressPercentage() || 0,
+        accuracyPercentage: progress?.getAccuracyPercentage() || 0,
 
-          // Categories with questions
-          categories: categories,
-          totalQuestionsAvailable: categories.reduce(
-            (sum, cat) => sum + cat.questionsCount,
-            0,
-          ),
+        // Timestamps
+        startedAt: progress?.startedAt || null,
+        lastActiveAt: progress?.lastActiveAt || null,
+        completedAt: progress?.completedAt || null,
 
-          // Helper flags
-          isStarted: !!progress,
-          isCompleted: progress?.isCompleted() || false,
-          canStart: session.questionsGenerated && session.isActive,
-        };
-      }),
-    );
+        // Counts only - NO question data
+        totalQuestionsAvailable,
+        answeredQuestions: progress?.answeredQuestions || 0,
+        correctlyAnsweredQuestions: progress?.correctlyAnsweredQuestions || 0,
+
+        // Helper flags
+        isStarted: !!progress,
+        isCompleted: progress?.isCompleted() || false,
+        canStart: session.questionsGenerated && session.isActive,
+      };
+    });
   }
   async findOneSession(id: string) {
     const session = await this.sessionRepo.findOne({
@@ -277,30 +346,66 @@ export class SessionService {
     // ... existing code until return statement
     const session = await this.getSession(sessionId);
 
-    // 2) Ensure or create progress
-    let progress = await this.getOrCreateProgress(sessionId, roleId, userId);
-    if (!progress) throw new Error('No progress');
+    console.log('Session from start or resume session', session);
 
-    // 3) Load role categories (cached if possible)
+    // 2) Load role categories (cached if possible)
     const roleCategories = await this.getCategoriesCached(sessionId, roleId);
 
-    // 4) Load user answers for these categories
-    const existingAnswers = await this.getUserAnswers(userId, roleCategories);
-
-    // 5) Build snapshot (answered/remaining)
-    const byCategory = this.buildCategorySnapshot(
+    // 3) Ensure or create progress
+    let progress = await this.getOrCreateProgress(
+      sessionId,
+      roleId,
+      userId,
       roleCategories,
-      existingAnswers,
+    );
+    console.log('Progress created: from start or resume session ', progress);
+
+    if (!progress) throw new Error('No progress');
+
+    // // 4) Load user answers for these categories
+    // const existingAnswers = await this.getUserAnswers(userId, roleCategories);
+
+    // // 5) Build snapshot (answered/remaining)
+    // const byCategory = this.buildCategorySnapshot(
+    //   roleCategories,
+    //   existingAnswers,
+    // );
+
+    const categories = await Promise.all(
+      (roleCategories || []).map(async (rcq) => {
+        const questions = await this.questionRepo.find({
+          where: { id: In(rcq.questionIds) },
+        });
+
+        const sanitizedQuestions = questions.map((q) => ({
+          id: q.id,
+          question: q.questionText,
+          options: q.options,
+          category: q.crispCategory,
+          difficulty: q.difficultyLevel,
+          // Don't include correctAnswer in response
+        }));
+
+        return {
+          categoryId: rcq.id,
+          category: rcq.crispCategory,
+          questionsCount: rcq.questionsCount,
+          questionIds: rcq.questionIds,
+          questions: sanitizedQuestions,
+          userAnswers: rcq.userAnswers || [],
+        };
+      }),
     );
 
     // 6) Update progress (status, part, scores)
-    this.updateProgressFromSnapshot(progress, byCategory);
-    await this.userSessionProgressRepo.save(progress);
+    //this.updateProgressFromSnapshot(progress, byCategory);
+    //await this.userSessionProgressRepo.save(progress);
     // 7) Return data needed for frontend store initialization
     return {
       session,
       progress,
-      questionsByCategory: this.formatQuestionsForFrontend(byCategory),
+      //questionsByCategory: this.formatQuestionsForFrontend(byCategory),
+      categories,
       syncInterval: 180000, // 3 minutes in ms
       autoSyncTriggers: ['categoryComplete', 'timeInterval', 'pageHide'],
     };
@@ -438,6 +543,7 @@ export class SessionService {
     sessionId: string,
     roleId: number,
     userId: string,
+    roleCategories: SessionRoleCategoryQuestion[],
   ) {
     let progress = await this.userSessionProgressRepo.findOne({
       where: { user: { id: userId }, session: { id: sessionId } },
@@ -445,21 +551,32 @@ export class SessionService {
     });
 
     if (!progress) {
+      const totalQuestionsAvailable =
+        roleCategories?.reduce((sum, rcq) => sum + rcq.questionsCount, 0) || 0;
+
+      console.log(
+        'This is the Total question count: ',
+        totalQuestionsAvailable,
+      );
       progress = this.userSessionProgressRepo.create({
-        user: { id: userId } as User,
-        session: { id: sessionId } as Session,
-        role: { id: roleId } as Role,
+        userId,
+        sessionId,
+        roleId,
         status: ProgressStatus.IN_PROGRESS,
         startedAt: new Date(),
         lastActiveAt: new Date(),
         currentCategory: CRISP.C,
         currentQuestionIndex: 0,
+        totalQuestions: totalQuestionsAvailable,
       });
+      console.log('Progress created: ', progress);
       return this.userSessionProgressRepo.save(progress);
     }
-    progress.lastActiveAt = new Date();
+    // progress.lastActiveAt = new Date();
     if (!progress.role || progress.role.id !== roleId)
       throw new Error('Role must match'); //Not sure which
+
+    return progress;
   }
 
   private async getCategoriesCached(sessionId: string, roleId: number) {
@@ -529,41 +646,41 @@ export class SessionService {
     });
   }
 
-  private updateProgressFromSnapshot(
-    progress: UserSessionProgress,
-    snapshot: any[],
-  ) {
-    const totalRequired = snapshot.reduce(
-      (sum, c) => sum + c.requiredIds.length,
-      0,
-    );
-    const totalAnswered = snapshot.reduce(
-      (sum, c) => sum + c.answeredIds.length,
-      0,
-    );
-    const totalCorrect = snapshot.reduce(
-      (sum, c) => sum + c.correctlyAnsweredCount,
-      0,
-    );
+  // private updateProgressFromSnapshot(
+  //   progress: UserSessionProgress,
+  //   snapshot: any[],
+  // ) {
+  //   const totalRequired = snapshot.reduce(
+  //     (sum, c) => sum + c.requiredIds.length,
+  //     0,
+  //   );
+  //   const totalAnswered = snapshot.reduce(
+  //     (sum, c) => sum + c.answeredIds.length,
+  //     0,
+  //   );
+  //   const totalCorrect = snapshot.reduce(
+  //     (sum, c) => sum + c.correctlyAnsweredCount,
+  //     0,
+  //   );
 
-    progress.totalQuestions = totalRequired;
-    progress.answeredQuestions = totalAnswered;
-    progress.correctlyAnsweredQuestions = totalCorrect;
+  //   progress.totalQuestions = totalRequired;
+  //   progress.answeredQuestions = totalAnswered;
+  //   progress.correctlyAnsweredQuestions = totalCorrect;
 
-    const next = snapshot.find((c) => c.remainingIds.length > 0);
-    if (next) {
-      progress.currentCategory = next.category as CRISP;
-      progress.currentQuestionIndex = next.requiredIds.indexOf(
-        next.remainingIds[0],
-      );
-      progress.status = ProgressStatus.IN_PROGRESS;
-    } else {
-      progress.currentCategory = undefined;
-      progress.currentQuestionIndex = 0;
-      progress.status = ProgressStatus.COMPLETED;
-      progress.completedAt = new Date();
-    }
-  }
+  //   const next = snapshot.find((c) => c.remainingIds.length > 0);
+  //   if (next) {
+  //     progress.currentCategory = next.category as CRISP;
+  //     progress.currentQuestionIndex = next.requiredIds.indexOf(
+  //       next.remainingIds[0],
+  //     );
+  //     progress.status = ProgressStatus.IN_PROGRESS;
+  //   } else {
+  //     progress.currentCategory = undefined;
+  //     progress.currentQuestionIndex = 0;
+  //     progress.status = ProgressStatus.COMPLETED;
+  //     progress.completedAt = new Date();
+  //   }
+  // }
 
   private formatResult(
     session: Session,
@@ -601,6 +718,10 @@ export class SessionService {
         throw new BadRequestException('Session not completed');
       }
 
+      const user = await queryRunner.manager.findOne(User, {
+        where: { id: userId },
+      });
+
       // 2) Calculate final scores and performance metrics
       const completionData = await this.calculateCompletionMetrics(
         userId,
@@ -611,7 +732,8 @@ export class SessionService {
       // 3) Update progress with final metrics
       await queryRunner.manager.update(UserSessionProgress, progress.id, {
         completedAt: new Date(),
-        ...completionData.finalScores,
+        overallScore: completionData.overallScore,
+        categoryScores: completionData.categoryScores,
       });
 
       // 4) Generate certificate/completion record
@@ -646,7 +768,7 @@ export class SessionService {
           'generate',
           {
             certificateId,
-            userId: progress.userId,
+            user,
             sessionId: progress.sessionId,
             roleId: progress.roleId,
             score: completionData.overallScore,
@@ -782,9 +904,14 @@ export class SessionService {
       .createQueryBuilder(UserSessionProgress, 'up')
       .where('up.sessionId = :sessionId', { sessionId })
       .andWhere(
-        'up.roleId = (SELECT roleId FROM user_progress WHERE userId = :userId AND sessionId = :sessionId)',
+        `up."roleId" = (
+     SELECT "roleId"
+     FROM user_session_progress
+     WHERE "userId" = :userId AND "sessionId" = :sessionId
+   )`,
         { userId, sessionId },
       )
+
       .andWhere('up.status = :status', { status: 'completed' })
       .andWhere(
         '(up.correctlyAnsweredQuestions * 100.0 / up.answeredQuestions) > :userScore',
@@ -844,6 +971,7 @@ export class SessionService {
 
   private formatQuestionsForFrontend(snapshot: any[]) {
     return snapshot.map((categoryData) => ({
+      categoryId: categoryData.id,
       category: categoryData.category,
       questions: categoryData.rc.questionIds.map((qId, index) => ({
         id: qId,
@@ -1184,7 +1312,7 @@ export class SessionService {
       totalCorrect: progress.correctlyAnsweredQuestions,
       progressPercentage: progress.getProgressPercentage(),
       status: progress.status,
-      completedAt: progress.completedAt,
+      completedAt: progress.completedAt ?? undefined,
       isComplete: progress.status === 'completed',
     };
   }
@@ -1271,5 +1399,19 @@ export class SessionService {
    */
   private checkAnswer(correctAnswer: number, userAnswer: number): boolean {
     return correctAnswer === userAnswer;
+  }
+
+  async resetUserProgress(sessionId: string, dto: StartSessionDto) {
+    const progress = await this.userSessionProgressRepo.findOne({
+      where: { userId: dto.userId, sessionId },
+    });
+
+    if (!progress) {
+      throw new Error('Progress not found');
+    }
+
+    progress.resetProgress();
+    await this.userSessionProgressRepo.save(progress);
+    return this.startOrResumeSession(sessionId, dto);
   }
 }

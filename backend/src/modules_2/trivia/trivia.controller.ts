@@ -44,10 +44,11 @@ export class TriviaController {
   }
 
   @Post('start')
-  async startTrivia(@Body() startTriviaDto: StartTriviaDto, @Request() req) {
+  async startTrivia(@Body() startTriviaDto: StartTriviaDto) {
+    console.log('This is the start trivia dto: ', startTriviaDto);
     const participation = await this.triviaService.startTrivia(
       startTriviaDto.triviaId,
-      req.user.id,
+      startTriviaDto.userId,
     );
 
     // Get trivia questions

@@ -208,7 +208,7 @@ export class SessionManagementService {
         success: true,
         finalScore: completionData.overallScore,
         categoryScores: completionData.categoryScores,
-        certificate,
+        certificateId: certificate,
         completionTime: completionData.timeSpent,
         rank: completionData.roleRank,
       };

@@ -10,11 +10,13 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToOne,
 } from 'typeorm';
 //import { SessionRoleQuestion } from './session-role-category-questions.entity';
 import { Session } from './session.entity';
 import { CRISP } from 'src/core/enums/training.enum';
 import { ProgressStatus } from 'src/core/enums/user.enum';
+import { Certificate } from 'src/modules_2/certificate/entities/certificate.entity';
 
 // @Entity('user_session_progress')
 // @Unique(['user', 'session'])
@@ -170,9 +172,9 @@ export class UserSessionProgress {
   @Column({
     type: 'enum',
     enum: CRISP,
-    nullable: true,
+    default: CRISP.C,
   })
-  currentCategory?: CRISP;
+  currentCategory: CRISP;
 
   @Column({ default: 0 })
   currentQuestionIndex: number; // Index in the question array for current category
@@ -187,15 +189,24 @@ export class UserSessionProgress {
   @Column({ default: 0 })
   correctlyAnsweredQuestions: number; // How many answered correctly
 
+  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  overallScore: number;
+
+  @Column({
+    type: 'json',
+    default: () => "'{}'",
+  })
+  categoryScores: Record<string, number>;
+
   // Timestamps
-  @Column({ nullable: true })
-  startedAt: Date;
+  @Column({ type: 'timestamp', nullable: true })
+  startedAt: Date | null;
 
-  @Column({ nullable: true })
-  lastActiveAt: Date;
+  @Column({ type: 'timestamp', nullable: true })
+  lastActiveAt: Date | null;
 
-  @Column({ nullable: true })
-  completedAt: Date;
+  @Column({ type: 'timestamp', nullable: true })
+  completedAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -216,6 +227,9 @@ export class UserSessionProgress {
   @JoinColumn({ name: 'roleId' })
   role: Role;
 
+  @OneToOne(() => Certificate, (certificate) => certificate.userProgress)
+  certificate: Certificate;
+
   // Helper methods
   getProgressPercentage(): number {
     if (this.totalQuestions === 0) return 0;
@@ -232,5 +246,23 @@ export class UserSessionProgress {
       this.status === 'completed' ||
       this.answeredQuestions === this.totalQuestions
     );
+  }
+
+  // In user-session-progress.entity.ts
+
+  resetProgress(): void {
+    this.status = 'not_started' as any; // or ProgressStatus.NOT_STARTED
+    this.currentCategory = CRISP.C;
+    this.currentQuestionIndex = 0;
+    this.answeredQuestions = 0;
+    this.correctlyAnsweredQuestions = 0;
+    this.overallScore = 0;
+    this.categoryScores = {};
+
+    this.startedAt = new Date();
+    this.lastActiveAt = new Date();
+    this.completedAt = null;
+
+    // keep createdAt, updatedAt untouched (updatedAt will auto-update when saved)
   }
 }

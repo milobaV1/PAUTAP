@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeormConfigAsync } from './infrastructure/database/database.config';
 // import { UsersModule } from './modules/users/users.module';
@@ -24,6 +24,9 @@ import { CacheableMemory } from 'cacheable';
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TriviaModule } from './modules_2/trivia/trivia.module';
+import { TriviaSeeder } from './core/seeds/trivia.seeder';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { EmailModule } from './modules_2/email/email.module';
 
 @Module({
   imports: [
@@ -37,6 +40,7 @@ import { TriviaModule } from './modules_2/trivia/trivia.module';
     // UsersModule,
     AuthModule,
     CertificateModule,
+    EmailModule,
     QuestionBankModule,
     SessionModule,
     UsersModule,
@@ -62,11 +66,27 @@ import { TriviaModule } from './modules_2/trivia/trivia.module';
     }),
     //BullModule.registerQueue({ name: 'email' }, { name: 'leaderboard' }),
     ScheduleModule.forRoot(),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        transport: {
+          host: configService.get<string>('EMAIL_HOST'),
+          port: configService.get<number>('EMAIL_PORT'),
+          secure: false,
+          auth: {
+            user: configService.get<string>('EMAIL_USERNAME'),
+            pass: configService.get<string>('EMAIL_PASSWORD'),
+          },
+        },
+      }),
+    }),
   ],
   controllers: [AppController],
   providers: [
     AppService,
     AdminSeeder,
+    //TriviaSeeder,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

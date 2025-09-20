@@ -17,12 +17,14 @@ import { TriviaParticipation } from './entities/trivia-participation.entity';
 import { Trivia } from './entities/trivia.entity';
 import { ParticipationStatus, TriviaStatus } from 'src/core/enums/trivia.enum';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { UsersService } from '../users/users.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TriviaService {
   constructor(
     @InjectQueue('email') private readonly emailQueue: Queue,
-    @InjectQueue('leaderboard') private readonly leaderboardQueue: Queue,
+    //@InjectQueue('leaderboard') private readonly leaderboardQueue: Queue,
     @InjectRepository(Trivia)
     private triviaRepository: Repository<Trivia>,
     @InjectRepository(TriviaParticipation)
@@ -35,6 +37,8 @@ export class TriviaService {
     private userRepository: Repository<User>,
     @InjectRepository(QuestionBank)
     private questionBankRepository: Repository<QuestionBank>,
+    private userService: UsersService,
+    private readonly configService: ConfigService,
   ) {}
   create(createTriviaDto: CreateTriviaDto) {
     return 'This action adds a new trivia';
@@ -84,10 +88,116 @@ export class TriviaService {
 
     const savedTrivia = await this.triviaRepository.save(trivia);
 
-    // enqueue emails — workers will handle actual sending (retries, backoff)
-    await this.emailQueue.add('send-trivia-notifications', {
-      triviaId: savedTrivia.id,
-    });
+    // // enqueue emails — workers will handle actual sending (retries, backoff)
+    // await this.emailQueue.add('send-trivia-notification', {
+    //   triviaId: savedTrivia.id,
+    // });
+    const users = await this.userService.findAll();
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    // const url = `${frontendUrl}/trivia`;
+    // const jobs = users.map((user) => ({
+    //   name: 'send trivia', // job name
+    //   data: {
+    //     to: user.email,
+    //     subject: 'New Trivia',
+    //     html: `
+    //   <p>Hi</p>
+    //   <p>Click here to go to the trivia page <a href="${url}">reset-password</a></p>
+    // `,
+    //   },
+    //   opts: {
+    //     attempts: 3,
+    //     backoff: { type: 'exponential', delay: 5000 },
+    //     removeOnComplete: 10,
+    //     removeOnFail: 5,
+    //   },
+    // }));
+
+    const url = `${frontendUrl}/trivia`;
+
+    const jobs = users.map((user) => ({
+      name: 'send trivia',
+      data: {
+        to: user.email,
+        subject: '🧩 New Trivia Challenge Awaits!',
+        html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              background-color: #f9fafb;
+              color: #2e3f6f;
+              margin: 0;
+              padding: 0;
+            }
+            .container {
+              max-width: 600px;
+              margin: 20px auto;
+              background: #ffffff;
+              padding: 30px;
+              border-radius: 8px;
+              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            }
+            h1 {
+              font-size: 22px;
+              margin-bottom: 20px;
+              text-align: center;
+              color: #2e3f6f;
+            }
+            p {
+              font-size: 16px;
+              line-height: 1.5;
+              color: #444;
+            }
+            .button {
+              display: inline-block;
+              padding: 12px 20px;
+              margin-top: 20px;
+              background-color: #2e3f6f;
+              color: #ffffff !important;
+              text-decoration: none;
+              font-weight: bold;
+              border-radius: 6px;
+            }
+            .footer {
+              margin-top: 30px;
+              font-size: 12px;
+              color: #777;
+              text-align: center;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>New Trivia Challenge 🎉</h1>
+            <p>Hi ${user.first_name || ''},</p>
+            <p>
+              A new trivia challenge has just been released! Test your knowledge and see how you rank against others.
+            </p>
+            <p style="text-align: center;">
+              <a href="${url}" class="button">Play Trivia Now</a>
+            </p>
+            <div class="footer">
+              <p>You’re receiving this email because you use the PAU Training Application.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+      },
+      opts: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: 10,
+        removeOnFail: 5,
+      },
+    }));
+
+    await this.emailQueue.addBulk(jobs);
 
     return savedTrivia;
   }
@@ -95,13 +205,17 @@ export class TriviaService {
   // Cron job to activate scheduled trivias - runs every minute
   @Cron(CronExpression.EVERY_MINUTE)
   async activateScheduledTrivias(): Promise<void> {
+    console.log('[CRON] Checking for scheduled trivias to activate…');
     const now = new Date();
+    console.log(now);
     const scheduledTrivias = await this.triviaRepository.find({
       where: {
         status: TriviaStatus.SCHEDULED,
         scheduledAt: LessThan(now),
       },
     });
+
+    console.log('Scheduled Trivias: ', scheduledTrivias);
 
     for (const trivia of scheduledTrivias) {
       trivia.status = TriviaStatus.ACTIVE;
@@ -172,9 +286,12 @@ export class TriviaService {
     triviaId: string,
     userId: string,
   ): Promise<TriviaParticipation> {
+    console.log('Trivia Id: ', triviaId);
     const trivia = await this.triviaRepository.findOne({
       where: { id: triviaId },
     });
+
+    console.log('Found Trivia: ', trivia);
 
     if (!trivia) {
       throw new NotFoundException('Trivia not found');
@@ -278,13 +395,39 @@ export class TriviaService {
       participation.correctAnswers += 1;
     }
     participation.score =
-      (participation.correctAnswers / participation.totalAnswered) * 100;
+      (participation.correctAnswers / participation.trivia.totalQuestions) *
+      100;
 
     await this.participationRepository.save(participation);
 
     return savedAnswer;
   }
 
+  // async submitTrivia(participationId: string): Promise<TriviaParticipation> {
+  //   const participation = await this.participationRepository.findOne({
+  //     where: { id: participationId },
+  //     relations: ['answers'],
+  //   });
+
+  //   if (!participation) {
+  //     throw new NotFoundException('Participation not found');
+  //   }
+
+  //   if (participation.status !== ParticipationStatus.IN_PROGRESS) {
+  //     throw new BadRequestException('Participation is not in progress');
+  //   }
+
+  //   // Calculate final stats
+  //   const now = new Date();
+  //   participation.status = ParticipationStatus.SUBMITTED;
+  //   participation.completedAt = now;
+  //   participation.submittedAt = now;
+  //   participation.timeSpent = Math.floor(
+  //     (now.getTime() - participation.startedAt.getTime()) / 1000,
+  //   );
+
+  //   return this.participationRepository.save(participation);
+  // }
   async submitTrivia(participationId: string): Promise<TriviaParticipation> {
     const participation = await this.participationRepository.findOne({
       where: { id: participationId },
@@ -295,20 +438,34 @@ export class TriviaService {
       throw new NotFoundException('Participation not found');
     }
 
-    if (participation.status !== ParticipationStatus.IN_PROGRESS) {
-      throw new BadRequestException('Participation is not in progress');
+    // If already submitted/completed, block resubmission
+    if (
+      participation.status === ParticipationStatus.SUBMITTED ||
+      participation.status === ParticipationStatus.COMPLETED
+    ) {
+      throw new BadRequestException('You have already submitted this trivia');
     }
 
-    // Calculate final stats
-    const now = new Date();
-    participation.status = ParticipationStatus.SUBMITTED;
-    participation.completedAt = now;
-    participation.submittedAt = now;
-    participation.timeSpent = Math.floor(
-      (now.getTime() - participation.startedAt.getTime()) / 1000,
-    );
+    // Allow finalization if IN_PROGRESS or EXPIRED
+    if (
+      participation.status === ParticipationStatus.IN_PROGRESS ||
+      participation.status === ParticipationStatus.EXPIRED
+    ) {
+      const now = new Date();
+      participation.status = ParticipationStatus.SUBMITTED;
+      participation.completedAt = now;
+      participation.submittedAt = now;
+      participation.timeSpent = Math.floor(
+        (now.getTime() - participation.startedAt.getTime()) / 1000,
+      );
 
-    return this.participationRepository.save(participation);
+      return this.participationRepository.save(participation);
+    }
+
+    // Otherwise block
+    throw new BadRequestException(
+      `Trivia cannot be submitted in current state: ${participation.status}`,
+    );
   }
 
   async getTriviaQuestions(triviaId: string): Promise<QuestionBank[]> {

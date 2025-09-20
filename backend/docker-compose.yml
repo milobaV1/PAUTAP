@@ -62,7 +62,11 @@ services:
       - db
     networks:
       - app-network
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
 
 networks:
   app-network:
     driver: bridge
+volumes: # ✅ define the volume here
+  pgadmin-data:

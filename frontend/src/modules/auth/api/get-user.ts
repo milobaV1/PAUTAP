@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 
 export async function getUser(userId: string): Promise<User | undefined> {
   try {
-    const response = await client.get(`users/${userId}`);
+    const response = await client.get(`/users/${userId}`);
     console.log(`User with id: ${userId}: `, response.data);
     return response.data as User;
   } catch (error) {

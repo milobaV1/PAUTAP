@@ -13,12 +13,20 @@ export const getAxiosError = (error: any): string => {
       const data = info as any;
 
       switch (status) {
+        case 400:
+          return data?.message || "Bad request. Please check your input.";
         case 401:
-          return "Authentication failed. Please log in again.";
+          return data?.message || "Authentication failed. Please log in again.";
         case 403:
-          return "Access denied. You don't have permission to perform this action.";
+          return (
+            data?.message ||
+            "Access denied. You don't have permission to perform this action."
+          );
         case 404:
-          return "Oops! The resource you're looking for was not found.";
+          return (
+            data?.message ||
+            "Oops! The resource you're looking for was not found."
+          );
         case 422:
           if (data && data.errors) {
             const fieldErrors = data.errors;

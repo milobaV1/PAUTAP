@@ -15,6 +15,7 @@ import { Session } from '../session/entities/session.entity';
 import { CompletionMetrics } from 'src/core/interfaces/session.interface';
 import { UserSessionProgress } from '../session/entities/user-session-progress.entity';
 import puppeteer from 'puppeteer';
+import { CertificateListDto } from 'src/core/interfaces/certificate.interface';
 @Injectable()
 export class CertificateService {
   constructor(
@@ -41,9 +42,7 @@ export class CertificateService {
     });
 
     if (existingCert) {
-      throw new BadRequestException(
-        'Certificate already issued for this user and session',
-      );
+      return existingCert;
     }
 
     // 3. Get user and session data with relations
@@ -137,7 +136,7 @@ export class CertificateService {
     roleName: string;
     score: number;
     passingScore: number;
-    completionDate: Date;
+    completionDate: Date | null;
     issuedAt: Date;
     certificateId: string;
   }): Promise<Buffer> {
@@ -271,7 +270,8 @@ export class CertificateService {
     //     </body>
     //   </html>
     // `;
-    const template = `<html>
+    const template = `
+    <html>
   <head>
     <style>
       body {
@@ -282,90 +282,79 @@ export class CertificateService {
         color: #2e3f6f;
       }
       .certificate {
-        width: 1000px;
-        margin: 40px auto;
-        padding: 60px;
+        width: 750px; 
+        min-height: 750px; 
+        margin: 20px auto;
+        padding: 40px 50px;
         background: #fff;
-        border: 12px solid #2e3f6f;
+        border: 10px solid #2e3f6f;
         position: relative;
+        box-sizing: border-box;
       }
       .header {
         text-align: center;
         margin-bottom: 40px;
       }
       .header h1 {
-        font-size: 40px;
+        font-size: 36px;
         margin: 0;
         font-weight: bold;
       }
       .header p {
-        font-size: 18px;
-        margin-top: 10px;
+        font-size: 16px;
+        margin-top: 8px;
         color: #555;
       }
       .recipient {
         text-align: center;
-        margin: 50px 0;
+        margin: 40px 0;
       }
       .recipient h2 {
-        font-size: 36px;
+        font-size: 32px;
         margin: 0;
         font-weight: bold;
         border-bottom: 3px solid #2e3f6f;
         display: inline-block;
-        padding-bottom: 8px;
+        padding-bottom: 6px;
       }
       .recipient .role-info {
-        font-size: 16px;
+        font-size: 14px;
         color: #666;
-        margin-top: 10px;
+        margin-top: 8px;
       }
       .session {
         text-align: center;
-        margin: 40px 0;
+        margin: 30px 0;
       }
       .session h3 {
-        font-size: 28px;
+        font-size: 24px;
         margin: 0;
       }
       .session .difficulty {
-        font-size: 16px;
+        font-size: 14px;
         color: #666;
-        margin-top: 10px;
+        margin-top: 8px;
         text-transform: uppercase;
         font-weight: bold;
       }
       .score-section {
         text-align: center;
-        margin: 30px 0;
-        padding: 20px;
+        margin: 30px auto;
+        padding: 15px;
         background: #f8f9fa;
-        border-radius: 10px;
+        border-radius: 8px;
+        width: 80%;
       }
       .final-score {
-        font-size: 24px;
+        font-size: 20px;
         font-weight: bold;
-        color: "#28a745";
-      }
-      .category-breakdown {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 10px;
-        margin-top: 15px;
-      }
-      .category-score {
-        display: flex;
-        justify-content: space-between;
-        padding: 5px 10px;
-        background: white;
-        border-radius: 5px;
-        font-size: 14px;
+        color: #28a745;
       }
       .details {
         display: flex;
         justify-content: space-between;
-        margin-top: 60px;
-        font-size: 14px;
+        margin-top: 50px;
+        font-size: 13px;
         color: #444;
       }
       .details div {
@@ -375,19 +364,10 @@ export class CertificateService {
       .footer {
         text-align: center;
         margin-top: 60px;
-        font-size: 12px;
+        font-size: 11px;
         color: #777;
         border-top: 1px solid #ccc;
-        padding-top: 15px;
-      }
-      .validity-notice {
-        background: #fff3cd;
-        border: 1px solid #ffeaa7;
-        padding: 10px;
-        border-radius: 5px;
-        margin-top: 20px;
-        text-align: center;
-        font-size: 12px;
+        padding-top: 12px;
       }
     </style>
   </head>
@@ -400,9 +380,7 @@ export class CertificateService {
 
       <div class="recipient">
         <h2>${data.name}</h2>
-        <div class="role-info">
-          ${data.roleName}
-        </div>
+        <div class="role-info">${data.roleName}</div>
       </div>
 
       <div class="session">
@@ -419,7 +397,7 @@ export class CertificateService {
       <div class="details">
         <div>
           <p><strong>Completion Date</strong></p>
-          <p>${data.completionDate.toDateString()}</p>
+          <p>${data.completionDate?.toDateString()}</p>
         </div>
         <div>
           <p><strong>Certificate ID</strong></p>
@@ -430,7 +408,6 @@ export class CertificateService {
           <p>${data.issuedAt.toDateString()}</p>
         </div>
       </div>
-      }
 
       <div class="footer">
         This certificate can be verified at pau.edu.ng/verify using the
@@ -520,6 +497,12 @@ export class CertificateService {
     });
   }
 
+  async findOneCertificate(id: string): Promise<Certificate | null> {
+    return this.certRepo.findOne({
+      where: { id },
+    });
+  }
+
   // async revokeCertificate(
   //   certificateId: string,
   //   reason?: string,
@@ -532,4 +515,44 @@ export class CertificateService {
 
   //   return this.certRepo.save(cert);
   // }
+
+  async getUserCertificatesWithDetails(
+    userId: string,
+  ): Promise<CertificateListDto[]> {
+    // Get certificates for a specific user
+    const certificates = await this.certRepo
+      .createQueryBuilder('certificate')
+      .leftJoinAndSelect('certificate.session', 'session')
+      .where('certificate.userId = :userId', { userId })
+      .select([
+        'certificate.id',
+        'certificate.certificateId',
+        'certificate.score',
+        'certificate.createdAt',
+        'session.title',
+        'session.description',
+        'session.createdAt',
+      ])
+      .getMany();
+
+    // Calculate average score for this user
+    const avgResult = await this.certRepo
+      .createQueryBuilder('certificate')
+      .select('AVG(certificate.score)', 'averageScore')
+      .where('certificate.userId = :userId', { userId })
+      .getRawOne();
+
+    const averageScore = parseFloat(avgResult.averageScore) || 0;
+
+    return certificates.map((cert) => ({
+      id: cert.id,
+      certificateId: cert.certificateId,
+      sessionName: cert.session?.title || 'Unknown Session',
+      sessionDescription: cert.session?.description || '',
+      sessionCreatedAt: cert.session?.createdAt || cert.createdAt,
+      score: cert.score,
+      createdAt: cert.createdAt,
+      averageScore: Number(averageScore.toFixed(2)),
+    }));
+  }
 }

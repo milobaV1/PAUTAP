@@ -61,16 +61,12 @@ export class Certificate {
   session: Session;
 
   // One-to-one with UserSessionProgress to link the completion record
-  @OneToOne(() => UserSessionProgress, {
-    nullable: true, // In case progress record is cleaned up
+  @ManyToOne(() => UserSessionProgress, {
+    nullable: true,
   })
-  @JoinColumn({
-    name: 'userId',
-    referencedColumnName: 'userId',
-  })
-  @JoinColumn({
-    name: 'sessionId',
-    referencedColumnName: 'sessionId',
-  })
+  @JoinColumn([
+    { name: 'userId', referencedColumnName: 'userId' },
+    { name: 'sessionId', referencedColumnName: 'sessionId' },
+  ])
   userProgress: UserSessionProgress;
 }

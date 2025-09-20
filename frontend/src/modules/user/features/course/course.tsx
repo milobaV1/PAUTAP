@@ -27,7 +27,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { Route } from "@/routes/(user)/_layout/program/$id/course/$courseId";
+import { Route } from "@/routes/_auth/(user)/_layout/program/$id/course/$courseId";
 import { useNavigate } from "@tanstack/react-router";
 
 export function CourseContent() {

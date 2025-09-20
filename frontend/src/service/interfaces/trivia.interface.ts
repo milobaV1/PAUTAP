@@ -10,27 +10,31 @@ export interface CurrentTriviaResponse {
     startedAt?: string;
     endedAt?: string;
   };
-  userParticipation?: {
-    id: string;
-    triviaId: string;
-    userId: string;
-    status:
-      | "not_started"
-      | "in_progress"
-      | "completed"
-      | "submitted"
-      | "expired";
-    score: number;
-    correctAnswers: number;
-    totalAnswered: number;
-    timeSpent?: number;
-    startedAt?: string;
-    completedAt?: string;
-    submittedAt?: string;
-  };
+  userParticipation?: TriviaParticipation;
   canParticipate: boolean;
   message?: string;
 }
+
+export interface TriviaParticipation {
+  id: string;
+  triviaId: string;
+  userId: string;
+  status: ParticipationStatus;
+  score: number;
+  correctAnswers: number;
+  totalAnswered: number;
+  timeSpent?: number;
+  startedAt?: string;
+  completedAt?: string;
+  submittedAt?: string;
+}
+
+export type ParticipationStatus =
+  | "not_started"
+  | "in_progress"
+  | "completed"
+  | "submitted"
+  | "expired";
 
 export interface TriviaQuestion {
   id: string;
@@ -49,6 +53,11 @@ export interface StartTriviaResponse {
     startedAt: string;
   };
   questions: TriviaQuestion[];
+}
+
+export interface StartTriviaDto {
+  triviaId: string;
+  userId: string;
 }
 
 export interface LeaderboardEntry {

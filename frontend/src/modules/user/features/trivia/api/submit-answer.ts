@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 export async function submitAnswer(data: {
   participationId: string;
   questionId: string;
-  selectedAnswer: string;
+  selectedAnswer: number;
   timeSpent: number;
 }) {
   try {

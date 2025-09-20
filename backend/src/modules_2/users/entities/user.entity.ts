@@ -41,6 +41,9 @@ export class User {
   @Column({ type: 'enum', enum: Difficulty, default: Difficulty.BEGINNER })
   level: Difficulty;
 
+  @Column({ nullable: true })
+  resetToken?: string;
+
   @CreateDateColumn()
   created_at: Date;
 

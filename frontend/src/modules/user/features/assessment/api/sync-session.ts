@@ -24,14 +24,22 @@ import { useMutation } from "@tanstack/react-query";
 // }
 
 export const sessionApi = {
-  syncProgress: async (userId: string, sessionId: string, syncData: any) => {
+  syncProgress: async (sessionId: string, syncData: any) => {
     const { data } = await client.post(`/session/${sessionId}/sync`, syncData);
     return data;
   },
-  updateOnlyStatus: async (sessionId: string, status: string) => {
+  updateOnlyStatus: async (
+    userId: string,
+    sessionId: string,
+    status: string
+  ) => {
+    const payload = {
+      userId,
+      status,
+    };
     const { data } = await client.patch(
-      `/sessions/${sessionId}/status`,
-      status
+      `/session/${sessionId}/status`,
+      payload
     );
     return data;
   },
@@ -60,13 +68,17 @@ export const useProgressSync = () => {
       if (unsyncedAnswers.length === 0) {
         // If no unsynced answers but status update needed
         if (status !== "in_progress") {
-          const response = await sessionApi.updateOnlyStatus(sessionId, status);
+          const response = await sessionApi.updateOnlyStatus(
+            userId,
+            sessionId,
+            status
+          );
 
-          if (!response.ok) {
-            throw new Error("Failed to update session status");
-          }
+          // if (!response.ok) {
+          //   throw new Error("Failed to update session status");
+          // }
 
-          return response.json();
+          return response.data;
         }
         return null;
       }
@@ -85,7 +97,7 @@ export const useProgressSync = () => {
         },
       };
       console.log("sync Data: ", syncData);
-      return sessionApi.syncProgress(userId, sessionId, syncData);
+      return sessionApi.syncProgress(sessionId, syncData);
     },
     // onSuccess: (data, variables) => {
     //   const syncedQuestionIds = unsyncedAnswers.map((a) => a.questionId);

@@ -123,4 +123,8 @@ export class UsersService {
 
     return roles;
   }
+
+  async save(user: User): Promise<User> {
+    return this.userRepo.save(user);
+  }
 }

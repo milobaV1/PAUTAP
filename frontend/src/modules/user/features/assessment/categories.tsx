@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -18,28 +18,56 @@ import {
   Award,
   FileCheck,
 } from "lucide-react";
-import { Route } from "@/routes/(user)/_layout/session/$id";
+import { Route } from "@/routes/_auth/(user)/_layout/session/$id";
 import { useSessionStore } from "@/store/session.store";
 import type { UsersessionData } from "@/service/interfaces/session.interface";
 import { CRISP } from "@/service/enums/crisp.enum";
 import { useNavigate } from "@tanstack/react-router";
+import { useStartOrResumeSession } from "./api/get-sessions";
+import { useAuthState } from "@/store/auth.store";
 
 export function CategorySelection() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { sessions, localAnswers } = useSessionStore();
-  console.log("Sessions from the store: ", sessions);
-  const session = sessions.find((s) => String(s.sessionId) === String(id)) as
-    | UsersessionData
-    | undefined;
+  const { decodedDto } = useAuthState();
+  const { currentSessionData, localAnswers } = useSessionStore();
+  const startSessionMutation = useStartOrResumeSession();
 
-  if (!session) {
-    return <div className="p-6">Loading session...</div>;
+  console.log("Current session data: ", currentSessionData);
+  // const { sessions, localAnswers } = useSessionStore();
+  // console.log("Sessions from the store: ", sessions);
+  // const session = sessions.find((s) => String(s.sessionId) === String(id)) as
+  //   | UsersessionData
+  //   | undefined;
+
+  // if (!session) {
+  //   return <div className="p-6">Loading session...</div>;
+  // }
+
+  useEffect(() => {
+    if (id && !currentSessionData && decodedDto) {
+      // Initialize full session data when entering session
+      startSessionMutation.mutate({
+        sessionId: id,
+        userId: decodedDto.sub.id,
+        roleId: decodedDto.sub.roleId,
+      });
+    }
+  }, [id, currentSessionData, decodedDto]);
+
+  if (startSessionMutation.isPending) {
+    return <div className="p-6">Loading session details...</div>;
+  }
+
+  if (!currentSessionData) {
+    return <div className="p-6">Failed to load session details.</div>;
   }
 
   const CRISP_ORDER: CRISP[] = [CRISP.C, CRISP.R, CRISP.I, CRISP.S, CRISP.P];
 
-  const categories = session.categories || [];
+  // const categories = session.categories || [];
+  const categories = currentSessionData.categories || [];
+
   const sortedCategories = [...categories].sort(
     (a, b) => CRISP_ORDER.indexOf(a.category) - CRISP_ORDER.indexOf(b.category)
   );
@@ -57,6 +85,11 @@ export function CategorySelection() {
     (sum, cat) => sum + cat.questionsCount,
     0
   );
+
+  // const totalQuestions = categories.reduce(
+  //   (sum, cat) => sum + cat.totalQuestions,
+  //   0
+  // );
   const totalAnswered = Object.keys(localAnswers).length;
   const overallProgress =
     totalQuestions > 0 ? (totalAnswered / totalQuestions) * 100 : 0;
@@ -95,14 +128,14 @@ export function CategorySelection() {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <CardTitle className="text-2xl mb-2">
-                  {session.sessionTitle}
+                  {currentSessionData.session.title}
                 </CardTitle>
                 <CardDescription className="text-base">
-                  {session.sessionDescription}
+                  {currentSessionData.session.description}
                 </CardDescription>
               </div>
               <Badge variant="outline" className="text-sm">
-                {session.totalQuestionsAvailable} Questions
+                {currentSessionData.progress.totalQuestions} Questions
               </Badge>
             </div>
           </CardHeader>
@@ -117,36 +150,41 @@ export function CategorySelection() {
               <div className="text-center">
                 <Clock className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
                 <div className="font-semibold">
-                  {session.startedAt ? "In Progress" : "Not Started"}
+                  {currentSessionData.progress.startedAt
+                    ? "In Progress"
+                    : "Not Started"}
                 </div>
                 <div className="text-sm text-muted-foreground">Status</div>
               </div>
               <div className="text-center">
                 <Target className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
                 <div className="font-semibold">
-                  {session.accuracyPercentage ?? 0}%
+                  {currentSessionData.progress.accuracyPercentage ?? 0}%
                 </div>
                 <div className="text-sm text-muted-foreground">Accuracy</div>
               </div>
               <div className="text-center">
                 <Award className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
                 <div className="font-semibold">
-                  {session.progressPercentage ?? 0}%
+                  {currentSessionData.progress.progressPercentage ?? 0}%
                 </div>
                 <div className="text-sm text-muted-foreground">Progress</div>
               </div>
             </div>
 
             {/* Overall Progress */}
-            {session.progressPercentage > 0 && (
+            {currentSessionData.progress.progressPercentage > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold">Overall Progress</h3>
                   <span className="text-sm text-muted-foreground">
-                    {session.progressPercentage}% completed
+                    {currentSessionData.progress.progressPercentage}% completed
                   </span>
                 </div>
-                <Progress value={session.progressPercentage} className="h-3" />
+                <Progress
+                  value={currentSessionData.progress.progressPercentage}
+                  className="h-3"
+                />
               </div>
             )}
           </CardContent>
@@ -219,7 +257,7 @@ export function CategorySelection() {
                         {/* Action */}
                         <div className="flex items-center justify-between">
                           <div className="text-sm text-muted-foreground">
-                            Difficulty: {session.sessionDifficulty}
+                            Difficulty: {currentSessionData.session.difficulty}
                           </div>
                           <Button
                             onClick={() =>

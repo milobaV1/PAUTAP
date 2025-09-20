@@ -1,15 +1,15 @@
+import { client } from "@/lib/api/client";
 import type {
   CompleteSessionPayload,
   SessionCompletionResult,
 } from "@/service/interfaces/session.interface";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 
 const completeSession = async (
   sessionId: string,
   payload: CompleteSessionPayload
 ): Promise<SessionCompletionResult> => {
-  const { data } = await axios.post(`/session/${sessionId}/complete`, payload);
+  const { data } = await client.post(`/session/${sessionId}/complete`, payload);
   return data;
 };
 

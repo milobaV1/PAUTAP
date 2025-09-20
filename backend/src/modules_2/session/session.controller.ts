@@ -47,6 +47,7 @@ export class SessionController {
     @Param('id') id: string,
     @Body() startSessionDto: StartSessionDto,
   ) {
+    console.log('API call went through: ', startSessionDto);
     return this.sessionService.startOrResumeSession(id, startSessionDto);
   }
 
@@ -103,6 +104,7 @@ export class SessionController {
     @Body() body: { userId: string; status: string },
   ) {
     const { userId, status } = body;
+    console.log('Received payload for updating status: ', body);
     return await this.sessionService.updateSessionStatus(
       sessionId,
       userId,
