@@ -11,6 +11,7 @@ export interface CompletionMetrics {
 
 export interface SessionCompletionResult {
   success: boolean;
+  sessionTitle: string;
   finalScore: number;
   categoryScores: Record<string, number>;
   certificateId: string;
@@ -39,6 +40,7 @@ export interface ValidatedAnswer {
   userAnswer: number;
   isCorrect: boolean;
   answeredAt: Date;
+  isUpdated?: boolean;
 }
 
 export interface SyncResult {
@@ -59,4 +61,20 @@ export interface ProgressSummary {
   status: string;
   completedAt?: Date; // Add this
   isComplete?: boolean; // Add this for convenience
+}
+
+export interface AdminSessionSummary {
+  id: string;
+  title: string;
+  description: string | null;
+  totalQuestions: number;
+  createdAt: Date;
+}
+
+export interface AdminSessionsResponse {
+  totalSessions: number;
+  totalQuestions: number;
+  sessions: AdminSessionSummary[];
+  page: number;
+  limit: number;
 }

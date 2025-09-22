@@ -14,7 +14,7 @@ import { Role } from './role.entity';
 import { Department } from './department.entity';
 import { UserQuestionHistory } from 'src/modules_2/question-bank/entities/user-question-history.entity';
 import { Certificate } from 'src/modules_2/certificate/entities/certificate.entity';
-import { Difficulty } from 'src/core/enums/question.enum';
+//import { Difficulty } from 'src/core/enums/question.enum';
 import * as bcrypt from 'bcrypt';
 import { TriviaLeaderboard } from 'src/modules_2/trivia/entities/trivia-leaderboard';
 
@@ -32,14 +32,14 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column({ default: true })
+  @Column({ default: false })
   is_onboarding: boolean;
 
   @Column()
   password: string;
 
-  @Column({ type: 'enum', enum: Difficulty, default: Difficulty.BEGINNER })
-  level: Difficulty;
+  // @Column({ type: 'enum', enum: Difficulty, default: Difficulty.BEGINNER })
+  // level: Difficulty;
 
   @Column({ nullable: true })
   resetToken?: string;

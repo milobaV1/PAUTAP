@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { QuestionBank } from './entities/question-bank.entity';
 import { User } from '../users/entities/user.entity';
 import { Role } from '../users/entities/role.entity';
+import { QuestionUsage } from './entities/question-usage.entity';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { Role } from '../users/entities/role.entity';
       // TrainingSession,
       Role,
       User,
+      QuestionUsage,
     ]),
   ],
   controllers: [QuestionBankController],

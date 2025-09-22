@@ -7,6 +7,7 @@ import {
 import {
   CompleteSessionDto,
   CreateSessionDto,
+  RetakeSessionDto,
   StartSessionDto,
   SyncSessionDto,
 } from './dto/create-session.dto';
@@ -34,6 +35,8 @@ import {
   SyncResult,
   ProgressSummary,
   ValidatedAnswer,
+  AdminSessionsResponse,
+  AdminSessionSummary,
 } from 'src/core/interfaces/session.interface';
 import KeyvRedis from '@keyv/redis';
 import { Certificate } from '../certificate/entities/certificate.entity';
@@ -241,7 +244,7 @@ export class SessionService {
         sessionId: session.id,
         sessionTitle: session.title,
         sessionDescription: session.description,
-        sessionDifficulty: session.difficulty,
+        //sessionDifficulty: session.difficulty,
         sessionCreatedAt: session.createdAt,
         questionsGenerated: session.questionsGenerated,
 
@@ -379,10 +382,10 @@ export class SessionService {
 
         const sanitizedQuestions = questions.map((q) => ({
           id: q.id,
-          question: q.questionText,
+          questionText: q.questionText,
           options: q.options,
           category: q.crispCategory,
-          difficulty: q.difficultyLevel,
+          //difficulty: q.difficultyLevel,
           // Don't include correctAnswer in response
         }));
 
@@ -414,8 +417,13 @@ export class SessionService {
     return `This action updates a #${id} session`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} session`;
+  async remove(id: string): Promise<void> {
+    const session = await this.sessionRepo.findOne({ where: { id } });
+    if (!session) {
+      throw new NotFoundException(`Session with ID ${id} not found`);
+    }
+
+    await this.sessionRepo.remove(session);
   }
 
   private async generateQuestionsForAllRoles(
@@ -480,7 +488,7 @@ export class SessionService {
       .andWhere('q.crispCategory = :category', { category })
       .orderBy('COALESCE(qu.usageCount, 0)', 'ASC')
       .addOrderBy('RANDOM()') // Secondary randomization
-      .limit(10)
+      .limit(5)
       .getRawMany();
 
     return questions.map((q) => q.q_id);
@@ -722,6 +730,10 @@ export class SessionService {
         where: { id: userId },
       });
 
+      const session = await queryRunner.manager.findOne(Session, {
+        where: { id: sessionId },
+      });
+
       // 2) Calculate final scores and performance metrics
       const completionData = await this.calculateCompletionMetrics(
         userId,
@@ -803,6 +815,7 @@ export class SessionService {
 
       return {
         success: true,
+        sessionTitle: session?.title ?? '',
         finalScore: completionData.overallScore,
         categoryScores: completionData.categoryScores,
         certificateId: certificateInfo?.certificateId ?? '',
@@ -1236,9 +1249,6 @@ export class SessionService {
 
     for (const answer of answerBatch) {
       // Skip if already answered
-      if (existingQuestionIds.has(answer.questionId)) {
-        continue;
-      }
 
       const question = questionMap.get(answer.questionId);
       if (!question) {
@@ -1260,6 +1270,22 @@ export class SessionService {
 
       if (!categoryData) {
         continue; // Question not in user's assigned set
+      }
+      if (existingQuestionIds.has(answer.questionId)) {
+        validated.push({
+          userId: progress.userId,
+          questionId: answer.questionId,
+          sessionRoleCategoryQuestionId: categoryData.id,
+          userAnswer: answer.userAnswer,
+          isCorrect: this.checkAnswer(
+            question.correctAnswer,
+            answer.userAnswer,
+          ),
+          answeredAt: answer.answeredAt,
+          isUpdated: true, // Add flag for updates
+        });
+
+        continue;
       }
 
       validated.push({
@@ -1401,17 +1427,69 @@ export class SessionService {
     return correctAnswer === userAnswer;
   }
 
-  async resetUserProgress(sessionId: string, dto: StartSessionDto) {
+  async resetUserProgress(sessionId: string, dto: RetakeSessionDto) {
     const progress = await this.userSessionProgressRepo.findOne({
       where: { userId: dto.userId, sessionId },
     });
+    console.log('Retake 3: ', progress);
 
     if (!progress) {
       throw new Error('Progress not found');
     }
 
-    progress.resetProgress();
+    // Step 1: Get question IDs
+    const questionIds = await this.sessionRoleCategoryRepo.find({
+      where: { sessionId },
+      select: ['id'],
+    });
+
+    // Step 2: Delete answers
+    if (questionIds.length > 0) {
+      await this.userAnswerRepo.delete({
+        userId: dto.userId,
+        sessionRoleCategoryQuestionId: In(questionIds.map((q) => q.id)),
+      });
+    }
+
+    progress.resetProgress(); // assuming you’ve defined this helper
     await this.userSessionProgressRepo.save(progress);
-    return this.startOrResumeSession(sessionId, dto);
+  }
+
+  async getAdminSessions(page = 1, limit = 5): Promise<AdminSessionsResponse> {
+    const [sessions, totalSessions] = await this.sessionRepo.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      relations: ['roleCategoryQuestions'],
+      order: { createdAt: 'DESC' },
+    });
+
+    // total number of questions across ALL sessions
+    const totalQuestions = await this.sessionRoleCategoryRepo
+      .createQueryBuilder('rcq')
+      .select('SUM(rcq.questionsCount)', 'totalQuestions')
+      .getRawOne<{ totalQuestions: string }>();
+
+    // map session summaries
+    const sessionSummaries: AdminSessionSummary[] = sessions.map((s) => {
+      const totalQuestions = s.roleCategoryQuestions?.reduce(
+        (sum, rcq) => sum + (rcq.questionsCount || 0),
+        0,
+      );
+      return {
+        id: s.id,
+        title: s.title,
+        description: s.description,
+        totalQuestions,
+        createdAt: s.createdAt,
+      };
+    });
+
+    return {
+      totalSessions,
+      totalQuestions: Number(totalQuestions?.totalQuestions) || 0,
+      sessions: sessionSummaries,
+      page,
+      limit,
+    };
   }
 }

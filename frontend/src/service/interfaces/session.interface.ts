@@ -1,6 +1,6 @@
 import type { CRISP } from "../enums/crisp.enum";
 
-import type { Difficulty } from "../enums/difficulty.enum";
+//import type { Difficulty } from "../enums/difficulty.enum";
 export interface CategoryProgress {
   categoryProgress?: {
     [key: string]: {
@@ -46,7 +46,7 @@ export interface Question {
   questionText: string;
   options: string[];
   crispCategory: CRISP;
-  difficultyLevel: Difficulty;
+  //difficultyLevel: Difficulty;
 }
 
 export interface Category {
@@ -58,40 +58,41 @@ export interface Category {
   userAnswers: UserAnswer[];
 }
 
-export interface UsersessionData {
-  sessionId: string;
-  sessionTitle: string;
-  sessionDescription: string;
-  sessionDifficulty: Difficulty;
-  sessionCreatedAt: string;
-  questionsGenerated: boolean;
+// export interface UsersessionData {
+//   sessionId: string;
+//   sessionTitle: string;
+//   sessionDescription: string;
+//   //sessionDifficulty: Difficulty;
+//   sessionCreatedAt: string;
+//   questionsGenerated: boolean;
 
-  // Progress data
-  status: "not_started" | "in_progress" | "completed" | string; // could refine to ProgressStatus enum
-  currentCategory: CRISP | null;
-  progressPercentage: number;
-  accuracyPercentage: number;
-  totalQuestions: number;
-  answeredQuestions: number;
-  correctlyAnsweredQuestions: number;
+//   // Progress data
+//   status: "not_started" | "in_progress" | "completed" | string; // could refine to ProgressStatus enum
+//   currentCategory: CRISP | null;
+//   progressPercentage: number;
+//   accuracyPercentage: number;
+//   totalQuestions: number;
+//   answeredQuestions: number;
+//   correctlyAnsweredQuestions: number;
 
-  // Timestamps
-  startedAt: string | null;
-  lastActiveAt: string | null;
-  completedAt: string | null;
+//   // Timestamps
+//   startedAt: string | null;
+//   lastActiveAt: string | null;
+//   completedAt: string | null;
 
-  // Categories with questions
-  categories: Category[];
-  totalQuestionsAvailable: number;
+//   // Categories with questions
+//   categories: Category[];
+//   totalQuestionsAvailable: number;
 
-  // Helper flags
-  isStarted: boolean;
-  isCompleted: boolean;
-  canStart: boolean;
-}
+//   // Helper flags
+//   isStarted: boolean;
+//   isCompleted: boolean;
+//   canStart: boolean;
+// }
 
 export interface SessionCompletionResult {
   success: boolean;
+  sessionTitle: string;
   finalScore: number;
   categoryScores: Record<string, number>;
   certificateId: string;
@@ -140,7 +141,7 @@ export interface SessionSummary {
   sessionId: string;
   sessionTitle: string;
   sessionDescription: string;
-  sessionDifficulty: Difficulty;
+  //sessionDifficulty: Difficulty;
   sessionCreatedAt: string;
   questionsGenerated: boolean;
 
@@ -171,10 +172,11 @@ export interface FullSessionData {
     id: string;
     title: string;
     description: string;
-    difficulty: Difficulty;
-    createdAt: string;
+    //difficulty: Difficulty;
+    timeLimit: number;
     questionsGenerated: boolean;
     isActive: boolean;
+    createdAt: string;
   };
   progress: {
     status: "not_started" | "in_progress" | "completed" | string;
@@ -205,4 +207,33 @@ export interface FullSessionData {
   categories: Category[];
   syncInterval: number;
   autoSyncTriggers: string[];
+}
+
+export interface RetakeSessionDto {
+  sessionId: string;
+  userId: string;
+}
+
+export interface AdminSessionSummary {
+  id: string;
+  title: string;
+  description: string | null;
+  totalQuestions: number;
+  createdAt: Date;
+}
+
+export interface AdminSessionsResponse {
+  totalSessions: number;
+  totalQuestions: number;
+  sessions: AdminSessionSummary[];
+  page: number;
+  limit: number;
+}
+
+export interface CreateSessionDto {
+  title: string;
+
+  description?: string;
+
+  timeLimit?: number;
 }

@@ -1,4 +1,4 @@
-import { Difficulty } from 'src/core/enums/question.enum';
+//import { Difficulty } from 'src/core/enums/question.enum';
 import { CRISP } from 'src/core/enums/training.enum';
 
 import {
@@ -33,8 +33,11 @@ export class QuestionBank {
   @Column()
   correctAnswer: number;
 
-  @Column({ type: 'enum', enum: Difficulty })
-  difficultyLevel: Difficulty;
+  @Column({ nullable: true })
+  explanation?: string;
+
+  // @Column({ type: 'enum', enum: Difficulty })
+  // difficultyLevel: Difficulty;
 
   // @Column({ default: 0 })
   // usage_count: number;

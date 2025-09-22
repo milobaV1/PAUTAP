@@ -5,7 +5,7 @@ import {
 } from "zustand/middleware";
 import { create, type StateCreator } from "zustand";
 import type {
-  UsersessionData,
+  //UsersessionData,
   Answer,
   ProgressSummary,
   FullSessionData,
@@ -188,6 +188,9 @@ export type SessionState = {
   // Answer management
   localAnswers: Record<string, Answer>;
   unsyncedAnswers: Answer[];
+  sessionTimeLeft: number; // in seconds
+  sessionStartTime: Date | null;
+  sessionDuration: number;
 };
 
 export type SessionActions = {
@@ -215,6 +218,10 @@ export type SessionActions = {
   ) => void;
   updateSessionStatus: (sessionId: string, status: string) => void;
   markCategoryComplete: (sessionId: string, categoryId: string) => void;
+
+  setSessionTimeLeft: (timeLeft: number) => void;
+  initializeSessionTimer: (duration: number) => void;
+  resetSessionTimer: () => void;
 
   // Session cleanup
   clearSession: () => void;
@@ -247,18 +254,49 @@ const initializer: StateCreator<SessionState & SessionActions> = (
   currentQuestionIndex: 0,
   localAnswers: {},
   unsyncedAnswers: [],
+  sessionTimeLeft: 0,
+  sessionStartTime: null,
+  sessionDuration: 0,
 
   // Session list actions
   setSessions: (sessions) => set({ sessions }),
+  setSessionTimeLeft: (timeLeft) => set({ sessionTimeLeft: timeLeft }),
+
+  initializeSessionTimer: (duration) =>
+    set({
+      sessionDuration: duration,
+      sessionTimeLeft: duration,
+      sessionStartTime: new Date(),
+    }),
+
+  resetSessionTimer: () =>
+    set({
+      sessionTimeLeft: 0,
+      sessionStartTime: null,
+      sessionDuration: 0,
+    }),
 
   // Full session data actions
   initializeSessionData: (sessionData) => {
     console.log("🔵 Initializing session data:", sessionData);
+    const now = new Date();
+    const sessionStart = sessionData.progress.startedAt
+      ? new Date(sessionData.progress.startedAt)
+      : now;
+    const sessionDuration = sessionData.session.timeLimit * 60; // convert minutes to seconds
+    const elapsedTime = Math.floor(
+      (now.getTime() - sessionStart.getTime()) / 1000
+    );
+    const timeLeft = Math.max(0, sessionDuration - elapsedTime);
+
     set({
       currentSessionData: sessionData,
       currentSessionId: sessionData.session.id,
       currentCategory: sessionData.progress.currentCategory,
       currentQuestionIndex: sessionData.progress.currentQuestionIndex,
+      sessionTimeLeft: timeLeft,
+      sessionDuration: sessionDuration,
+      sessionStartTime: sessionStart,
     });
   },
 
@@ -377,6 +415,9 @@ const initializer: StateCreator<SessionState & SessionActions> = (
       currentSessionData: null,
       localAnswers: {},
       unsyncedAnswers: [],
+      sessionTimeLeft: 0,
+      sessionStartTime: null,
+      sessionDuration: 0,
     }),
 });
 

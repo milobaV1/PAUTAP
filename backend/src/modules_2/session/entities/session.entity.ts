@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 import { SessionRoleCategoryQuestion } from './session-role-category-questions.entity';
 import { UserSessionProgress } from './user-session-progress.entity';
-import { Difficulty } from 'src/core/enums/question.enum';
+//import { Difficulty } from 'src/core/enums/question.enum';
 
 @Entity()
 export class Session {
@@ -28,11 +28,14 @@ export class Session {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column({ type: 'enum', enum: Difficulty, default: Difficulty.BEGINNER })
-  difficulty: Difficulty;
+  // @Column({ type: 'enum', enum: Difficulty, default: Difficulty.BEGINNER })
+  // difficulty: Difficulty;
 
   @Column({ default: false })
   questionsGenerated: boolean;
+
+  @Column({ default: 1200 }) // 5 minutes in seconds
+  timeLimit: number;
 
   @CreateDateColumn()
   createdAt: Date;

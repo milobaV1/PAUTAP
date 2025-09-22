@@ -32,12 +32,12 @@ export function AdminSidebar() {
       icon: Users,
       to: "/admin/user",
     },
-    {
-      id: "course-management",
-      label: "Course Management",
-      icon: BookOpen,
-      to: "/admin/course",
-    },
+    // {
+    //   id: "course-management",
+    //   label: "Course Management",
+    //   icon: BookOpen,
+    //   to: "/admin/course",
+    // },
     {
       id: "question-management",
       label: "Question Bank",
@@ -48,14 +48,14 @@ export function AdminSidebar() {
       id: "training-session-management",
       label: "Training Sessions",
       icon: Calendar,
-      to: "/admin/training-session",
+      to: "/admin/session",
     },
-    {
-      id: "admin-settings",
-      label: "Settings",
-      icon: Settings,
-      to: "/admin/settings",
-    },
+    // {
+    //   id: "admin-settings",
+    //   label: "Settings",
+    //   icon: Settings,
+    //   to: "/admin/settings",
+    // },
   ];
 
   const isCurrentPage = (path: string) => {
@@ -134,7 +134,7 @@ export function AdminSidebar() {
               <Button
                 variant="ghost"
                 className="w-full justify-start h-10 text-blue-600 hover:bg-blue-50"
-                //onClick={() => onNavigate("dashboard")}
+                onClick={() => navigate({ to: "/" })}
               >
                 <LayoutDashboard className="w-4 h-4 mr-3" />
                 Back to User Portal

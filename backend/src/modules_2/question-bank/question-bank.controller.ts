@@ -6,11 +6,18 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { QuestionBankService } from './question-bank.service';
 import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
 import { UpdateQuestionBankDto } from './dto/update-question-bank.dto';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+} from '@nestjs/swagger';
+import { AdminQuestionsResponse } from 'src/core/interfaces/question.interface';
 
 @ApiBearerAuth('access-token')
 @Controller('question-bank')
@@ -37,6 +44,32 @@ export class QuestionBankController {
   @Get()
   findAll() {
     return this.questionBankService.findAll();
+  }
+
+  @Get('admin')
+  @ApiOperation({ summary: 'Get paginated list of admin questions' })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    example: 1,
+    description: 'Page number for pagination (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    example: 5,
+    description: 'Number of items per page (default: 5)',
+  })
+  async getAdminQuestions(
+    @Query('page') page = '1',
+    @Query('limit') limit = '5',
+  ): Promise<AdminQuestionsResponse> {
+    return this.questionBankService.getAdminQuestions(
+      Number(page),
+      Number(limit),
+    );
   }
 
   @Get(':id')

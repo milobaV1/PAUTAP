@@ -62,7 +62,7 @@ export class TriviaController {
       question: q.questionText,
       options: q.options,
       category: q.crispCategory,
-      difficulty: q.difficultyLevel,
+      // difficulty: q.difficultyLevel,
       // Don't include correctAnswer in response
     }));
 

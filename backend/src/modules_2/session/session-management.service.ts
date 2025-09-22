@@ -158,67 +158,67 @@ export class SessionManagementService {
       .execute();
   }
 
-  async completeSession(
-    userId: string,
-    sessionId: string,
-  ): Promise<SessionCompletionResult> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+  // async completeSession(
+  //   userId: string,
+  //   sessionId: string,
+  // ): Promise<SessionCompletionResult> {
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
 
-    try {
-      // 1) Get final progress state
-      const progress = await queryRunner.manager.findOne(UserSessionProgress, {
-        where: { userId, sessionId },
-        relations: ['user', 'session', 'role'],
-      });
+  //   try {
+  //     // 1) Get final progress state
+  //     const progress = await queryRunner.manager.findOne(UserSessionProgress, {
+  //       where: { userId, sessionId },
+  //       relations: ['user', 'session', 'role'],
+  //     });
 
-      if (!progress || progress.status !== 'completed') {
-        throw new BadRequestException('Session not completed');
-      }
+  //     if (!progress || progress.status !== 'completed') {
+  //       throw new BadRequestException('Session not completed');
+  //     }
 
-      // 2) Calculate final scores and performance metrics
-      const completionData = await this.calculateCompletionMetrics(
-        userId,
-        sessionId,
-        queryRunner.manager,
-      );
+  //     // 2) Calculate final scores and performance metrics
+  //     const completionData = await this.calculateCompletionMetrics(
+  //       userId,
+  //       sessionId,
+  //       queryRunner.manager,
+  //     );
 
-      // 3) Update progress with final metrics
-      await queryRunner.manager.update(UserSessionProgress, progress.id, {
-        completedAt: new Date(),
-        ...completionData.finalScores,
-      });
+  //     // 3) Update progress with final metrics
+  //     await queryRunner.manager.update(UserSessionProgress, progress.id, {
+  //       completedAt: new Date(),
+  //       ...completionData.finalScores,
+  //     });
 
-      // 4) Generate certificate/completion record
-      const certificate = await this.generateCompletionCertificate(
-        progress,
-        completionData,
-      );
+  //     // 4) Generate certificate/completion record
+  //     const certificate = await this.generateCompletionCertificate(
+  //       progress,
+  //       completionData,
+  //     );
 
-      // 5) Trigger notifications/events
-      //await this.triggerCompletionEvents(progress, completionData);
+  //     // 5) Trigger notifications/events
+  //     //await this.triggerCompletionEvents(progress, completionData);
 
-      // 6) Clean up temporary data
-      await this.cleanupSessionData(userId, sessionId);
+  //     // 6) Clean up temporary data
+  //     await this.cleanupSessionData(userId, sessionId);
 
-      await queryRunner.commitTransaction();
+  //     await queryRunner.commitTransaction();
 
-      return {
-        success: true,
-        finalScore: completionData.overallScore,
-        categoryScores: completionData.categoryScores,
-        certificateId: certificate,
-        completionTime: completionData.timeSpent,
-        rank: completionData.roleRank,
-      };
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
-  }
+  //     return {
+  //       success: true,
+  //       finalScore: completionData.overallScore,
+  //       categoryScores: completionData.categoryScores,
+  //       certificateId: certificate,
+  //       completionTime: completionData.timeSpent,
+  //       rank: completionData.roleRank,
+  //     };
+  //   } catch (error) {
+  //     await queryRunner.rollbackTransaction();
+  //     throw error;
+  //   } finally {
+  //     await queryRunner.release();
+  //   }
+  // }
 
   private async calculateCompletionMetrics(
     userId: string,

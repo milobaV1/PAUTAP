@@ -33,13 +33,11 @@ import { useAuthState } from "@/store/auth.store";
 import { useGetSessions, useStartOrResumeSession } from "./api/get-sessions";
 import type {
   getSessions,
+  RetakeSessionDto,
   SessionSummary,
-  UsersessionData,
+  //UsersessionData,
 } from "@/service/interfaces/session.interface";
-
-interface sessionsProps {
-  onNavigate: (page: string, data?: any) => void;
-}
+import { useRetakeSession } from "./api/retake-session";
 
 export function sessions() {
   const [selectedsession, setSelectedsession] = useState<number | null>(null);
@@ -58,6 +56,18 @@ export function sessions() {
   const allSessions: SessionSummary[] = data || [];
 
   console.log("All Sessions: ", allSessions);
+
+  const { mutateAsync: retakeSession } = useRetakeSession();
+
+  const retake = async (sessionId: string) => {
+    const userId = decodedDto?.sub.id;
+    const data: RetakeSessionDto = {
+      sessionId,
+      userId: userId ?? "",
+    };
+    await retakeSession(data);
+    navigate({ to: "/session/$id", params: { id: sessionId } });
+  };
 
   const completedSessions = allSessions.filter(
     (session) => session.isCompleted
@@ -183,8 +193,7 @@ export function sessions() {
             Session Categories
           </CardTitle>
           <CardDescription>
-            Each session covers 5 core categories with 10 questions per category
-            (50 total questions)
+            Each session covers 5 core categories
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -207,9 +216,9 @@ export function sessions() {
                 <p className="text-xs text-muted-foreground">
                   {category.description}
                 </p>
-                <Badge variant="outline" className="mt-2">
+                {/* <Badge variant="outline" className="mt-2">
                   10 Questions
-                </Badge>
+                </Badge> */}
               </div>
             ))}
           </div>
@@ -533,7 +542,11 @@ export function sessions() {
                           Retake session
                         </Button>
                       )} */}
-                      <Button size="sm" className="pau-gradient">
+                      <Button
+                        size="sm"
+                        className="pau-gradient"
+                        onClick={() => retake(session.sessionId)}
+                      >
                         Retake session
                       </Button>
                     </div>

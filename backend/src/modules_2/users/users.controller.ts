@@ -6,14 +6,25 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateDepartmentDto } from './dto/create-department.dto';
 import { CreateRoleDto } from './dto/create-role.dto';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { User } from './entities/user.entity';
+import {
+  AdminStatsUserResponse,
+  DashboardResponse,
+} from 'src/core/interfaces/user.interface';
 
 @ApiBearerAuth('access-token')
 @Controller('users')
@@ -97,11 +108,36 @@ export class UsersController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Get('/dashboard/:userId')
+  @ApiParam({
+    name: 'userId',
+    type: String,
+    description: 'UUID of the user',
+    example: '2f5e3f52-1a1d-4c36-9f70-2d7e22b998a4',
+  })
+  // @ApiOkResponse({
+  //   description: 'User dashboard data fetched successfully',
+  //   type: DashboardResponse,
+  // })
+  async getDashboard(
+    @Param('userId') userId: string,
+  ): Promise<DashboardResponse> {
+    return this.usersService.getUserDashboard(userId);
+  }
+
+  @Get('/admin/stats')
+  async getAdminStatsUser(
+    @Query('page') page = '1',
+    @Query('limit') limit = '5',
+  ): Promise<AdminStatsUserResponse> {
+    return this.usersService.getAdminStatsUser(Number(page), Number(limit));
   }
 }

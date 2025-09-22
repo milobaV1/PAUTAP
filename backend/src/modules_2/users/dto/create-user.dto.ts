@@ -32,7 +32,7 @@ export class CreateUserDto {
     example: true,
     description: 'Whether the user is onboarding',
     required: false,
-    default: true,
+    default: false,
   })
   @IsOptional()
   @IsBoolean()

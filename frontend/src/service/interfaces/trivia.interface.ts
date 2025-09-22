@@ -41,7 +41,7 @@ export interface TriviaQuestion {
   question: string;
   options: string[];
   category: string;
-  difficulty: string;
+  //difficulty: string;
 }
 
 export interface StartTriviaResponse {

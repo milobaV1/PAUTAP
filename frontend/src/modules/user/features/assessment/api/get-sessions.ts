@@ -3,7 +3,7 @@ import { getAxiosError } from "@/lib/api/error";
 import type {
   FullSessionData,
   SessionSummary,
-  UsersessionData,
+  //UsersessionData,
 } from "@/service/interfaces/session.interface";
 import type { getSessions } from "@/service/interfaces/session.interface";
 import { useSessionStore } from "@/store/session.store";

@@ -1,7 +1,5 @@
 "use client";
-
 import { useState } from "react";
-
 import {
   Target,
   Search,
@@ -12,18 +10,10 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  BookOpen,
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -41,323 +31,129 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-
-import { z } from "zod";
-import { CRISP } from "@/service/enums/crisp.enum";
-import { Difficulty } from "@/service/enums/difficulty.enum";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getRoleIds, roles } from "@/lib/roles";
-import { Checkbox } from "@/components/ui/checkbox";
+import { z } from "zod";
+import { CRISP } from "@/service/enums/crisp.enum";
+import { roles, getRoleIds } from "@/lib/roles";
+
 import type { addQuestionDto } from "@/service/interfaces/question.interface";
 import { AddQuestion, useAddQuestion } from "./api/add-quetion";
+import { useAdminQuestions } from "./api/get-questions";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { useDeleteQuestion } from "./api/delete-question";
+import { toast } from "sonner";
 
-//
-
-const questionSchema = z
-  .object({
-    crispType: z.enum(CRISP, {
-      message: "Please select a CRISP type",
-    }),
-    difficulty: z.enum(Difficulty, {
-      message: "Please select a difficulty level",
-    }),
-    questionType: z.enum([
-      "multiple-choice",
-      "true-false",
-      "short-answer",
-      "essay",
-    ]),
-    questionText: z
-      .string()
-      .min(10, "Question must be at least 10 characters long")
-      .max(1000, "Question must not exceed 1000 characters"),
-    // Multiple choice options (only required if question type is multiple-choice)
-    options: z
-      .array(
-        z.object({
-          text: z.string().min(4, "Option cannot be empty"),
-        })
-      )
-      .optional(),
-    correctAnswer: z.number().optional(), // index of correct option
-    explanation: z
-      .string()
-      .max(500, "Explanation must not exceed 500 characters")
-      .optional(),
-    roles: z
-      .array(
-        z.enum(
-          roles.map((role) => role.value),
-          {
-            message: "Please select at least one role",
-          }
-        )
-      )
-      .min(1, "At least one role is required"),
-  })
-  .refine(
-    (data) => {
-      // Custom validation for multiple choice questions
-      if (data.questionType === "multiple-choice") {
-        if (!data.options || data.options.length < 2) {
-          return false;
-        }
-        if (
-          data.correctAnswer === undefined ||
-          data.correctAnswer < 0 ||
-          data.correctAnswer >= data.options.length
-        ) {
-          return false;
-        }
-      }
-      return true;
-    },
-    {
-      message:
-        "Multiple choice questions must have at least 2 options and exactly 1 correct answer",
-      path: ["options"],
-    }
-  );
+const questionSchema = z.object({
+  crispType: z.enum(CRISP),
+  questionType: z.enum([
+    "multiple-choice",
+    "true-false",
+    "short-answer",
+    "essay",
+  ]),
+  questionText: z.string().min(10).max(1000),
+  options: z.array(z.object({ text: z.string().min(1) })).optional(),
+  correctAnswer: z.number().optional(),
+  explanation: z.string().max(500).optional(),
+  roles: z.array(z.enum(roles.map((r) => r.value))).min(1),
+});
 
 export function QuestionManagement() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCourse, setSelectedCourse] = useState("all");
-  const [selectedType, setSelectedType] = useState("all");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("all");
   const [showAddQuestion, setShowAddQuestion] = useState(false);
-  const [questionType, setQuestionType] = useState("multiple-choice");
-
-  const questions = [
-    {
-      id: 1,
-      question:
-        "Which digital tool is most effective for creating interactive presentations?",
-      type: "Multiple Choice",
-      course: "Digital Teaching Methods",
-      difficulty: "Easy",
-      correctAnswer: "Interactive whiteboards",
-      options: [
-        "PowerPoint",
-        "Interactive whiteboards",
-        "PDF documents",
-        "Word documents",
-      ],
-      usageCount: 245,
-      successRate: 87,
-      created: "2024-01-10",
-      lastUsed: "2024-01-15",
-    },
-    {
-      id: 2,
-      question:
-        "Explain the benefits of flipped classroom methodology in higher education.",
-      type: "Short Answer",
-      course: "Educational Leadership",
-      difficulty: "Medium",
-      correctAnswer: "",
-      keyPoints: [
-        "Student engagement",
-        "Active learning",
-        "Flexible pacing",
-        "Better use of class time",
-      ],
-      usageCount: 156,
-      successRate: 73,
-      created: "2024-01-08",
-      lastUsed: "2024-01-14",
-    },
-    {
-      id: 3,
-      question: "What are the key components of an effective session rubric?",
-      type: "Multiple Choice",
-      course: "session Strategies",
-      difficulty: "Medium",
-      correctAnswer: "Clear criteria, performance levels, descriptors",
-      options: [
-        "Clear criteria, performance levels, descriptors",
-        "Grades only",
-        "Student names and scores",
-        "Course objectives only",
-      ],
-      usageCount: 189,
-      successRate: 91,
-      created: "2024-01-05",
-      lastUsed: "2024-01-13",
-    },
-    {
-      id: 4,
-      question:
-        "Describe three strategies for promoting inclusive learning environments.",
-      type: "Essay",
-      course: "Educational Leadership",
-      difficulty: "Hard",
-      correctAnswer: "",
-      keyPoints: [
-        "Universal design",
-        "Cultural responsiveness",
-        "Differentiated instruction",
-        "Accessibility",
-      ],
-      usageCount: 98,
-      successRate: 65,
-      created: "2024-01-12",
-      lastUsed: "2024-01-16",
-    },
-    {
-      id: 5,
-      question: "True or False: Formative sessions should always be graded.",
-      type: "True/False",
-      course: "session Strategies",
-      difficulty: "Easy",
-      correctAnswer: "False",
-      explanation:
-        "Formative sessions are primarily for feedback and learning, not grading.",
-      usageCount: 267,
-      successRate: 78,
-      created: "2024-01-07",
-      lastUsed: "2024-01-17",
-    },
-  ];
-
-  const courses = [
-    { value: "all", label: "All Courses" },
-    { value: "digital-teaching-methods", label: "Digital Teaching Methods" },
-    { value: "educational-leadership", label: "Educational Leadership" },
-    { value: "session-strategies", label: "session Strategies" },
-    { value: "research-methods", label: "Research Methods" },
-  ];
-
-  const questionTypes = [
-    { value: "all", label: "All Types" },
-    { value: "multiple-choice", label: "Multiple Choice" },
-    { value: "true-false", label: "True/False" },
-    { value: "short-answer", label: "Short Answer" },
-    { value: "essay", label: "Essay" },
-  ];
-
-  const difficulties = [
-    { value: "all", label: "All Difficulties" },
-    { value: "easy", label: "Easy" },
-    { value: "medium", label: "Medium" },
-    { value: "hard", label: "Hard" },
-  ];
-
-  const filteredQuestions = questions.filter((question) => {
-    const matchesSearch =
-      question.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      question.course.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCourse =
-      selectedCourse === "all" ||
-      question.course.toLowerCase().replace(" ", "-") === selectedCourse;
-    const matchesType =
-      selectedType === "all" ||
-      question.type.toLowerCase().replace(" ", "-") === selectedType;
-    const matchesDifficulty =
-      selectedDifficulty === "all" ||
-      question.difficulty.toLowerCase() === selectedDifficulty;
-    return matchesSearch && matchesCourse && matchesType && matchesDifficulty;
-  });
-
-  const getTypeBadge = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "multiple choice":
-        return (
-          <Badge className="bg-blue-100 text-blue-800">Multiple Choice</Badge>
-        );
-      case "true/false":
-        return (
-          <Badge className="bg-green-100 text-green-800">True/False</Badge>
-        );
-      case "short answer":
-        return (
-          <Badge className="bg-purple-100 text-purple-800">Short Answer</Badge>
-        );
-      case "essay":
-        return <Badge className="bg-orange-100 text-orange-800">Essay</Badge>;
-      default:
-        return <Badge variant="outline">{type}</Badge>;
-    }
-  };
-
-  const getDifficultyBadge = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
-      case "easy":
-        return <Badge className="bg-green-100 text-green-800">Easy</Badge>;
-      case "medium":
-        return <Badge className="bg-yellow-100 text-yellow-800">Medium</Badge>;
-      case "hard":
-        return <Badge className="bg-red-100 text-red-800">Hard</Badge>;
-      default:
-        return <Badge variant="outline">{difficulty}</Badge>;
-    }
-  };
-
-  const totalStats = {
-    totalQuestions: questions.length,
-    averageSuccessRate: Math.round(
-      questions.reduce((sum, q) => sum + q.successRate, 0) / questions.length
-    ),
-    totalUsage: questions.reduce((sum, q) => sum + q.usageCount, 0),
-    activeQuestions: questions.filter((q) => q.usageCount > 0).length,
-  };
+  const [page, setPage] = useState(1);
+  const limit = 5;
 
   const {
-    mutate: addQuestion,
-    isPending,
-    isError,
-    error,
-    isSuccess,
-  } = useAddQuestion();
+    data,
+    isLoading,
+    isError: isGetQuestionError,
+    error: getQuestionError,
+  } = useAdminQuestions(page, limit);
+
+  const { mutate: addQuestion, isPending, isError, error } = useAddQuestion();
+  const { mutate: deleteQuestion } = useDeleteQuestion();
 
   const form = useForm<z.infer<typeof questionSchema>>({
     resolver: zodResolver(questionSchema),
-    mode: "onSubmit",
     defaultValues: {
       crispType: CRISP.C,
-      difficulty: Difficulty.BEGINNER,
       questionType: "multiple-choice",
       questionText: "",
       options: [{ text: "" }, { text: "" }, { text: "" }, { text: "" }],
-      correctAnswer: 0, // default to first option
-      // keyPoints: undefined, // if you add it back later
+      correctAnswer: 0,
       explanation: "",
       roles: [],
     },
   });
 
   async function onSubmit(values: z.infer<typeof questionSchema>) {
-    console.log("button clicked");
-    console.log(values);
-    const { questionType, roles, explanation, options, ...data } = values;
-
+    const { questionType, roles, explanation, options, ...rest } = values;
     const roleIds = getRoleIds(roles);
-    const editedData: addQuestionDto = {
-      crispCategory: data.crispType,
-      difficultyLevel: data.difficulty,
-      questionText: data.questionText,
-      options: options ? options.map((opt) => opt.text) : [],
-      correctAnswer: values.correctAnswer ?? 0,
-      roles: roleIds,
-    };
 
-    return addQuestion(editedData);
-
-    // const editedData = data as UserSignUpInterface;
-    // console.log("This is the sign up data I am sending", editedData);
-    // const response = await createUser(editedData);
-    // console.log(response);
+    try {
+      const payload: addQuestionDto = {
+        crispCategory: rest.crispType,
+        questionText: rest.questionText,
+        options: options ? options.map((opt) => opt.text) : [],
+        correctAnswer: values.correctAnswer ?? 0,
+        explanation,
+        roles: roleIds,
+      };
+      addQuestion(payload);
+      toast.success("✅ Question created successfully");
+      form.reset();
+      setShowAddQuestion(false);
+    } catch (error) {
+      console.error("❌ Question creation failed:", error);
+      toast.error("Failed to create question. Please try again.");
+    }
   }
+
+  if (isLoading) return <p>Loading questions...</p>;
+  if (isGetQuestionError || !data)
+    return (
+      <div>
+        <p>Error loading questions</p>
+        <p>{getQuestionError ? getQuestionError.message : ""}</p>
+      </div>
+    );
+
+  const filteredQuestions = data.questions.filter((q) =>
+    q.questionText.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(data.totalQuestions / data.limit);
+
+  const handleDelete = (id: string) => {
+    deleteQuestion(id, {
+      onSuccess: () => {
+        toast.success("✅ Question deleted successfully");
+      },
+      onError: (error: any) => {
+        console.error("❌ Delete failed:", error);
+        toast.error("Failed to delete question");
+      },
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -366,7 +162,7 @@ export function QuestionManagement() {
         <div>
           <h1>Question Management</h1>
           <p className="text-muted-foreground mt-1">
-            Create and manage session questions for courses
+            Create and manage session questions
           </p>
         </div>
         <Dialog open={showAddQuestion} onOpenChange={setShowAddQuestion}>
@@ -426,7 +222,7 @@ export function QuestionManagement() {
                     )}
                   />
 
-                  {/* Difficulty Select */}
+                  {/* Difficulty Select 
                   <FormField
                     control={form.control}
                     name="difficulty"
@@ -453,7 +249,7 @@ export function QuestionManagement() {
                         <FormMessage />
                       </FormItem>
                     )}
-                  />
+                  />*/}
                 </div>
                 {/* Question Text */}
                 <FormField
@@ -610,193 +406,108 @@ export function QuestionManagement() {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="pau-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Target className="w-8 h-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-2xl font-bold">
-                  {totalStats.totalQuestions}
-                </p>
-                <p className="text-sm text-muted-foreground">Total Questions</p>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardContent className="p-6 flex items-center">
+            <Target className="w-8 h-8 text-blue-600" />
+            <div className="ml-4">
+              <p className="text-2xl font-bold">{data.totalQuestions}</p>
+              <p className="text-sm text-muted-foreground">Total Questions</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="pau-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-2xl font-bold">
-                  {totalStats.activeQuestions}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Active Questions
-                </p>
-              </div>
+        <Card>
+          <CardContent className="p-6 flex items-center">
+            <BarChart3 className="w-8 h-8 text-purple-600" />
+            <div className="ml-4">
+              <p className="text-2xl font-bold">{data.totalUsage}</p>
+              <p className="text-sm text-muted-foreground">Total Usage</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="pau-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <BarChart3 className="w-8 h-8 text-purple-600" />
-              <div className="ml-4">
-                <p className="text-2xl font-bold">
-                  {totalStats.averageSuccessRate}%
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Avg Success Rate
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="pau-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Clock className="w-8 h-8 text-yellow-600" />
-              <div className="ml-4">
-                <p className="text-2xl font-bold">{totalStats.totalUsage}</p>
-                <p className="text-sm text-muted-foreground">Total Usage</p>
-              </div>
+        <Card>
+          <CardContent className="p-6 flex items-center">
+            <Clock className="w-8 h-8 text-yellow-600" />
+            <div className="ml-4">
+              <p className="text-2xl font-bold">Page {data.page}</p>
+              <p className="text-sm text-muted-foreground">Current Page</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search and Filters */}
-      <Card className="pau-shadow">
+      {/* Search */}
+      <Card>
         <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Search questions by content or course..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filter by course" />
-              </SelectTrigger>
-              <SelectContent>
-                {courses.map((course) => (
-                  <SelectItem key={course.value} value={course.value}>
-                    {course.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                {questionTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={selectedDifficulty}
-              onValueChange={setSelectedDifficulty}
-            >
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filter by difficulty" />
-              </SelectTrigger>
-              <SelectContent>
-                {difficulties.map((difficulty) => (
-                  <SelectItem key={difficulty.value} value={difficulty.value}>
-                    {difficulty.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Search questions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </CardContent>
       </Card>
 
       {/* Questions List */}
-      <Card className="pau-shadow">
+      <Card>
         <CardHeader>
           <CardTitle>Questions ({filteredQuestions.length})</CardTitle>
-          <CardDescription>
-            Manage session questions and their performance
-          </CardDescription>
+          <CardDescription>Manage questions and usage</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {filteredQuestions.map((question) => (
+            {filteredQuestions.map((q) => (
               <div
-                key={question.id}
+                key={q.id}
                 className="p-6 border rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h4 className="font-medium">{question.question}</h4>
-                    </div>
-                    <div className="flex items-center space-x-4 mb-3">
-                      {getTypeBadge(question.type)}
-                      {getDifficultyBadge(question.difficulty)}
-                      <Badge variant="outline">{question.course}</Badge>
-                    </div>
-                    <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+                <div className="flex justify-between">
+                  <div>
+                    <h4 className="font-medium mb-2">{q.questionText}</h4>
+                    <div className="flex items-center text-sm text-muted-foreground space-x-4">
                       <span className="flex items-center">
-                        <Eye className="w-4 h-4 mr-1" />
-                        Used {question.usageCount} times
+                        <Eye className="w-4 h-4 mr-1" /> Used {q.usage} times
                       </span>
-                      <span className="flex items-center">
-                        <BarChart3 className="w-4 h-4 mr-1" />
-                        {question.successRate}% success rate
-                      </span>
-                      <span>Last used: {question.lastUsed}</span>
                     </div>
                   </div>
-
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm">
-                      <Eye className="w-4 h-4" />
-                    </Button>
                     <Button variant="ghost" size="sm">
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700"
+                      className="text-red-600"
+                      onClick={() => handleDelete(q.id)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
 
-                {question.type === "Multiple Choice" && (
-                  <div className="pl-4 border-l-2 border-gray-200">
+                {/* Options */}
+                {q.options.length > 0 && (
+                  <div className="pl-4 mt-3 border-l-2 border-gray-200">
                     <p className="text-sm font-medium mb-2">Options:</p>
                     <div className="space-y-1 text-sm">
-                      {question.options?.map((option, index) => (
+                      {q.options.map((opt, idx) => (
                         <div
-                          key={index}
+                          key={idx}
                           className={`flex items-center space-x-2 ${
-                            option === question.correctAnswer
+                            idx === q.correctAnswer
                               ? "text-green-600 font-medium"
                               : "text-muted-foreground"
                           }`}
                         >
-                          {option === question.correctAnswer ? (
+                          {idx === q.correctAnswer ? (
                             <CheckCircle className="w-4 h-4" />
                           ) : (
                             <XCircle className="w-4 h-4" />
                           )}
-                          <span>{option}</span>
+                          <span>{opt}</span>
                         </div>
                       ))}
                     </div>
@@ -806,12 +517,37 @@ export function QuestionManagement() {
             ))}
           </div>
 
+          {/* Pagination controls */}
+          <div className="flex justify-between items-center mt-6">
+            <Button
+              variant="outline"
+              disabled={page === 1}
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Previous
+            </Button>
+
+            <span className="text-sm text-muted-foreground">
+              Page {data.page} of {totalPages}
+            </span>
+
+            <Button
+              variant="outline"
+              disabled={page >= totalPages}
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+
           {filteredQuestions.length === 0 && (
             <div className="text-center py-12">
               <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No questions found</h3>
               <p className="text-muted-foreground">
-                Try adjusting your search criteria or create a new question.
+                Try adjusting your search or add a new question.
               </p>
             </div>
           )}

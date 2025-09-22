@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Card,
@@ -23,17 +23,23 @@ import {
   BookOpen,
   Share,
 } from "lucide-react";
+import { useSessionStore } from "@/store/session.store";
+import { retakeSession } from "./api/retake-session";
+import type { RetakeSessionDto } from "@/service/interfaces/session.interface";
+import { useAuthState } from "@/store/auth.store";
 
 interface SessionResultsProps {
   sessionId: string;
+  sessionTitle: string;
   finalScore: number;
   categoryScores: Record<string, number>;
-  certificateId: string;
-  completionTime: number;
+  certificateId?: string;
+  completionTime?: number;
 }
 
 export function SessionResults({
   sessionId,
+  sessionTitle,
   finalScore,
   categoryScores,
   certificateId,
@@ -42,17 +48,35 @@ export function SessionResults({
   const navigate = useNavigate();
   const passingScore = 80; // Should match your backend logic
   const passed = finalScore >= passingScore;
+  const { clearSession } = useSessionStore();
+  const { decodedDto } = useAuthState();
 
   // Convert category scores to display format
   const crispCategories = [
-    { key: "cScore", label: "Community", score: categoryScores.cScore || 0 },
-    { key: "rScore", label: "Respect", score: categoryScores.rScore || 0 },
-    { key: "iScore", label: "Integriy", score: categoryScores.iScore || 0 },
-    { key: "sScore", label: "Service", score: categoryScores.sScore || 0 },
+    {
+      key: "cScore",
+      label: "Community",
+      score: categoryScores.communityScore || 0,
+    },
+    {
+      key: "rScore",
+      label: "Respect",
+      score: categoryScores.respectScore || 0,
+    },
+    {
+      key: "iScore",
+      label: "Integriy",
+      score: categoryScores.integrityScore || 0,
+    },
+    {
+      key: "sScore",
+      label: "Service",
+      score: categoryScores.serviceScore || 0,
+    },
     {
       key: "pScore",
       label: "Professionalism",
-      score: categoryScores.pScore || 0,
+      score: categoryScores.professionalismScore || 0,
     },
   ];
 
@@ -60,31 +84,46 @@ export function SessionResults({
     ? [
         "Excellent work! You've demonstrated strong understanding across all CRISP categories.",
         "Your certificate is being generated and will be available for download shortly.",
-        "Consider sharing your achievement with colleagues and on professional networks.",
-        "Explore advanced training sessions to further develop your skills.",
       ]
     : [
-        "Focus on reviewing the areas where you scored below 70% before retaking.",
+        "Focus on reviewing the areas where you scored below 80% before retaking.",
         "Review the course materials, especially focusing on your weaker CRISP categories.",
-        "Practice applying the concepts through the interactive exercises provided.",
-        "Consider scheduling additional training or consultation if available.",
+        "Consider retaking the session",
       ];
 
-  // const handleNavigate = (path: string, params?: Record<string, string>) => {
-  //   switch (path) {
-  //     case 'dashboard':
-  //       navigate({ to: '/dashboard' });
-  //       break;
-  //     case 'session-detail':
-  //       navigate({ to: '/sessions/$sessionId', params: { sessionId } });
-  //       break;
-  //     case 'session-retake':
-  //       navigate({ to: '/sessions/$sessionId/quiz', params: { sessionId } });
-  //       break;
-  //     default:
-  //       break;
-  //   }
-  // };
+  useEffect(() => {
+    // Clear session data when result page loads
+    clearSession();
+  }, [clearSession]);
+
+  const retake = async () => {
+    const userId = decodedDto?.sub.id;
+    const data: RetakeSessionDto = {
+      sessionId,
+      userId: userId ?? "",
+    };
+    await retakeSession(data);
+    navigate({ to: "/session/$id", params: { id: sessionId } });
+  };
+
+  const handleNavigate = (path: string, params?: Record<string, string>) => {
+    switch (path) {
+      case "dashboard":
+        navigate({ to: "/" });
+        break;
+      // case 'session-detail':
+      //   navigate({ to: '/sessions/$sessionId', params: { sessionId } });
+      //   break;
+      // case 'session-retake':
+      //   navigate({ to: '/sessions/$sessionId/quiz', params: { sessionId } });
+      //   break;
+      case "certificate":
+        navigate({ to: "/certificate" });
+        break;
+      default:
+        break;
+    }
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return "text-green-600";
@@ -122,17 +161,19 @@ export function SessionResults({
         </div>
 
         <h1 className={passed ? "text-green-600" : "text-red-600"}>
-          {passed ? "Congratulations!" : "Session Not Passed"}
+          {passed
+            ? "Congratulations!"
+            : `Session on ${sessionTitle} Not Passed`}
         </h1>
         <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
           {passed
-            ? "You have successfully completed this training session."
+            ? `You have successfully completed this training session on ${sessionTitle}.`
             : "You can review the material and retake the session to improve your score."}
         </p>
       </div>
 
       {/* Score Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="pau-shadow">
           <CardContent className="p-6 text-center">
             <div
@@ -147,7 +188,7 @@ export function SessionResults({
           </CardContent>
         </Card>
 
-        <Card className="pau-shadow">
+        {/* <Card className="pau-shadow">
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold mb-2 text-[#2e3f6f]">
               {completionTime}m
@@ -157,7 +198,7 @@ export function SessionResults({
               Session duration
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card className="pau-shadow">
           <CardContent className="p-6 text-center">
@@ -167,7 +208,7 @@ export function SessionResults({
             <div className="text-sm text-muted-foreground">Status</div>
             {certificateId && (
               <div className="text-xs text-muted-foreground mt-1">
-                Certificate ID: {certificateId.slice(-8)}
+                Certificate ID: {certificateId}
               </div>
             )}
           </CardContent>
@@ -332,7 +373,10 @@ export function SessionResults({
                       certificate is being generated.
                     </p>
                     {certificateId && (
-                      <Button className="w-full pau-gradient">
+                      <Button
+                        className="w-full pau-gradient"
+                        onClick={() => handleNavigate("certificate")}
+                      >
                         <Award className="w-4 h-4 mr-2" />
                         View Certificate
                       </Button>
@@ -345,7 +389,7 @@ export function SessionResults({
                     </p>
                     <Button
                       className="w-full pau-gradient"
-                      //onClick={() => handleNavigate('session-retake')}
+                      onClick={() => retake()}
                     >
                       <RefreshCw className="w-4 h-4 mr-2" />
                       Retake Session
@@ -362,7 +406,7 @@ export function SessionResults({
               <CardTitle>Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button
+              {/* <Button
                 variant="outline"
                 className="w-full justify-start"
                 //onClick={() => handleNavigate('session-detail')}
@@ -381,12 +425,12 @@ export function SessionResults({
                   <Share className="w-4 h-4 mr-2" />
                   Share Achievement
                 </Button>
-              )}
+              )} */}
 
               <Button
                 variant="outline"
                 className="w-full justify-start"
-                //onClick={() => handleNavigate('dashboard')}
+                onClick={() => handleNavigate("dashboard")}
               >
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Back to Dashboard
@@ -432,7 +476,7 @@ export function SessionResults({
                     <div>
                       <p className="text-sm font-medium">Review Required</p>
                       <p className="text-xs text-muted-foreground">
-                        Focus on categories below 70%
+                        Focus on categories below 80%
                       </p>
                     </div>
                   </div>

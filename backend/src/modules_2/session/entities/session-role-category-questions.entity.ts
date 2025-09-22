@@ -38,7 +38,7 @@ export class SessionRoleCategoryQuestion {
   @Column('simple-json') // Stores array of question IDs
   questionIds: string[];
 
-  @Column({ default: 10 })
+  @Column({ default: 5 })
   questionsCount: number;
 
   @CreateDateColumn()

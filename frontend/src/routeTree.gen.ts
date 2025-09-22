@@ -27,6 +27,7 @@ import { Route as AuthuserLayoutSessionIndexRouteImport } from './routes/_auth/(
 import { Route as AuthuserLayoutProgramIndexRouteImport } from './routes/_auth/(user)/_layout/program/index'
 import { Route as AuthuserLayoutCertificateIndexRouteImport } from './routes/_auth/(user)/_layout/certificate/index'
 import { Route as AdminAuthAdminLayoutUserIndexRouteImport } from './routes/_admin-auth/admin/_layout/user/index'
+import { Route as AdminAuthAdminLayoutSessionIndexRouteImport } from './routes/_admin-auth/admin/_layout/session/index'
 import { Route as AdminAuthAdminLayoutQuestionIndexRouteImport } from './routes/_admin-auth/admin/_layout/question/index'
 import { Route as AuthuserLayoutSessionIdIndexRouteImport } from './routes/_auth/(user)/_layout/session/$id/index'
 import { Route as AuthuserLayoutProgramIdIndexRouteImport } from './routes/_auth/(user)/_layout/program/$id/index'
@@ -129,6 +130,12 @@ const AdminAuthAdminLayoutUserIndexRoute =
     path: '/user/',
     getParentRoute: () => AdminAuthAdminLayoutRoute,
   } as any)
+const AdminAuthAdminLayoutSessionIndexRoute =
+  AdminAuthAdminLayoutSessionIndexRouteImport.update({
+    id: '/session/',
+    path: '/session/',
+    getParentRoute: () => AdminAuthAdminLayoutRoute,
+  } as any)
 const AdminAuthAdminLayoutQuestionIndexRoute =
   AdminAuthAdminLayoutQuestionIndexRouteImport.update({
     id: '/question/',
@@ -184,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthuserLayoutIndexRoute
   '/admin/': typeof AdminAuthAdminLayoutIndexRoute
   '/admin/question': typeof AdminAuthAdminLayoutQuestionIndexRoute
+  '/admin/session': typeof AdminAuthAdminLayoutSessionIndexRoute
   '/admin/user': typeof AdminAuthAdminLayoutUserIndexRoute
   '/certificate': typeof AuthuserLayoutCertificateIndexRoute
   '/program': typeof AuthuserLayoutProgramIndexRoute
@@ -205,6 +213,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminAuthAdminLayoutIndexRoute
   '/': typeof AuthuserLayoutIndexRoute
   '/admin/question': typeof AdminAuthAdminLayoutQuestionIndexRoute
+  '/admin/session': typeof AdminAuthAdminLayoutSessionIndexRoute
   '/admin/user': typeof AdminAuthAdminLayoutUserIndexRoute
   '/certificate': typeof AuthuserLayoutCertificateIndexRoute
   '/program': typeof AuthuserLayoutProgramIndexRoute
@@ -233,6 +242,7 @@ export interface FileRoutesById {
   '/_admin-auth/admin/_layout/': typeof AdminAuthAdminLayoutIndexRoute
   '/_auth/(user)/_layout/': typeof AuthuserLayoutIndexRoute
   '/_admin-auth/admin/_layout/question/': typeof AdminAuthAdminLayoutQuestionIndexRoute
+  '/_admin-auth/admin/_layout/session/': typeof AdminAuthAdminLayoutSessionIndexRoute
   '/_admin-auth/admin/_layout/user/': typeof AdminAuthAdminLayoutUserIndexRoute
   '/_auth/(user)/_layout/certificate/': typeof AuthuserLayoutCertificateIndexRoute
   '/_auth/(user)/_layout/program/': typeof AuthuserLayoutProgramIndexRoute
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/'
     | '/admin/question'
+    | '/admin/session'
     | '/admin/user'
     | '/certificate'
     | '/program'
@@ -278,6 +289,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/'
     | '/admin/question'
+    | '/admin/session'
     | '/admin/user'
     | '/certificate'
     | '/program'
@@ -305,6 +317,7 @@ export interface FileRouteTypes {
     | '/_admin-auth/admin/_layout/'
     | '/_auth/(user)/_layout/'
     | '/_admin-auth/admin/_layout/question/'
+    | '/_admin-auth/admin/_layout/session/'
     | '/_admin-auth/admin/_layout/user/'
     | '/_auth/(user)/_layout/certificate/'
     | '/_auth/(user)/_layout/program/'
@@ -456,6 +469,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuthAdminLayoutUserIndexRouteImport
       parentRoute: typeof AdminAuthAdminLayoutRoute
     }
+    '/_admin-auth/admin/_layout/session/': {
+      id: '/_admin-auth/admin/_layout/session/'
+      path: '/session'
+      fullPath: '/admin/session'
+      preLoaderRoute: typeof AdminAuthAdminLayoutSessionIndexRouteImport
+      parentRoute: typeof AdminAuthAdminLayoutRoute
+    }
     '/_admin-auth/admin/_layout/question/': {
       id: '/_admin-auth/admin/_layout/question/'
       path: '/question'
@@ -511,6 +531,7 @@ declare module '@tanstack/react-router' {
 interface AdminAuthAdminLayoutRouteChildren {
   AdminAuthAdminLayoutIndexRoute: typeof AdminAuthAdminLayoutIndexRoute
   AdminAuthAdminLayoutQuestionIndexRoute: typeof AdminAuthAdminLayoutQuestionIndexRoute
+  AdminAuthAdminLayoutSessionIndexRoute: typeof AdminAuthAdminLayoutSessionIndexRoute
   AdminAuthAdminLayoutUserIndexRoute: typeof AdminAuthAdminLayoutUserIndexRoute
 }
 
@@ -518,6 +539,7 @@ const AdminAuthAdminLayoutRouteChildren: AdminAuthAdminLayoutRouteChildren = {
   AdminAuthAdminLayoutIndexRoute: AdminAuthAdminLayoutIndexRoute,
   AdminAuthAdminLayoutQuestionIndexRoute:
     AdminAuthAdminLayoutQuestionIndexRoute,
+  AdminAuthAdminLayoutSessionIndexRoute: AdminAuthAdminLayoutSessionIndexRoute,
   AdminAuthAdminLayoutUserIndexRoute: AdminAuthAdminLayoutUserIndexRoute,
 }
 

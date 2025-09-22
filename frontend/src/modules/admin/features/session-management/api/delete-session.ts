@@ -1,11 +1,10 @@
 import { client } from "@/lib/api/client";
 import { getAxiosError } from "@/lib/api/error";
-import type { addQuestionDto } from "@/service/interfaces/question.interface";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export async function AddQuestion(data: addQuestionDto) {
+export async function deleteSession(id: string) {
   try {
-    const response = await client.post("/question-bank", data);
+    const response = await client.delete(`/session/${id}`);
     return response.data;
   } catch (error) {
     const msg = getAxiosError(error);
@@ -13,12 +12,12 @@ export async function AddQuestion(data: addQuestionDto) {
   }
 }
 
-export function useAddQuestion() {
+export function useDeleteSession() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: AddQuestion,
+    mutationFn: deleteSession,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-questions"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-session"] });
     },
   });
 }

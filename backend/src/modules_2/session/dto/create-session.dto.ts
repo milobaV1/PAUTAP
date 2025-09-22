@@ -6,7 +6,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { Difficulty } from 'src/core/enums/question.enum';
+//import { Difficulty } from 'src/core/enums/question.enum';
 import {
   AnswerBatch,
   type ProgressState,
@@ -32,13 +32,21 @@ export class CreateSessionDto {
   @IsString()
   description?: string;
 
-  @ApiProperty({
-    description: 'Difficulty level of the session',
-    enum: Difficulty,
-    example: Difficulty.BEGINNER,
+  @ApiPropertyOptional({
+    description: 'Time limit for the session in minutes',
+    example: 60,
   })
-  @IsEnum(Difficulty)
-  difficulty: Difficulty;
+  @IsOptional()
+  @IsNumber()
+  timeLimit?: number;
+
+  // @ApiProperty({
+  //   description: 'Difficulty level of the session',
+  //   enum: Difficulty,
+  //   example: Difficulty.BEGINNER,
+  // })
+  // @IsEnum(Difficulty)
+  // difficulty: Difficulty;
 }
 
 export class StartSessionDto {
@@ -49,6 +57,15 @@ export class StartSessionDto {
   @IsNumber()
   roleId: number;
 
+  @ApiProperty({
+    description: 'The UUID of the user',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsUUID()
+  userId: string;
+}
+
+export class RetakeSessionDto {
   @ApiProperty({
     description: 'The UUID of the user',
     example: '550e8400-e29b-41d4-a716-446655440000',

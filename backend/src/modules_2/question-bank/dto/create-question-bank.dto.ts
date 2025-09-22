@@ -10,7 +10,7 @@ import {
   IsEnum,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Difficulty } from 'src/core/enums/question.enum';
+//import { Difficulty } from 'src/core/enums/question.enum';
 import { CRISP } from 'src/core/enums/training.enum';
 
 export class CreateQuestionBankDto {
@@ -41,13 +41,20 @@ export class CreateQuestionBankDto {
   correctAnswer: number;
 
   @ApiProperty({
-    enum: Difficulty,
-    required: false,
-    example: Difficulty.BEGINNER,
+    example: 'Helping one another because PAU is big on service',
   })
-  @IsEnum(Difficulty)
   @IsOptional()
-  difficultyLevel?: Difficulty;
+  @IsString()
+  explanation?: string;
+
+  // @ApiProperty({
+  //   enum: Difficulty,
+  //   required: false,
+  //   example: Difficulty.BEGINNER,
+  // })
+  // @IsEnum(Difficulty)
+  // @IsOptional()
+  // difficultyLevel?: Difficulty;
 
   @ApiProperty({
     type: [Number],

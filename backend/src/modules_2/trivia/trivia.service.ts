@@ -115,7 +115,7 @@ export class TriviaService {
 
     const url = `${frontendUrl}/trivia`;
 
-    const jobs = users.map((user) => ({
+    const jobs = users.users.map((user) => ({
       name: 'send trivia',
       data: {
         to: user.email,

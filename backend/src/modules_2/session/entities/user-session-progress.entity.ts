@@ -251,7 +251,7 @@ export class UserSessionProgress {
   // In user-session-progress.entity.ts
 
   resetProgress(): void {
-    this.status = 'not_started' as any; // or ProgressStatus.NOT_STARTED
+    this.status = ProgressStatus.NOT_STARTED;
     this.currentCategory = CRISP.C;
     this.currentQuestionIndex = 0;
     this.answeredQuestions = 0;

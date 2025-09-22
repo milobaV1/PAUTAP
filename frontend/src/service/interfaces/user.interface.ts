@@ -1,4 +1,4 @@
-import type { Difficulty } from "../enums/difficulty.enum";
+//import type { Difficulty } from "../enums/difficulty.enum";
 
 export interface Role {
   id: string;
@@ -19,7 +19,7 @@ export interface User {
   last_name: string;
   email: string;
   is_onboarding: boolean;
-  level: Difficulty;
+  //level: Difficulty;
   created_at: string; // Dates usually come as ISO strings from API
   updated_at: string;
   role: Role;
@@ -41,4 +41,41 @@ export interface ForgotPasswordInput {
 export interface ResetPasswordInput {
   token: string;
   password: string;
+}
+export interface DashboardResponse {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  completedSessions: number;
+  triviaScore: number;
+  certificatesCount: number;
+  // incompleteSessions: IncompleteSession[];
+}
+
+export interface UserWithStats {
+  id: string;
+  email: string;
+  createdAt: Date;
+  role: string;
+  department: string;
+  totalCertificates: number;
+}
+
+export interface AdminStatsUserResponse {
+  totalUsers: number;
+  totalCertificates: number;
+  users: UserWithStats[];
+  page: number;
+  limit: number;
+}
+
+export interface CreateUser {
+  first_name: string;
+  last_name: string;
+  email: string;
+  is_onboarding?: boolean;
+  password: string;
+  role_id: number;
 }

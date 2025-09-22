@@ -1,7 +1,7 @@
-export const Difficulty = {
-  BEGINNER: "beginner",
-  INTERMEDIATE: "intermediate",
-  ADVANCED: "advanced",
-} as const;
+// export const Difficulty = {
+//   BEGINNER: "beginner",
+//   INTERMEDIATE: "intermediate",
+//   ADVANCED: "advanced",
+// } as const;
 
-export type Difficulty = (typeof Difficulty)[keyof typeof Difficulty];
+// export type Difficulty = (typeof Difficulty)[keyof typeof Difficulty];
