@@ -27,6 +27,8 @@ import { TriviaModule } from './modules_2/trivia/trivia.module';
 import { TriviaSeeder } from './core/seeds/trivia.seeder';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { EmailModule } from './modules_2/email/email.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AdminModule } from './modules_2/admin/admin.module';
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { EmailModule } from './modules_2/email/email.module';
     SessionModule,
     UsersModule,
     TriviaModule,
+    AdminModule,
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: async () => {
@@ -81,15 +84,28 @@ import { EmailModule } from './modules_2/email/email.module';
         },
       }),
     }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 10,
+        },
+      ],
+    }),
   ],
   controllers: [AppController],
   providers: [
     AppService,
     AdminSeeder,
-    //TriviaSeeder,
+    TriviaSeeder,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

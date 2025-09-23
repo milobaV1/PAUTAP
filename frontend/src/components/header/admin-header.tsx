@@ -3,7 +3,11 @@ import { Button } from "../ui/button";
 import { useAuthState } from "@/store/auth.store";
 import { useNavigate } from "@tanstack/react-router";
 
-export function AdminHeader() {
+export function AdminHeader({
+  setSidebarOpen,
+}: {
+  setSidebarOpen: (open: boolean) => void;
+}) {
   const navigate = useNavigate();
   const { logOut, user } = useAuthState();
 
@@ -20,7 +24,7 @@ export function AdminHeader() {
               variant="ghost"
               size="sm"
               className="lg:hidden mr-2"
-              //onClick={() => setSidebarOpen(!sidebarOpen)}
+              onClick={() => setSidebarOpen(true)}
             >
               <Menu className="w-5 h-5" />
             </Button>

@@ -63,6 +63,7 @@ export class Certificate {
   // One-to-one with UserSessionProgress to link the completion record
   @ManyToOne(() => UserSessionProgress, {
     nullable: true,
+    onDelete: 'CASCADE',
   })
   @JoinColumn([
     { name: 'userId', referencedColumnName: 'userId' },

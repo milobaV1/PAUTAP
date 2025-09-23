@@ -82,7 +82,7 @@ export class QuestionBankController {
     @Param('id') id: string,
     @Body() updateQuestionBankDto: UpdateQuestionBankDto,
   ) {
-    return this.questionBankService.update(+id, updateQuestionBankDto);
+    return this.questionBankService.update(id, updateQuestionBankDto);
   }
 
   @Delete(':id')

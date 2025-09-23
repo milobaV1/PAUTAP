@@ -1,12 +1,14 @@
 import { AdminHeader } from "@/components/header/admin-header";
 import { AdminSidebar } from "@/components/sidebar/admin-sidebar";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_admin-auth/admin/_layout")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
     // <div className="min-h-screen bg-gray-50">
     //   <AdminHeader />
@@ -28,13 +30,13 @@ function RouteComponent() {
     // </div>
 
     <div className="min-h-screen bg-gray-50">
-      <AdminSidebar />
+      <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="lg:pl-64">
-        <AdminHeader />
+        <AdminHeader setSidebarOpen={setSidebarOpen} />
         <main className="p-4 lg:p-6">
           <Outlet />
         </main>
       </div>
     </div>
-  )
+  );
 }

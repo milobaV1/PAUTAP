@@ -29,6 +29,7 @@ export function useUpdateSession() {
     }) => updateSession(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-session"] });
+      queryClient.invalidateQueries({ queryKey: ["session-details"] });
     },
   });
 }

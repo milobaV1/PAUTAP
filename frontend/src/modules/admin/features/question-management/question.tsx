@@ -60,6 +60,7 @@ import {
 } from "@/components/ui/select";
 import { useDeleteQuestion } from "./api/delete-question";
 import { toast } from "sonner";
+import { QuestionDetailsModal } from "./question-details";
 
 const questionSchema = z.object({
   crispType: z.enum(CRISP),
@@ -91,6 +92,9 @@ export function QuestionManagement() {
 
   const { mutate: addQuestion, isPending, isError, error } = useAddQuestion();
   const { mutate: deleteQuestion } = useDeleteQuestion();
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(
+    null
+  );
 
   const form = useForm<z.infer<typeof questionSchema>>({
     resolver: zodResolver(questionSchema),
@@ -158,7 +162,7 @@ export function QuestionManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <div>
           <h1>Question Management</h1>
           <p className="text-muted-foreground mt-1">
@@ -185,6 +189,7 @@ export function QuestionManagement() {
                 onSubmit={form.handleSubmit(onSubmit, (errors) => {
                   console.log("validation failed", errors);
                 })}
+                className="space-y-6"
               >
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   {/* CRISP Select */}
@@ -474,8 +479,12 @@ export function QuestionManagement() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm">
-                      <Edit className="w-4 h-4" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedQuestionId(q.id)}
+                    >
+                      <Eye className="w-4 h-4" />
                     </Button>
                     <Button
                       variant="ghost"
@@ -553,6 +562,14 @@ export function QuestionManagement() {
           )}
         </CardContent>
       </Card>
+
+      {selectedQuestionId && (
+        <QuestionDetailsModal
+          questionId={selectedQuestionId}
+          open={!!selectedQuestionId}
+          onOpenChange={(open) => !open && setSelectedQuestionId(null)}
+        />
+      )}
     </div>
   );
 }

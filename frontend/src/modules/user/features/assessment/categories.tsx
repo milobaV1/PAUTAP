@@ -182,6 +182,7 @@ export function CategorySelection() {
     navigate({
       to: "/session/$id/category/$categoryId",
       params: { id, categoryId },
+      replace: true,
     });
   };
 

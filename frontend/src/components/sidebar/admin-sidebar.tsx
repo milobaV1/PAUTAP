@@ -13,9 +13,13 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
-export function AdminSidebar() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
+export function AdminSidebar({
+  sidebarOpen,
+  setSidebarOpen,
+}: {
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
 

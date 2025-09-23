@@ -237,3 +237,26 @@ export interface CreateSessionDto {
 
   timeLimit?: number;
 }
+
+export interface SessionRoleCategoryQuestion {
+  id: number;
+  sessionId: string;
+  roleId: number;
+  crispCategory: CRISP;
+  questionIds: string[]; // stores IDs of questions
+  questionsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Session {
+  id: string;
+  title: string;
+  description?: string;
+  isActive: boolean;
+  questionsGenerated: boolean;
+  timeLimit: number; // in seconds
+  createdAt: string;
+  updatedAt: string;
+  roleCategoryQuestions?: SessionRoleCategoryQuestion[];
+}

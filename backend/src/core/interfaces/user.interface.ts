@@ -36,6 +36,8 @@ export interface DashboardResponse {
 
 export interface UserWithStats {
   id: string;
+  first_name: string;
+  last_name: string;
   email: string;
   createdAt: Date;
   role: string;

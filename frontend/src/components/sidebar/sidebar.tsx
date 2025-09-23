@@ -1,12 +1,25 @@
-import { Home, BookOpen, FileCheck, Trophy, Award, X } from "lucide-react";
+import {
+  Home,
+  BookOpen,
+  FileCheck,
+  Trophy,
+  Award,
+  X,
+  LayoutDashboard,
+} from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useLocation, useNavigate } from "@tanstack/react-router";
+import { isAdmin } from "@/utils/auth-extension";
 
-export function Sidebar() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
+export function Sidebar({
+  sidebarOpen,
+  setSidebarOpen,
+}: {
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -32,6 +45,8 @@ export function Sidebar() {
     navigate({ to });
     setSidebarOpen(false);
   };
+
+  const admin = isAdmin();
   return (
     <div>
       {/* Mobile sidebar overlay */}
@@ -86,6 +101,20 @@ export function Sidebar() {
               </li>
             ))}
           </ul>
+          {admin ? (
+            <div className="pt-4 border-t">
+              <Button
+                variant="ghost"
+                className="w-full justify-start h-10 text-blue-600 hover:bg-blue-50"
+                onClick={() => navigate({ to: "/admin" })}
+              >
+                <LayoutDashboard className="w-4 h-4 mr-3" />
+                Back to Admin Portal
+              </Button>
+            </div>
+          ) : (
+            ""
+          )}
         </nav>
 
         {/* User profile */}

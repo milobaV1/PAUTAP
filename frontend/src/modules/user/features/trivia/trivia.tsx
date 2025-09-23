@@ -37,6 +37,7 @@ import { useSubmitAnswer } from "./api/submit-answer";
 import { useSubmitTrivia } from "./api/submit-trivia";
 import { useAuthState } from "@/store/auth.store";
 import { getParticipationStatusMessage } from "@/utils/trivia-extension";
+import { useNavigate } from "@tanstack/react-router";
 
 export function Trivia() {
   const [gameStarted, setGameStarted] = useState(false);
@@ -59,6 +60,7 @@ export function Trivia() {
   const submitAnswerMutation = useSubmitAnswer();
   const submitTriviaMutation = useSubmitTrivia();
   const { decodedDto } = useAuthState();
+  const navigate = useNavigate();
 
   console.log("Trivia data: ", triviaData);
 
@@ -184,16 +186,16 @@ export function Trivia() {
     }
   };
 
-  const resetGame = () => {
-    setGameStarted(false);
-    setGameCompleted(false);
-    setCurrentQuestion(0);
-    setSelectedAnswer(null);
-    setQuestions([]);
-    setParticipationId(null);
-    setAnswers({});
-    refetch();
-  };
+  // const resetGame = () => {
+  //   setGameStarted(false);
+  //   setGameCompleted(false);
+  //   setCurrentQuestion(0);
+  //   setSelectedAnswer(null);
+  //   setQuestions([]);
+  //   setParticipationId(null);
+  //   setAnswers({});
+  //   refetch();
+  // };
 
   // Loading state
   if (isLoading) {
@@ -384,7 +386,7 @@ export function Trivia() {
               </div>
             </div>
 
-            <Button variant="outline" onClick={resetGame}>
+            <Button variant="outline" onClick={() => navigate({ to: "/" })}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Back to Dashboard
             </Button>

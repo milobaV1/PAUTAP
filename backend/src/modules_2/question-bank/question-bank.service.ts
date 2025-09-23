@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
 import { UpdateQuestionBankDto } from './dto/update-question-bank.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -108,21 +112,59 @@ export class QuestionBankService {
 
   async findAll() {
     const question = await this.questionRepo.find({
-      relations: ['question_history', 'roles'],
+      relations: ['usages', 'roles'],
     });
   }
 
-  async findOne(id: string) {
-    const question = await this.questionRepo.findOne({
-      where: { id },
-      relations: ['question_history', 'roles'],
-    });
+  async findOne(id: string): Promise<QuestionBank> {
+    console.log('=== FINDING QUESTION ===');
+    console.log('Question ID:', id);
 
+    const question = await this.questionRepo
+      .createQueryBuilder('question')
+      .leftJoinAndSelect('question.roles', 'role')
+      .leftJoinAndSelect('question.usages', 'usage')
+      .where('question.id = :id', { id })
+      .getOne();
+
+    console.log('Question found:', !!question);
+    if (question) {
+      console.log('Roles count:', question.roles?.length || 0);
+      console.log(
+        'Roles data:',
+        question.roles?.map((r) => ({ id: r.id, name: r.name })),
+      );
+    }
+
+    if (!question) throw new NotFoundException('Question not found');
     return question;
   }
 
-  update(id: number, updateQuestionBankDto: UpdateQuestionBankDto) {
-    return `This action updates a #${id} questionBank`;
+  async update(id: string, updateQuestionBankDto: UpdateQuestionBankDto) {
+    console.log('=== UPDATE QUESTION ===');
+    console.log('Update data:', updateQuestionBankDto);
+    const question = await this.findOne(id);
+    if (!question) throw new NotFoundException('Question not found');
+
+    // Handle regular fields
+    const { roleIds, ...otherFields } = updateQuestionBankDto;
+    Object.assign(question, otherFields);
+
+    // Handle roles separately if provided
+    if (roleIds && Array.isArray(roleIds)) {
+      console.log('Setting roles with IDs:', roleIds);
+      const roleEntities = await this.roleRepo.find({
+        where: { id: In(roleIds) },
+      });
+      console.log(
+        'Found role entities:',
+        roleEntities.map((r) => ({ id: r.id, name: r.name })),
+      );
+      question.roles = roleEntities;
+    }
+
+    await this.questionRepo.save(question);
+    return this.findOne(id);
   }
 
   async remove(id: string) {

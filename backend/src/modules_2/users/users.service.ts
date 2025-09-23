@@ -330,7 +330,9 @@ export class UsersService {
    * Update user
    */
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.findById(id, false);
+    console.log('Data from update service: ', updateUserDto);
+    console.log('id from update service: ', id);
+    const user = await this.findById(id, true);
 
     // Check email uniqueness if email is being updated
     if (updateUserDto.email && updateUserDto.email !== user.email) {
@@ -611,6 +613,8 @@ export class UsersService {
       .loadRelationCountAndMap('user.totalCertificates', 'user.certificates')
       .select([
         'user.id',
+        'user.first_name',
+        'user.last_name',
         'user.email',
         'user.created_at',
         'role.name',
@@ -623,12 +627,15 @@ export class UsersService {
 
     const formattedUsers: UserWithStats[] = users.map((u: any) => ({
       id: u.id,
+      first_name: u.first_name,
+      last_name: u.last_name,
       email: u.email,
       createdAt: u.created_at,
       role: u.role?.name || 'N/A',
       department: u.role?.department?.name || 'N/A',
       totalCertificates: u.totalCertificates || 0,
     }));
+    console.log('Formatted Users: ', formattedUsers);
 
     return {
       totalUsers,

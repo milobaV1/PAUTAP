@@ -34,3 +34,38 @@ export interface AdminQuestionsResponse {
   page: number;
   limit: number;
 }
+
+export interface Role {
+  id: number;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  departmentId?: number; // you can normalize department if you need
+}
+
+export interface QuestionUsage {
+  id: number;
+  questionId: string;
+  roleId: number;
+  usageCount: number;
+  lastUsedAt?: string;
+  lastUsedInSessionId?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Question {
+  id: string;
+  crispCategory: CRISP;
+  questionText: string;
+  options: string[];
+  correctAnswer: number;
+  explanation?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+
+  // relations
+  usages?: QuestionUsage[];
+  roles?: Role[];
+}

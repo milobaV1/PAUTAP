@@ -3,14 +3,12 @@
 export interface Role {
   id: string;
   name: string;
-  // if your Role entity has more fields, add them here
   department?: Department;
 }
 
 export interface Department {
   id: string;
   name: string;
-  // add other department fields if needed
 }
 
 export interface User {
@@ -19,14 +17,10 @@ export interface User {
   last_name: string;
   email: string;
   is_onboarding: boolean;
-  //level: Difficulty;
-  created_at: string; // Dates usually come as ISO strings from API
+  created_at: string;
   updated_at: string;
   role: Role;
-  // optional relationships if your API includes them
-  //   question_history?: any[];
   certificates?: any[];
-  //   department?: Department; // getter in entity, might be included in API
 }
 
 export interface LoginInterface {
@@ -56,6 +50,8 @@ export interface DashboardResponse {
 
 export interface UserWithStats {
   id: string;
+  first_name: string;
+  last_name: string;
   email: string;
   createdAt: Date;
   role: string;

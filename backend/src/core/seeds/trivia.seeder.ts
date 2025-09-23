@@ -65,7 +65,7 @@ export class TriviaSeeder implements OnApplicationBootstrap {
     }
 
     const today = new Date();
-    today.setHours(13, 35, 0, 0); // 13:40 = 1:40 PM
+    today.setHours(19, 16, 0, 0); // 13:40 = 1:40 PM
 
     const testTrivia = triviaRepository.create({
       title: `Test Trivia - ${today.toLocaleString('default', { month: 'long', day: 'numeric', year: 'numeric' })}`,

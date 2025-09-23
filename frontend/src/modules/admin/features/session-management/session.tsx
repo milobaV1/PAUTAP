@@ -52,6 +52,7 @@ import { useCreateSession } from "./api/create-session";
 import { toast } from "sonner";
 import { useDeleteSession } from "./api/delete-session";
 import { useUpdateSession } from "./api/update-session";
+import { SessionDetailsModal } from "./session-details";
 
 const sessionSchema = z.object({
   title: z.string().min(1, "Session title is required"),
@@ -72,7 +73,9 @@ export function TrainingSessionManagement() {
   //   const [sessionDescription, setSessionDescription] = useState("");
   const { mutateAsync: createSession, isPending, isError } = useCreateSession();
   const { mutate: deleteSession } = useDeleteSession();
-  const { mutate: updateSession } = useUpdateSession();
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+    null
+  );
   const [page, setPage] = useState(1);
   const limit = 5;
 
@@ -114,21 +117,6 @@ export function TrainingSessionManagement() {
     });
   };
 
-  const handleUpdate = (sessionId: string) => {
-    updateSession(
-      { id: sessionId, data: { title: "Updated Title" } }, // 🔥 replace with form data
-      {
-        onSuccess: () => {
-          toast.success("✅ Session updated successfully");
-        },
-        onError: (error: any) => {
-          console.error("❌ Update failed:", error);
-          toast.error("Failed to update session");
-        },
-      }
-    );
-  };
-
   //   const resetForm = () => {
   //     setSessionName("");
   //     setSessionDescription("");
@@ -155,7 +143,7 @@ export function TrainingSessionManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <div>
           <h1>Training Session Management</h1>
           <p className="text-muted-foreground mt-1">
@@ -334,15 +322,15 @@ export function TrainingSessionManagement() {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm" title="View Questions">
-                      <Eye className="w-4 h-4" />
-                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleUpdate(session.id)}
-                      title="Edit Session"
+                      title="View Questions"
+                      onClick={() => setSelectedSessionId(session.id)}
                     >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" title="Edit Session">
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button
@@ -396,6 +384,13 @@ export function TrainingSessionManagement() {
           </div>
         </CardContent>
       </Card>
+      {selectedSessionId && (
+        <SessionDetailsModal
+          sessionId={selectedSessionId}
+          open={!!selectedSessionId}
+          onOpenChange={(open) => !open && setSelectedSessionId(null)}
+        />
+      )}
     </div>
   );
 }

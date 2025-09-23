@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,10 +31,12 @@ import {
 import { useGetLogin } from "./api/login";
 
 const loginSchema = z.object({
-  email: z.string().min(5, { message: "Enter a valid email" }),
-  // .refine((value) => /^\S+@pau\.edu\.ng$/.test(value), {
-  //   message: "Must be a valid PAU email",
-  // })
+  email: z
+    .string()
+    .min(5, { message: "Enter a valid email" })
+    .refine((value) => /^\S+@pau\.edu\.ng$/.test(value), {
+      message: "Must be a valid PAU email",
+    }),
   password: z
     .string()
     .min(6, { message: "Password must be at least 6 characters" }),

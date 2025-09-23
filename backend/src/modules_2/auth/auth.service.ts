@@ -22,6 +22,7 @@ export class AuthService {
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.userService.findOne('email', email);
+
     if (user && (await bcrypt.compare(pass, user.password))) {
       const { password, ...result } = user;
       return result;
@@ -48,33 +49,12 @@ export class AuthService {
 
     const payload = { email };
 
-    const token = this.jwtService.sign(payload);
+    const token = this.jwtService.sign(payload, { expiresIn: '15m' });
 
     user.resetToken = token;
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const url = `${frontendUrl}/reset-password?token=${token}`;
 
-    // await this.emailQueue.add(
-    //   'reset-password',
-    //   {
-    //     to: user.email,
-    //     subject: 'Reset Your Password',
-    //     html: `
-    //     <p>Hi</p>
-    //     <p>To reset your password, click here: <a href="${url}">reset-password</p>
-    //   `,
-    //   },
-    //   {
-    //     // Queue options
-    //     attempts: 3, // Retry up to 3 times on failure
-    //     backoff: {
-    //       type: 'exponential',
-    //       delay: 5000, // Start with 5 second delay
-    //     },
-    //     removeOnComplete: 10, // Keep only 10 completed jobs
-    //     removeOnFail: 5, // Keep only 5 failed jobs for debugging
-    //   },
-    // );
     await this.emailQueue.add(
       'reset-password',
       {

@@ -422,6 +422,7 @@ export function SessionTaking() {
       setCurrentSession(id);
       setCurrentCategory(currentCategory.category);
       resetCurrentQuestionIndex();
+      setCurrentQuestionState(0);
 
       // Sync the category change immediately
       if (userId) {
@@ -1195,10 +1196,17 @@ export function SessionTaking() {
                   </div>
                   <Button
                     variant="outline"
-                    onClick={handleNextQuestion}
-                    disabled={currentQuestion === questions.length - 1}
+                    onClick={() => {
+                      if (currentQuestion === questions.length - 1) {
+                        handleBackToCategories();
+                      } else {
+                        handleNextQuestion();
+                      }
+                    }}
                   >
-                    Next
+                    {currentQuestion === questions.length - 1
+                      ? "Finish"
+                      : "Next"}
                     <ChevronRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>

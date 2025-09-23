@@ -565,7 +565,12 @@ export class TriviaService {
     );
 
     // Sort by average score descending
-    leaderboardData.sort((a, b) => b.averageScore - a.averageScore);
+    leaderboardData.sort((a, b) => {
+      if (b.totalScore !== a.totalScore) {
+        return b.totalScore - a.totalScore;
+      }
+      return b.triviaCount - a.triviaCount;
+    });
 
     // Assign ranks and update database
     for (let i = 0; i < leaderboardData.length; i++) {

@@ -32,12 +32,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
+import { Switch } from "@/components/ui/switch";
 import {
   Users,
   Search,
@@ -56,6 +57,8 @@ import type { CreateUser } from "@/service/interfaces/user.interface";
 import { useCreateUser } from "./api/create-user";
 import { toast } from "sonner";
 import { useDeleteUser } from "./api/delete-user";
+import { useAuthState } from "@/store/auth.store";
+import { UserDetailsModal } from "./user-details";
 
 const createUserSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -84,6 +87,10 @@ export function UserManagement() {
   const limit = 5;
 
   const { data, isLoading } = useGetUserForAdmin(page, limit);
+  const { decodedDto } = useAuthState();
+
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const form = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
@@ -96,6 +103,13 @@ export function UserManagement() {
       is_onboarding: false,
     },
   });
+
+  //const userId = decodedDto?.sub.id;
+
+  const handleViewUser = (userId: string) => {
+    setSelectedUserId(userId);
+    setShowUserModal(true);
+  };
 
   async function handleSubmit(values: CreateUserFormValues) {
     const { role, ...rest } = values;
@@ -131,6 +145,7 @@ export function UserManagement() {
   }
 
   const users = data?.users ?? [];
+  console.log("Users: ", users);
   const totalUsers = data?.totalUsers ?? 0;
   const totalCertificates = data?.totalCertificates ?? 0;
   const totalPages = Math.ceil(data ? data.totalUsers / data.limit : 1);
@@ -148,7 +163,7 @@ export function UserManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <div>
           <h1>User Management</h1>
           <p className="text-muted-foreground mt-1">
@@ -284,6 +299,29 @@ export function UserManagement() {
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name="is_onboarding"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Onboarding Required
+                        </FormLabel>
+                        <FormDescription>
+                          User needs to complete onboarding process
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
                 <div className="flex justify-end space-x-3">
                   <Button
                     type="button"
@@ -383,6 +421,9 @@ export function UserManagement() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
+                      <h2 className="text-lg font-semibold">
+                        {user.first_name} {user.last_name}
+                      </h2>
                       <h4 className="font-medium">{user.email}</h4>
                       <p className="text-sm text-muted-foreground">
                         {user.department} • {user.role}
@@ -402,17 +443,22 @@ export function UserManagement() {
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewUser(user.id)}
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      {/* <Button variant="ghost" size="sm">
                         <Edit className="w-4 h-4" />
-                      </Button>
+                      </Button> */}
                       <Button
                         variant="ghost"
                         size="sm"
                         className="text-red-600 hover:text-red-700"
-                        onClick={() => handleDelete(user.id)}
+                        onClick={() => user.id && handleDelete(user.id)}
+                        disabled={!user.id}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -455,6 +501,13 @@ export function UserManagement() {
           </div>
         </CardContent>
       </Card>
+      {selectedUserId && (
+        <UserDetailsModal
+          userId={selectedUserId}
+          open={!!selectedUserId}
+          onOpenChange={(open) => !open && setSelectedUserId(null)}
+        />
+      )}
     </div>
   );
 }

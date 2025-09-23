@@ -108,6 +108,8 @@ export class UsersController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    // console.log('Data from update backend: ', updateUserDto);
+    // console.log('id from update backend: ', id);
     return this.usersService.update(id, updateUserDto);
   }
 

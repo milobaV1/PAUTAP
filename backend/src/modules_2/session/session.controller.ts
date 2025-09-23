@@ -190,4 +190,16 @@ export class SessionController {
   async remove(@Param('id', new ParseUUIDPipe()) id: string): Promise<void> {
     await this.sessionService.remove(id);
   }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.sessionService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateSessionDto: UpdateSessionDto) {
+    // console.log('Data from update backend: ', updateUserDto);
+    // console.log('id from update backend: ', id);
+    return this.sessionService.update(id, updateSessionDto);
+  }
 }
