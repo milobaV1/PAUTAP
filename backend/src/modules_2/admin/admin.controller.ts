@@ -1,12 +1,17 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminDashboardStats } from 'src/core/interfaces/admin.interface';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { SystemAdminOnly } from 'src/core/metadata/role.metadata';
 
+@ApiBearerAuth('access-token')
 @Controller('admin')
+@UseGuards(RolesGuard)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  @SystemAdminOnly()
   @Get('/dashboard/stats')
   @ApiOperation({
     summary: 'Get admin dashboard statistics',

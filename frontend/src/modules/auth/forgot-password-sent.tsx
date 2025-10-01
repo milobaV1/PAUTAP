@@ -9,31 +9,6 @@ import {
 import { BookOpen, Mail, CheckCircle, Clock } from "lucide-react";
 
 export function ForgotPasswordSent() {
-  //   const [timeLeft, setTimeLeft] = useState(60);
-  //   const [canResend, setCanResend] = useState(false);
-
-  //   useEffect(() => {
-  //     if (timeLeft > 0) {
-  //       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-  //       return () => clearTimeout(timer);
-  //     } else {
-  //       setCanResend(true);
-  //     }
-  //   }, [timeLeft]);
-
-  //   const handleResend = () => {
-  //     setTimeLeft(60);
-  //     setCanResend(false);
-  //     // Simulate resending email
-  //     console.log("Resending password reset email...");
-  //   };
-
-  //   const formatTime = (seconds: number) => {
-  //     const mins = Math.floor(seconds / 60);
-  //     const secs = seconds % 60;
-  //     return `${mins}:${secs.toString().padStart(2, "0")}`;
-  //   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md">
@@ -107,57 +82,6 @@ export function ForgotPasswordSent() {
               </div>
             </div>
 
-            {/* Action Buttons
-            <div className="space-y-3">
-            
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-xs text-yellow-800 mb-2">
-                  <strong>Demo Mode:</strong> In a real application, you would
-                  click the link in your email. For testing purposes, use the
-                  button below:
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-yellow-700 border-yellow-300 hover:bg-yellow-100"
-                  onClick={() => onNavigate("reset-password")}
-                >
-                  Simulate Email Link (Demo)
-                </Button>
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleResend}
-                disabled={!canResend}
-              >
-                {canResend ? (
-                  <>
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Resend Email
-                  </>
-                ) : (
-                  <>
-                    <Clock className="w-4 h-4 mr-2" />
-                    Resend in {formatTime(timeLeft)}
-                  </>
-                )}
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => onNavigate("login")}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Login
-              </Button>
-            </div>
- */}
             {/* Support */}
             <div className="text-center pt-4 border-t">
               <p className="text-sm text-gray-600">

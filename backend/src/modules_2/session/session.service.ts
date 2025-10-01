@@ -18,7 +18,6 @@ import { DataSource, In, Repository } from 'typeorm';
 import { SessionRoleCategoryQuestion } from './entities/session-role-category-questions.entity';
 import { UserAnswer } from './entities/user-answers.entity';
 import { UserSessionProgress } from './entities/user-session-progress.entity';
-import { QuestionUsage } from '../question-bank/entities/question-usage.entity';
 import { Role } from '../users/entities/role.entity';
 import { CRISP } from 'src/core/enums/training.enum';
 import { QuestionBank } from '../question-bank/entities/question-bank.entity';
@@ -31,7 +30,6 @@ import {
   SessionCompletionResult,
   CompletionMetrics,
   AnswerBatch,
-  ProgressState,
   SyncResult,
   ProgressSummary,
   ValidatedAnswer,
@@ -76,6 +74,7 @@ export class SessionService {
       await this.generateQuestionsForAllRoles(
         session.id,
         roles,
+        session.questionsPerCategory,
         queryRunner.manager,
       );
 
@@ -131,7 +130,10 @@ export class SessionService {
         'roleCategoryQuestions.roleId = :roleId',
         { roleId: userRoleId },
       )
-      .where('session.isActive = :isActive', { isActive: true })
+      .where('session.isOnboardingSession = :isOnboarding', {
+        isOnboarding: false,
+      })
+      .andWhere('session.isActive = :isActive', { isActive: true })
       .orderBy('session.createdAt', 'DESC')
       .getMany();
 
@@ -178,6 +180,65 @@ export class SessionService {
         // Helper flags
         isStarted: !!progress,
         isCompleted: progress?.isCompleted() || false,
+        canStart: session.questionsGenerated && session.isActive,
+      };
+    });
+  }
+
+  // session.service.ts
+  async getOnboardingSessions(userId: string, userRoleId: number) {
+    const query = this.sessionRepo
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.roleCategoryQuestions', 'rcq')
+      .leftJoinAndSelect(
+        'session.userProgress',
+        'progress',
+        'progress.userId = :userId',
+        { userId: userId },
+      )
+      .where('session.isOnboardingSession = :isOnboarding', {
+        isOnboarding: true,
+      })
+      .andWhere('session.isActive = :isActive', { isActive: true })
+      .andWhere('rcq.roleId = :roleId', { roleId: userRoleId })
+      .orderBy('session.createdAt', 'DESC');
+
+    const sessions = await query.getMany();
+
+    return sessions.map((session) => {
+      const userProgress = session.userProgress[0];
+      const totalQuestions = session.roleCategoryQuestions.reduce(
+        (sum, rcq) => sum + rcq.questionsCount,
+        0,
+      );
+
+      return {
+        sessionId: session.id,
+        sessionTitle: session.title,
+        sessionDescription: session.description,
+        sessionCreatedAt: session.createdAt,
+        questionsGenerated: session.questionsGenerated,
+        status: userProgress?.status || ProgressStatus.NOT_STARTED,
+        //isCompleted: userProgress?.isCompleted() || false,
+        progressPercentage: userProgress?.getProgressPercentage() || 0,
+        accuracyPercentage: userProgress?.getAccuracyPercentage() || 0,
+
+        startedAt: userProgress?.startedAt || null,
+        lastActiveAt: userProgress?.lastActiveAt || null,
+        completedAt: userProgress?.completedAt || null,
+
+        totalQuestionsAvailable: totalQuestions,
+        // correctlyAnsweredQuestions: userProgress?.correctlyAnsweredQuestions || 0,
+        // completedAt: userProgress?.completedAt,
+        //isOnboardingSession: session.isOnboardingSession,
+
+        answeredQuestions: userProgress?.answeredQuestions || 0,
+        correctlyAnsweredQuestions:
+          userProgress?.correctlyAnsweredQuestions || 0,
+
+        // Helper flags
+        isStarted: !!userProgress,
+        isCompleted: userProgress?.isCompleted() || false,
         canStart: session.questionsGenerated && session.isActive,
       };
     });
@@ -314,6 +375,7 @@ export class SessionService {
   private async generateQuestionsForAllRoles(
     sessionId: string,
     roles: Role[],
+    questionsPerCategory: number,
     manager: any,
   ): Promise<void> {
     const crispCategories: CRISP[] = [
@@ -332,6 +394,7 @@ export class SessionService {
         const selectedQuestions = await this.selectQuestionsForRoleAndCategory(
           role.id,
           category,
+          questionsPerCategory,
           manager,
         );
         sessionRoleCategoryQuestions.push({
@@ -362,6 +425,7 @@ export class SessionService {
   private async selectQuestionsForRoleAndCategory(
     roleId: number,
     category: CRISP,
+    questionsPerCategory: number,
     manager: any,
   ): Promise<string[]> {
     const questions = await manager
@@ -373,7 +437,7 @@ export class SessionService {
       .andWhere('q.crispCategory = :category', { category })
       .orderBy('COALESCE(qu.usageCount, 0)', 'ASC')
       .addOrderBy('RANDOM()') // Secondary randomization
-      .limit(5)
+      .limit(questionsPerCategory)
       .getRawMany();
 
     return questions.map((q) => q.q_id);
@@ -493,103 +557,6 @@ export class SessionService {
     return roleCategories;
   }
 
-  private async getUserAnswers(
-    userId: string,
-    roleCategories: SessionRoleCategoryQuestion[],
-  ) {
-    const rcIds = roleCategories.map((rc) => rc.id);
-    return this.userAnswerRepo.find({
-      where: {
-        user: { id: userId },
-        sessionRoleCategoryQuestion: { id: In(rcIds) },
-      },
-      relations: ['question', 'sessionRoleCategoryQuestion'],
-    });
-  }
-
-  private buildCategorySnapshot(
-    roleCategories: SessionRoleCategoryQuestion[],
-    answers: UserAnswer[],
-  ) {
-    const answersByRcId = new Map<number, UserAnswer[]>();
-    for (const ans of answers) {
-      const list = answersByRcId.get(ans.sessionRoleCategoryQuestion.id) || [];
-      list.push(ans);
-      answersByRcId.set(ans.sessionRoleCategoryQuestion.id, list);
-    }
-
-    return roleCategories.map((rc) => {
-      const answeredForRc = answersByRcId.get(rc.id) || [];
-      const answeredIds = answeredForRc.map((a) => String(a.question.id));
-
-      const requiredIds = rc.questionIds.slice(0, rc.questionsCount);
-      const remainingIds = requiredIds.filter(
-        (qid) => !answeredIds.includes(qid),
-      );
-      const correctCount = answeredForRc.filter((a) => a.isCorrect).length;
-
-      return {
-        rc,
-        category: rc.crispCategory,
-        requiredIds,
-        answeredIds,
-        remainingIds,
-        correctlyAnsweredCount: correctCount,
-      };
-    });
-  }
-
-  // private updateProgressFromSnapshot(
-  //   progress: UserSessionProgress,
-  //   snapshot: any[],
-  // ) {
-  //   const totalRequired = snapshot.reduce(
-  //     (sum, c) => sum + c.requiredIds.length,
-  //     0,
-  //   );
-  //   const totalAnswered = snapshot.reduce(
-  //     (sum, c) => sum + c.answeredIds.length,
-  //     0,
-  //   );
-  //   const totalCorrect = snapshot.reduce(
-  //     (sum, c) => sum + c.correctlyAnsweredCount,
-  //     0,
-  //   );
-
-  //   progress.totalQuestions = totalRequired;
-  //   progress.answeredQuestions = totalAnswered;
-  //   progress.correctlyAnsweredQuestions = totalCorrect;
-
-  //   const next = snapshot.find((c) => c.remainingIds.length > 0);
-  //   if (next) {
-  //     progress.currentCategory = next.category as CRISP;
-  //     progress.currentQuestionIndex = next.requiredIds.indexOf(
-  //       next.remainingIds[0],
-  //     );
-  //     progress.status = ProgressStatus.IN_PROGRESS;
-  //   } else {
-  //     progress.currentCategory = undefined;
-  //     progress.currentQuestionIndex = 0;
-  //     progress.status = ProgressStatus.COMPLETED;
-  //     progress.completedAt = new Date();
-  //   }
-  // }
-
-  private formatResult(
-    session: Session,
-    progress: UserSessionProgress,
-    snapshot: any[],
-  ) {
-    const questionsByCategory = snapshot.map((c) => ({
-      category: c.category,
-      answered: c.answeredIds,
-      remaining: c.remainingIds,
-      requiredCount: c.requiredIds.length,
-    }));
-
-    return { session, progress, questionsByCategory };
-  }
-
   async completeSession(
     sessionId: string,
     completeSessionDto: CompleteSessionDto,
@@ -615,6 +582,8 @@ export class SessionService {
         where: { id: userId },
       });
 
+      if (!user) throw new NotFoundException('No user found');
+
       const session = await queryRunner.manager.findOne(Session, {
         where: { id: sessionId },
       });
@@ -632,6 +601,10 @@ export class SessionService {
         overallScore: completionData.overallScore,
         categoryScores: completionData.categoryScores,
       });
+
+      // await queryRunner.manager.update(User, user.id, {
+      //   is_onboarding: false,
+      // });
 
       // 4) Generate certificate/completion record
       // const certificate = await this.generateCompletionCertificate(
@@ -820,27 +793,6 @@ export class SessionService {
     return betterScores + 1; // Rank (1 = best)
   }
 
-  private async generateCompletionCertificate(
-    progress: UserSessionProgress,
-    metrics: CompletionMetrics,
-  ): Promise<string> {
-    // Generate certificate ID or URL
-    const certificateId = `CERT_${progress.sessionId}_${progress.userId}_${Date.now()}`;
-
-    // Store certificate data (could be separate table)
-    await this.certificateRepo.save({
-      id: certificateId,
-      userId: progress.userId,
-      sessionId: progress.sessionId,
-      roleId: progress.roleId,
-      score: metrics.overallScore,
-      completedAt: new Date(),
-      issuedAt: new Date(),
-    });
-
-    return certificateId;
-  }
-
   private async cleanupSessionData(
     userId: string,
     sessionId: string,
@@ -865,20 +817,6 @@ export class SessionService {
         await redisClient.del(...keys);
       }
     }
-  }
-
-  private formatQuestionsForFrontend(snapshot: any[]) {
-    return snapshot.map((categoryData) => ({
-      categoryId: categoryData.id,
-      category: categoryData.category,
-      questions: categoryData.rc.questionIds.map((qId, index) => ({
-        id: qId,
-        order: index,
-        isAnswered: categoryData.answeredIds.includes(String(qId)),
-      })),
-      totalQuestions: categoryData.requiredIds.length,
-      answeredCount: categoryData.answeredIds.length,
-    }));
   }
 
   async syncUserProgress(
@@ -1387,5 +1325,82 @@ export class SessionService {
     if (!session) throw new NotFoundException('Session not found');
 
     return session;
+  }
+
+  async createOnboardingSession(createSessionDto: CreateSessionDto) {
+    // Create session
+    const session = this.sessionRepo.create(createSessionDto);
+
+    const savedSession = await this.sessionRepo.save(session);
+
+    // Generate questions for onboarding users' roles
+    await this.generateOnboardingQuestions(
+      savedSession.id,
+      createSessionDto.questionsPerCategory || 5,
+    );
+
+    return savedSession;
+  }
+
+  private async generateOnboardingQuestions(
+    sessionId: string,
+    questionsPerCategory: number,
+  ) {
+    // Get roles that have onboarding users
+    const onboardingRoles = await this.roleRepo
+      .createQueryBuilder('role')
+      .innerJoin('role.users', 'user', 'user.is_onboarding = :isOnboarding', {
+        isOnboarding: true,
+      })
+      .distinct(true)
+      .getMany();
+
+    for (const role of onboardingRoles) {
+      for (const category of Object.values(CRISP)) {
+        // Get questions for this role and category
+        const questions = await this.questionRepo
+          .createQueryBuilder('question')
+          .innerJoin('question.roles', 'role', 'role.id = :roleId', {
+            roleId: role.id,
+          })
+          .where('question.crispCategory = :category', { category })
+          .andWhere('question.isActive = :isActive', { isActive: true })
+          .orderBy('RANDOM()')
+          .limit(questionsPerCategory)
+          .getMany();
+
+        if (questions.length > 0) {
+          const sessionRoleCategoryQuestion =
+            this.sessionRoleCategoryRepo.create({
+              sessionId,
+              roleId: role.id,
+              crispCategory: category,
+              questionIds: questions.map((q) => q.id),
+              questionsCount: questions.length,
+            });
+
+          await this.sessionRoleCategoryRepo.save(sessionRoleCategoryQuestion);
+        }
+      }
+    }
+
+    // Mark session as questions generated
+    await this.sessionRepo.update(sessionId, {
+      questionsGenerated: true,
+    });
+  }
+
+  // async getOnboardingSessions() {
+  //   return this.sessionRepo.find({
+  //     where: { isOnboardingSession: true, isActive: true },
+  //     order: { createdAt: 'DESC' },
+  //   });
+  // }
+
+  async getOnboardingSessionById(id: string) {
+    return this.sessionRepo.findOne({
+      where: { id, isOnboardingSession: true },
+      relations: ['roleCategoryQuestions', 'roleCategoryQuestions.role'],
+    });
   }
 }

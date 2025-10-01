@@ -14,9 +14,11 @@ import { Role } from './role.entity';
 import { Department } from './department.entity';
 import { UserQuestionHistory } from 'src/modules_2/question-bank/entities/user-question-history.entity';
 import { Certificate } from 'src/modules_2/certificate/entities/certificate.entity';
-//import { Difficulty } from 'src/core/enums/question.enum';
 import * as bcrypt from 'bcrypt';
 import { TriviaLeaderboard } from 'src/modules_2/trivia/entities/trivia-leaderboard';
+import { UserSessionProgress } from 'src/modules_2/session/entities/user-session-progress.entity';
+import { UserAnswer } from 'src/modules_2/session/entities/user-answers.entity';
+import { TriviaParticipation } from 'src/modules_2/trivia/entities/trivia-participation.entity';
 
 @Entity()
 export class User {
@@ -60,14 +62,36 @@ export class User {
   @OneToMany(
     () => UserQuestionHistory,
     (questionHistory) => questionHistory.user,
+    { cascade: true, onDelete: 'CASCADE' }, // Add this
   )
   question_history: UserQuestionHistory[];
 
-  @OneToMany(() => Certificate, (certificate) => certificate.user)
+  @OneToMany(() => Certificate, (certificate) => certificate.user, {
+    cascade: true,
+    onDelete: 'CASCADE', // Add this
+  })
   certificates: Certificate[];
 
-  @OneToMany(() => TriviaLeaderboard, (leaderboard) => leaderboard.user)
+  @OneToMany(() => TriviaLeaderboard, (leaderboard) => leaderboard.user, {
+    cascade: true,
+    onDelete: 'CASCADE', // Add this
+  })
   leaderboard: TriviaLeaderboard[];
+
+  @OneToMany(() => TriviaParticipation, (participation) => participation.user, {
+    cascade: true,
+  })
+  participation: TriviaParticipation[];
+
+  @OneToMany(() => UserSessionProgress, (progress) => progress.user, {
+    cascade: true,
+  })
+  sessionProgress: UserSessionProgress[];
+
+  @OneToMany(() => UserAnswer, (answer) => answer.user, {
+    cascade: true,
+  })
+  userAnswer: UserAnswer[];
 
   @BeforeInsert()
   async hashPassword() {
@@ -78,7 +102,9 @@ export class User {
   @BeforeUpdate()
   async hashNewPassword() {
     this.email = this.email.toLowerCase().trim();
-    this.password = await bcrypt.hash(this.password.trim(), 10);
+    if (this.password && !this.password.startsWith('$2b$')) {
+      this.password = await bcrypt.hash(this.password.trim(), 10);
+    }
   }
 
   get department(): Department {

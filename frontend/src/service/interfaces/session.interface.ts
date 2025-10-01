@@ -232,10 +232,10 @@ export interface AdminSessionsResponse {
 
 export interface CreateSessionDto {
   title: string;
-
   description?: string;
-
   timeLimit?: number;
+  isOnboardingSession?: boolean;
+  questionsPerCategory?: number;
 }
 
 export interface SessionRoleCategoryQuestion {

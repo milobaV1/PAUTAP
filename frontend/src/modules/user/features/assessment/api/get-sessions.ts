@@ -3,39 +3,11 @@ import { getAxiosError } from "@/lib/api/error";
 import type {
   FullSessionData,
   SessionSummary,
-  //UsersessionData,
 } from "@/service/interfaces/session.interface";
 import type { getSessions } from "@/service/interfaces/session.interface";
 import { useSessionStore } from "@/store/session.store";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-
-// export async function getSessions(data: getSessions) {
-//   try {
-//     const response = await client.get(
-//       `/session/user/${data.userId}/statuses?userRoleId=${data.userRoleId}`
-//     );
-//     return response.data as UsersessionData[]; // Array, not single object
-//   } catch (error) {
-//     const msg = getAxiosError(error);
-//     throw Error(msg);
-//   }
-// }
-
-// export function useGetSessions(data: getSessions) {
-//   const { userId, userRoleId } = data;
-//   const setSessions = useSessionStore((state) => state.setSessions); // ✅ only extract action
-
-//   return useQuery({
-//     queryKey: ["session-with-status", { userId, userRoleId }],
-//     queryFn: async () => {
-//       const sessions = await getSessions(data);
-//       console.log("Sessions from the api call: ", sessions);
-//       setSessions(sessions); // ✅ update store
-//       return sessions; // ✅ return to React Query
-//     },
-//   });
-// }
 
 // Updated getSessions function - returns lightweight data
 export async function getSessions(
@@ -45,6 +17,21 @@ export async function getSessions(
     console.log("This is point 6 of the api call");
     const response = await client.get(
       `/session/user/${data.userId}/statuses?userRoleId=${data.userRoleId}`
+    );
+    return response.data as SessionSummary[];
+  } catch (error) {
+    const msg = getAxiosError(error);
+    throw Error(msg);
+  }
+}
+
+export async function getOnboardingSession(
+  data: getSessions
+): Promise<SessionSummary[]> {
+  try {
+    console.log("This is point 6 of the api call");
+    const response = await client.get(
+      `/session/user/${data.userId}/statuses/onboarding?userRoleId=${data.userRoleId}`
     );
     return response.data as SessionSummary[];
   } catch (error) {
@@ -83,6 +70,21 @@ export function useGetSessions(data: getSessions) {
     queryKey: ["sessions-summary", { userId, userRoleId }],
     queryFn: async () => {
       const sessions = await getSessions(data);
+      console.log("Lightweight sessions from API:", sessions);
+      setSessions(sessions);
+      return sessions;
+    },
+  });
+}
+
+export function useGetOnboardingSession(data: getSessions) {
+  const { userId, userRoleId } = data;
+  const setSessions = useSessionStore((state) => state.setSessions);
+  console.log("This is point 7 of the api call");
+  return useQuery({
+    queryKey: ["onboarding-session-summary", { userId, userRoleId }],
+    queryFn: async () => {
+      const sessions = await getOnboardingSession(data);
       console.log("Lightweight sessions from API:", sessions);
       setSessions(sessions);
       return sessions;

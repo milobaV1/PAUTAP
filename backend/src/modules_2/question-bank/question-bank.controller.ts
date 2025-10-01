@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { QuestionBankService } from './question-bank.service';
 import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
@@ -18,12 +19,16 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { AdminQuestionsResponse } from 'src/core/interfaces/question.interface';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { SystemAdminOnly } from 'src/core/metadata/role.metadata';
 
 @ApiBearerAuth('access-token')
 @Controller('question-bank')
+@UseGuards(RolesGuard)
 export class QuestionBankController {
   constructor(private readonly questionBankService: QuestionBankService) {}
 
+  @SystemAdminOnly()
   @Post()
   @ApiOperation({ summary: 'Create a single question' })
   @ApiResponse({
@@ -34,6 +39,7 @@ export class QuestionBankController {
     return this.questionBankService.create(createQuestionBankDto);
   }
 
+  @SystemAdminOnly()
   @Post('bulk')
   @ApiOperation({ summary: 'Bulk insert questions' })
   @ApiResponse({ status: 201, description: 'Questions created successfully' })
@@ -46,6 +52,7 @@ export class QuestionBankController {
     return this.questionBankService.findAll();
   }
 
+  @SystemAdminOnly()
   @Get('admin')
   @ApiOperation({ summary: 'Get paginated list of admin questions' })
   @ApiQuery({
@@ -77,6 +84,7 @@ export class QuestionBankController {
     return this.questionBankService.findOne(id);
   }
 
+  @SystemAdminOnly()
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -85,6 +93,7 @@ export class QuestionBankController {
     return this.questionBankService.update(id, updateQuestionBankDto);
   }
 
+  @SystemAdminOnly()
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.questionBankService.remove(id);

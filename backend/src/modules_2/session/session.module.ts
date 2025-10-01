@@ -7,15 +7,9 @@ import { SessionRoleCategoryQuestion } from './entities/session-role-category-qu
 import { UserAnswer } from './entities/user-answers.entity';
 import { UserSessionProgress } from './entities/user-session-progress.entity';
 import { QuestionUsage } from '../question-bank/entities/question-usage.entity';
-import { SessionManagementService } from './session-management.service';
-import { ProgressService } from './progress.service';
-import { AnswerService } from './answer.service';
-import { ResultService } from './result.service';
 import { Certificate } from '../certificate/entities/certificate.entity';
 import { QuestionBank } from '../question-bank/entities/question-bank.entity';
 import { Role } from '../users/entities/role.entity';
-import { BullModule } from '@nestjs/bullmq';
-import { CertificateProcessor } from 'src/infrastructure/workers/certificate.worker';
 import { CertificateModule } from '../certificate/certificate.module';
 
 @Module({
@@ -33,12 +27,6 @@ import { CertificateModule } from '../certificate/certificate.module';
     CertificateModule,
   ],
   controllers: [SessionController],
-  providers: [
-    SessionService,
-    SessionManagementService,
-    ProgressService,
-    AnswerService,
-    ResultService,
-  ],
+  providers: [SessionService],
 })
 export class SessionModule {}

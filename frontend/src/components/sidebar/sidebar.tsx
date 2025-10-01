@@ -1,17 +1,17 @@
 import {
   Home,
   BookOpen,
-  FileCheck,
   Trophy,
   Award,
   X,
   LayoutDashboard,
+  User,
 } from "lucide-react";
-import { useState } from "react";
 import { Button } from "../ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { isAdmin } from "@/utils/auth-extension";
+import { useAuthState } from "@/store/auth.store";
 
 export function Sidebar({
   sidebarOpen,
@@ -22,22 +22,21 @@ export function Sidebar({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuthState();
+  const firstname = user?.first_name ?? "";
+  const lastname = user?.last_name ?? "";
+  const role = user?.role.name ?? "";
 
   const navigation = [
     { name: "Dashboard", icon: Home, to: "/" },
     { name: "Sessions", icon: BookOpen, to: "/session" },
-    //{ name: "sessions", icon: FileCheck, to: "/sessions" },
     { name: "Monthly Trivia", icon: Trophy, to: "/trivia" },
     { name: "Certificates", icon: Award, to: "/certificate" },
+    { name: "Profile", icon: User, to: "/profile" },
   ];
 
   //FIX THIS: MULTIPLE LOGS AND I NEED TO KNOW WHY
   const isCurrentPage = (path: string) => {
-    // console.log("This is the location.pathname: ", location.pathname);
-    // console.log("This is the path: ", path);
-    // return location.pathname.includes(path);
-    console.log("This is the location.pathname: ", location.pathname);
-    console.log("This is the path: ", path);
     return location.pathname === path;
   };
 
@@ -121,16 +120,18 @@ export function Sidebar({
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
           <div className="flex items-center space-x-3">
             <Avatar className="w-8 h-8">
-              <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" />
-              <AvatarFallback className="bg-[#2e3f6f] text-white">
-                JS
+              <AvatarFallback>
+                <Button onClick={() => navigate({ to: "/profile" })}>
+                  {firstname[0]}
+                  {lastname[0]}
+                </Button>
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                Michael Iloba
+                {`${firstname} ${lastname}`}
               </p>
-              <p className="text-xs text-gray-500 truncate">Faculty</p>
+              <p className="text-xs text-gray-500 truncate">{role}</p>
             </div>
           </div>
         </div>

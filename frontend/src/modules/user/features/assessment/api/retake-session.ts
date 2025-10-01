@@ -1,10 +1,6 @@
 import { client } from "@/lib/api/client";
 import { getAxiosError } from "@/lib/api/error";
-import type {
-  FullSessionData,
-  RetakeSessionDto,
-} from "@/service/interfaces/session.interface";
-import { useSessionStore } from "@/store/session.store";
+import type { RetakeSessionDto } from "@/service/interfaces/session.interface";
 import { useMutation } from "@tanstack/react-query";
 
 export async function retakeSession(data: RetakeSessionDto) {
@@ -24,20 +20,11 @@ export async function retakeSession(data: RetakeSessionDto) {
 }
 
 export function useRetakeSession() {
-  //   console.log("This is point 2 of the api call");
-  //   const initializeSessionData = useSessionStore(
-  //     (state) => state.initializeSessionData
-  //   );
-
-  //   console.log("This is point 3 of the api call");
-
   return useMutation({
     mutationFn: retakeSession,
 
     onSuccess: () => {
       console.log("This is point 4 of the api call");
-      //   console.log("Full session data loaded:", fullSessionData);
-      //   initializeSessionData(fullSessionData);
     },
 
     onError: (error) => {

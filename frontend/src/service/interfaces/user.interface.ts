@@ -72,6 +72,14 @@ export interface CreateUser {
   last_name: string;
   email: string;
   is_onboarding?: boolean;
-  password: string;
+  // password: string;
   role_id: number;
+}
+
+export interface VerifyPasswordDto {
+  password: string;
+}
+
+export interface UpdatePasswordDto {
+  newPassword: string;
 }

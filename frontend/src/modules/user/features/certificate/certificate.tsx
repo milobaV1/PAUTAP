@@ -8,15 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Award,
-  Download,
-  Calendar,
-  CheckCircle,
-  Target,
-  BookOpen,
-  Eye,
-} from "lucide-react";
+import { Award, Download, Calendar, CheckCircle, Target } from "lucide-react";
 import { useGetUserCertificates } from "./api/get-user-certificate";
 import { useAuthState } from "@/store/auth.store";
 import type { CertificateListDto } from "@/service/interfaces/certificate.interface";
@@ -232,17 +224,6 @@ export function Certificates() {
                           </p>
                         </div>
                         <div className="flex items-center space-x-2">
-                          {/* <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              // Handle view certificate
-                              console.log("View certificate:", certificate.id);
-                            }}
-                          >
-                            <Eye className="w-3 h-3 mr-1" />
-                            View
-                          </Button> */}
                           <Button
                             size="sm"
                             className="pau-gradient"
@@ -264,26 +245,6 @@ export function Certificates() {
 
         {/* Quick Actions Sidebar */}
         <div className="space-y-6">
-          {/* <Card className="pau-shadow">
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                disabled={certificates.length === 0}
-                onClick={() => {
-                  // Handle download all certificates
-                  console.log("Download all certificates");
-                }}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download All Certificates
-              </Button>
-            </CardContent>
-          </Card> */}
-
           {/* Session Stats */}
           {certificates.length > 0 && (
             <Card className="pau-shadow">

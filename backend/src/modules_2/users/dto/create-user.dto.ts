@@ -7,6 +7,7 @@ import {
   IsUUID,
   IsBoolean,
   IsNumber,
+  MinLength,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -38,13 +39,13 @@ export class CreateUserDto {
   @IsBoolean()
   is_onboarding?: boolean;
 
-  @ApiProperty({
-    example: 'SecurePassword123!',
-    description: 'Password for the user account',
-  })
-  @IsNotEmpty()
-  @IsString()
-  password: string;
+  // @ApiProperty({
+  //   example: 'SecurePassword123!',
+  //   description: 'Password for the user account',
+  // })
+  // @IsNotEmpty()
+  // @IsString()
+  // password: string;
 
   @ApiProperty({
     example: 'a23e4567-e89b-12d3-a456-426614174000',
@@ -53,4 +54,15 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsNumber()
   role_id: number;
+}
+
+export class UpdatePasswordDto {
+  newPassword: string;
+}
+
+export class VerifyPasswordDto {
+  @ApiProperty({ example: 'StrongPass123!', description: 'Password to verify' })
+  @IsString()
+  @MinLength(6)
+  password: string;
 }

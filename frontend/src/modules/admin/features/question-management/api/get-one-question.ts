@@ -14,6 +14,5 @@ export function useGetOneQuestion(id: string, enabled: boolean = true) {
     queryKey: ["question-details", id],
     queryFn: () => getOneQuestion(id),
     enabled,
-    //     placeholderData: (previousData) => previousData, // replaces keepPreviousData
   });
 }

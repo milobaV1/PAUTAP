@@ -1,9 +1,6 @@
 import { client } from "@/lib/api/client";
 import { getAxiosError } from "@/lib/api/error";
-import type {
-  AdminSessionsResponse,
-  AdminSessionSummary,
-} from "@/service/interfaces/session.interface";
+import type { AdminSessionsResponse } from "@/service/interfaces/session.interface";
 import { useQuery } from "@tanstack/react-query";
 
 export async function getSessionsForAdmin(page = 1, limit = 5) {

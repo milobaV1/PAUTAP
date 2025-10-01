@@ -4,7 +4,6 @@ import {
   Target,
   Search,
   Plus,
-  Edit,
   Trash2,
   Eye,
   CheckCircle,
@@ -46,7 +45,7 @@ import { CRISP } from "@/service/enums/crisp.enum";
 import { roles, getRoleIds } from "@/lib/roles";
 
 import type { addQuestionDto } from "@/service/interfaces/question.interface";
-import { AddQuestion, useAddQuestion } from "./api/add-quetion";
+import { useAddQuestion } from "./api/add-quetion";
 import { useAdminQuestions } from "./api/get-questions";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -226,35 +225,6 @@ export function QuestionManagement() {
                       </FormItem>
                     )}
                   />
-
-                  {/* Difficulty Select 
-                  <FormField
-                    control={form.control}
-                    name="difficulty"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Difficulty Level</FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select difficulty" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="beginner">Beginner</SelectItem>
-                              <SelectItem value="intermediate">
-                                Intermediate
-                              </SelectItem>
-                              <SelectItem value="advanced">Advanced</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />*/}
                 </div>
                 {/* Question Text */}
                 <FormField

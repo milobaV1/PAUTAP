@@ -6,7 +6,3 @@ export const Route = createFileRoute(
 )({
   component: SessionTaking,
 });
-
-function RouteComponent() {
-  return <div>Hello "/(user)/_layout/session/$id/category/$id/"!</div>;
-}

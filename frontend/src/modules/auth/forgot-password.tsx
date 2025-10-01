@@ -27,15 +27,15 @@ import { useForgotPassword } from "./api/forgot-password";
 import { useNavigate } from "@tanstack/react-router";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().min(5, { message: "Enter a valid email" }),
-  // .refine((value) => /^\S+@pau\.edu\.ng$/.test(value), {
-  //   message: "Must be a valid PAU email",
-  // })
+  email: z
+    .string()
+    .min(5, { message: "Enter a valid email" })
+    .refine((value) => /^\S+@pau\.edu\.ng$/.test(value), {
+      message: "Must be a valid PAU email",
+    }),
 });
 
 export function ForgotPassword() {
-  //   const [email, setEmail] = useState("");
-  //   const [isLoading, setIsLoading] = useState(false);
   const { mutateAsync: forgotPassword, isPending } = useForgotPassword();
   const navigate = useNavigate();
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
@@ -44,17 +44,6 @@ export function ForgotPassword() {
       email: "",
     },
   });
-
-  //   const handleSubmit = async (e: React.FormEvent) => {
-  //     e.preventDefault();
-  //     setIsLoading(true);
-
-  //     // Simulate API call
-  //     await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  //     setIsLoading(false);
-  //     onNavigate("forgot-password-sent");
-  //   };
 
   async function onSubmit(values: z.infer<typeof forgotPasswordSchema>) {
     toast(`Reset Password attempt with email: ${values.email}`);
@@ -150,56 +139,6 @@ export function ForgotPassword() {
                 </div>
               </form>
             </Form>
-
-            {/* <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="john.smith@pau.edu"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full"
-                  required
-                  disabled={isLoading}
-                />
-                <p className="text-xs text-gray-500">
-                  Please use your PAU email address registered with the platform
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <Button
-                  type="submit"
-                  className="w-full pau-gradient"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Sending Reset Link...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="w-4 h-4 mr-2" />
-                      Send Reset Link
-                    </>
-                  )}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => onNavigate("login")}
-                  disabled={isLoading}
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Login
-                </Button>
-              </div>
-            </form> */}
 
             {/* Help Section */}
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">

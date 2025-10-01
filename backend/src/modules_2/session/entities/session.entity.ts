@@ -2,17 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { SessionRoleCategoryQuestion } from './session-role-category-questions.entity';
 import { UserSessionProgress } from './user-session-progress.entity';
-//import { Difficulty } from 'src/core/enums/question.enum';
 
 @Entity()
 export class Session {
@@ -28,14 +23,17 @@ export class Session {
   @Column({ default: true })
   isActive: boolean;
 
-  // @Column({ type: 'enum', enum: Difficulty, default: Difficulty.BEGINNER })
-  // difficulty: Difficulty;
-
   @Column({ default: false })
   questionsGenerated: boolean;
 
   @Column({ default: 1200 }) // 5 minutes in seconds
   timeLimit: number;
+
+  @Column({ default: false })
+  isOnboardingSession: boolean;
+
+  @Column({ default: 5 })
+  questionsPerCategory: number;
 
   @CreateDateColumn()
   createdAt: Date;

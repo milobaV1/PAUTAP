@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -18,12 +17,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-
 import {
   Form,
   FormField,
@@ -41,7 +38,6 @@ import {
   FileText,
   HelpCircle,
   BookOpen,
-  Hash,
 } from "lucide-react";
 import { useGetSessionsForAdmin } from "./api/get-session-stats";
 import type {
@@ -51,8 +47,8 @@ import type {
 import { useCreateSession } from "./api/create-session";
 import { toast } from "sonner";
 import { useDeleteSession } from "./api/delete-session";
-import { useUpdateSession } from "./api/update-session";
 import { SessionDetailsModal } from "./session-details";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const sessionSchema = z.object({
   title: z.string().min(1, "Session title is required"),
@@ -64,13 +60,13 @@ const sessionSchema = z.object({
     .refine((val) => val === undefined || !isNaN(val), {
       message: "Time limit must be a number",
     }),
+  isOnboardingSession: z.boolean(),
+  questionsPerCategory: z.number().min(1).max(20),
 });
 
 export function TrainingSessionManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateSession, setShowCreateSession] = useState(false);
-  //   const [sessionName, setSessionName] = useState("");
-  //   const [sessionDescription, setSessionDescription] = useState("");
   const { mutateAsync: createSession, isPending, isError } = useCreateSession();
   const { mutate: deleteSession } = useDeleteSession();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
@@ -84,7 +80,9 @@ export function TrainingSessionManagement() {
     defaultValues: {
       title: "",
       description: "",
-      timeLimit: 60, // default in minutes
+      timeLimit: 1200, // default in minutes
+      isOnboardingSession: false,
+      questionsPerCategory: 5,
     },
   });
   const { data, isLoading } = useGetSessionsForAdmin(page, limit);
@@ -116,12 +114,6 @@ export function TrainingSessionManagement() {
       },
     });
   };
-
-  //   const resetForm = () => {
-  //     setSessionName("");
-  //     setSessionDescription("");
-  //     setShowCreateSession(false);
-  //   };
 
   async function onSubmit(values: z.infer<typeof sessionSchema>) {
     console.log(values);
@@ -221,6 +213,51 @@ export function TrainingSessionManagement() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="questionsPerCategory"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Questions per Category</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="20"
+                          placeholder="5"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="isOnboardingSession"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Onboarding Session</FormLabel>
+                        <p className="text-sm text-muted-foreground">
+                          Check this if this session is specifically for
+                          onboarding users
+                        </p>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="flex justify-end space-x-3">
                   <Button
@@ -307,10 +344,6 @@ export function TrainingSessionManagement() {
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      {/* <div className="flex items-center space-x-2">
-                        <Hash className="w-4 h-4 text-[#2e3f6f]" />
-                        <span>{session.totalQuestions} Questions</span>
-                      </div> */}
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4 text-[#2e3f6f]" />
                         <span>
@@ -330,9 +363,7 @@ export function TrainingSessionManagement() {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" title="Edit Session">
-                      <Edit className="w-4 h-4" />
-                    </Button>
+
                     <Button
                       variant="ghost"
                       size="sm"

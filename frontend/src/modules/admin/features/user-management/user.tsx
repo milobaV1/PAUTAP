@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useGetUserForAdmin } from "./api/get-user-stats";
-
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,7 +18,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -28,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -43,7 +39,6 @@ import {
   Users,
   Search,
   UserPlus,
-  Edit,
   Trash2,
   Eye,
   Award,
@@ -57,7 +52,6 @@ import type { CreateUser } from "@/service/interfaces/user.interface";
 import { useCreateUser } from "./api/create-user";
 import { toast } from "sonner";
 import { useDeleteUser } from "./api/delete-user";
-import { useAuthState } from "@/store/auth.store";
 import { UserDetailsModal } from "./user-details";
 
 const createUserSchema = z.object({
@@ -69,7 +63,7 @@ const createUserSchema = z.object({
     .refine((value) => /^\S+@pau\.edu\.ng$/.test(value), {
       message: "Must be a valid PAU email",
     }),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  //password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.string().min(1, "Role is required"),
   is_onboarding: z.boolean().optional(),
 });
@@ -80,15 +74,12 @@ export function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [showAddUser, setShowAddUser] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  // const [showPassword, setShowPassword] = useState(false);
   const { mutateAsync: createUser, isPending, isError } = useCreateUser();
   const { mutate: deleteUser } = useDeleteUser();
   const [page, setPage] = useState(1);
   const limit = 5;
-
   const { data, isLoading } = useGetUserForAdmin(page, limit);
-  const { decodedDto } = useAuthState();
-
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
@@ -98,7 +89,7 @@ export function UserManagement() {
       first_name: "",
       last_name: "",
       email: "",
-      password: "",
+      //password: "",
       role: "",
       is_onboarding: false,
     },
@@ -124,7 +115,7 @@ export function UserManagement() {
       form.reset();
     } catch (error) {
       console.error("❌ User creation failed:", error);
-      toast.error("Failed to create user. Please try again.");
+      toast.error(`Failed to create user. ${error}`);
     }
   }
 
@@ -237,7 +228,7 @@ export function UserManagement() {
                   )}
                 />
 
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="password"
                   render={({ field }) => (
@@ -269,7 +260,7 @@ export function UserManagement() {
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
 
                 <FormField
                   control={form.control}
@@ -413,18 +404,20 @@ export function UserManagement() {
                 key={user.id}
                 className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="w-12 h-12">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <div className="flex items-start space-x-3 min-w-0 flex-1">
+                    <Avatar className="w-12 h-12 flex-shrink-0">
                       <AvatarFallback>
                         {user.email[0].toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <h2 className="text-lg font-semibold">
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-lg font-semibold truncate">
                         {user.first_name} {user.last_name}
                       </h2>
-                      <h4 className="font-medium">{user.email}</h4>
+                      <h4 className="font-medium text-sm break-all">
+                        {user.email}
+                      </h4>
                       <p className="text-sm text-muted-foreground">
                         {user.department} • {user.role}
                       </p>
@@ -434,15 +427,24 @@ export function UserManagement() {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-6">
-                    <div className="text-center text-sm">
+                  <div className="flex items-center justify-between md:justify-end md:space-x-6">
+                    <div className="text-center text-sm md:hidden">
+                      <div className="font-medium">
+                        {user.totalCertificates}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Certificates
+                      </div>
+                    </div>
+
+                    <div className="hidden md:flex text-center text-sm">
                       <div className="font-medium">
                         {user.totalCertificates}
                       </div>
                       <div className="text-muted-foreground">Certificates</div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -450,9 +452,6 @@ export function UserManagement() {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      {/* <Button variant="ghost" size="sm">
-                        <Edit className="w-4 h-4" />
-                      </Button> */}
                       <Button
                         variant="ghost"
                         size="sm"

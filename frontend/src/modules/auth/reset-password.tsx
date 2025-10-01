@@ -46,12 +46,8 @@ const formSchema = z
   });
 
 export function ResetPassword() {
-  //   const [newPassword, setNewPassword] = useState("");
-  //   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  //const [isLoading, setIsLoading] = useState(false);
-  //  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
     feedback: [] as string[],
@@ -74,18 +70,6 @@ export function ResetPassword() {
   });
 
   const navigate = useNavigate();
-
-  //   // Simulate token validation on component mount
-  //   useEffect(() => {
-  //     const validateToken = async () => {
-  //       // Simulate API call to validate token
-  //       await new Promise((resolve) => setTimeout(resolve, 1000));
-  //       // For demo purposes, assume token is valid
-  //       setTokenValid(true);
-  //     };
-
-  //     validateToken();
-  //   }, [token]);
 
   // Password strength checker
   const newPassword = form.watch("newPassword");
@@ -159,71 +143,6 @@ export function ResetPassword() {
       },
     });
   }
-
-  // Loading state while validating token
-  //   if (tokenValid === null) {
-  //     return (
-  //       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-  //         <div className="text-center">
-  //           <div className="inline-flex items-center justify-center w-16 h-16 pau-gradient rounded-full mb-4">
-  //             <Loader2 className="w-8 h-8 text-white animate-spin" />
-  //           </div>
-  //           <h2 className="text-lg font-medium text-[#2e3f6f]">
-  //             Validating Reset Link...
-  //           </h2>
-  //           <p className="text-gray-600 mt-2">
-  //             Please wait while we verify your request
-  //           </p>
-  //         </div>
-  //       </div>
-  //     );
-  //   }
-
-  //   // Invalid token state
-  //   if (tokenValid === false) {
-  //     return (
-  //       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-  //         <div className="w-full max-w-md">
-  //           <Card className="pau-shadow">
-  //             <CardHeader className="text-center">
-  //               <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4 mx-auto">
-  //                 <AlertCircle className="w-8 h-8 text-red-600" />
-  //               </div>
-  //               <CardTitle className="text-red-700">Invalid Reset Link</CardTitle>
-  //               <CardDescription>
-  //                 This password reset link is invalid or has expired
-  //               </CardDescription>
-  //             </CardHeader>
-  //             <CardContent className="space-y-4">
-  //               <Alert>
-  //                 <AlertCircle className="h-4 w-4" />
-  //                 <AlertDescription>
-  //                   Password reset links expire after 24 hours for security
-  //                   reasons. Please request a new password reset link.
-  //                 </AlertDescription>
-  //               </Alert>
-
-  //               <div className="space-y-3">
-  //                 <Button
-  //                   className="w-full pau-gradient"
-  //                   onClick={() => onNavigate("forgot-password")}
-  //                 >
-  //                   Request New Reset Link
-  //                 </Button>
-  //                 <Button
-  //                   variant="outline"
-  //                   className="w-full"
-  //                   onClick={() => onNavigate("login")}
-  //                 >
-  //                   Back to Login
-  //                 </Button>
-  //               </div>
-  //             </CardContent>
-  //           </Card>
-  //         </div>
-  //       </div>
-  //     );
-  //   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">

@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { decodeToken } from "@/lib/token/decode-token";
 import type { LoginInterface } from "@/service/interfaces/user.interface";
 import { useAuthState, type DecodedToken } from "@/store/auth.store";
@@ -18,7 +17,7 @@ import { BookOpen, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
-import { getUser, useGetUser } from "./api/get-user";
+import { useGetUser } from "./api/get-user";
 import { toast } from "sonner";
 import {
   Form,
@@ -45,8 +44,6 @@ const loginSchema = z.object({
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  // const [email, setEmail] = useState("");
-  // const [password, setPassword] = useState("");
   const { mutateAsync: getLogin, isPending, isError } = useGetLogin();
   const { mutateAsync: getUser } = useGetUser();
 
@@ -60,7 +57,6 @@ export function LoginPage() {
   });
 
   const { setUser, setAuthToken, setDecodedToken } = useAuthState();
-  //const router = useRouter();
   const navigate = useNavigate();
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     console.log(values);
@@ -90,23 +86,7 @@ export function LoginPage() {
         navigate({ to: "/" });
       }
     }
-    // if (token) {
-    //   const payload = decodeToken(
-    //     token.access_token
-    //   ) as unknown as DecodedToken;
-    //   const user = await getUser(payload.sub.id);
-    //   if (user) setUser(user);
-    //   setAuthToken(token.access_token);
-    //   setDecodedToken(payload as unknown as DecodedToken);
-    //   //router.history.push();
-    //   navigate({ to: "/home" });
-    // }
   }
-
-  // const handleSubmit = (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   //DO SOMETHING
-  // };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -196,19 +176,8 @@ export function LoginPage() {
                 <FormField
                   control={form.control}
                   name="remember"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem className="flex items-center justify-between">
-                      {/* <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={field.value}
-                          onChange={(e) => field.onChange(e.target.checked)}
-                          className="rounded border-gray-300"
-                        />
-                        <span className="text-sm text-gray-600">
-                          Remember me
-                        </span>
-                      </label> */}
                       <Button
                         variant="link"
                         className="p-0 h-auto text-[#2e3f6f]"
@@ -231,14 +200,14 @@ export function LoginPage() {
               </form>
             </Form>
 
-            <div className="mt-6 text-center">
+            {/* <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Need help? Contact{" "}
                 <Button variant="link" className="p-0 h-auto text-[#2e3f6f]">
                   IT Support
                 </Button>
               </p>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 

@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -15,12 +14,7 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Award,
-  TrendingUp,
-  Calendar,
   Target,
-  BookOpen,
-  BarChart3,
   Play,
   Users,
   Heart,
@@ -30,7 +24,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthState } from "@/store/auth.store";
-import { useGetSessions, useStartOrResumeSession } from "./api/get-sessions";
+import { useGetOnboardingSession, useGetSessions } from "./api/get-sessions";
 import type {
   getSessions,
   RetakeSessionDto,
@@ -40,17 +34,21 @@ import type {
 import { useRetakeSession } from "./api/retake-session";
 
 export function sessions() {
-  const [selectedsession, setSelectedsession] = useState<number | null>(null);
-
   const navigate = useNavigate();
-  //const startSessionMutation = useStartOrResumeSession();
-
-  const { decodedDto } = useAuthState();
+  const { user, decodedDto } = useAuthState();
   const sessionData: getSessions = {
     userId: decodedDto?.sub.id,
     userRoleId: decodedDto?.sub.roleId,
   };
-  const { data, isLoading, isError, error } = useGetSessions(sessionData);
+
+  const isOnboardingUser = user?.is_onboarding ?? false;
+
+  console.log("Onboarding user check? ", isOnboardingUser);
+
+  const { data, isLoading, isError, error } = isOnboardingUser
+    ? useGetOnboardingSession(sessionData)
+    : useGetSessions(sessionData);
+  //const { data, isLoading, isError, error } = useGetSessions(sessionData);
   console.log("Data: ", data);
   //const allSessions: UsersessionData[] = data || [];
   const allSessions: SessionSummary[] = data || [];
@@ -124,34 +122,6 @@ export function sessions() {
     //     completedsessions.length) *
     //     100
     // ),
-  };
-
-  const getDaysUntilDeadline = (deadline: string) => {
-    const today = new Date();
-    const deadlineDate = new Date(deadline);
-    const diffTime = deadlineDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
-  const getDeadlineColor = (days: number) => {
-    if (days < 0) return "text-red-600";
-    if (days <= 3) return "text-orange-600";
-    if (days <= 7) return "text-yellow-600";
-    return "text-green-600";
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "beginner":
-        return "bg-green-100 text-green-800";
-      case "intermediate":
-        return "bg-yellow-100 text-yellow-800";
-      case "advanced":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
   };
 
   const getStatusColor = (status: string) => {
@@ -262,42 +232,6 @@ export function sessions() {
             </div>
           </CardContent>
         </Card>
-
-        {/* <Card className="pau-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Average Score
-                </p>
-                <p className="text-2xl font-bold mt-2">
-                  {stats.averageScore || 0}%
-                </p>
-              </div>
-              <div className="p-3 rounded-full bg-purple-100">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="pau-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Pass Rate
-                </p>
-                <p className="text-2xl font-bold mt-2">
-                  {stats.passRate || 0}%
-                </p>
-              </div>
-              <div className="p-3 rounded-full bg-yellow-100">
-                <Award className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card> */}
       </div>
 
       {/* session Tabs */}
@@ -314,7 +248,6 @@ export function sessions() {
         <TabsContent value="available" className="space-y-6 mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {activeSessions.map((session) => {
-              //const daysLeft = getDaysUntilDeadline(session.deadline);
               return (
                 <Card
                   key={session.sessionId}
@@ -331,13 +264,6 @@ export function sessions() {
                         </CardDescription>
                       </div>
                       <div className="flex flex-col gap-2">
-                        {/* <Badge
-                          className={getDifficultyColor(
-                            session.sessionDifficulty
-                          )}
-                        >
-                          {session.sessionDifficulty}
-                        </Badge> */}
                         <Badge className={getStatusColor(session.status)}>
                           {session.status === "in-progress"
                             ? "in Progress"
@@ -365,35 +291,7 @@ export function sessions() {
                         <FileCheck className="w-4 h-4 mr-2 text-muted-foreground" />
                         <span>{session.totalQuestionsAvailable} questions</span>
                       </div>
-                      {/* <div className="flex items-center">
-                        <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <span>{session.timeLimit} minutes</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Target className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <span>{session.passingScore}% to pass</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Award className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <span>{session.attempts} attempts</span>
-                      </div> */}
                     </div>
-
-                    {/* <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Deadline:</span>
-                        <span
-                          className={`text-sm font-medium ${getDeadlineColor(daysLeft)}`}
-                        >
-                          <Calendar className="w-3 h-3 inline mr-1" />
-                          {daysLeft < 0
-                            ? `${Math.abs(daysLeft)} days overdue`
-                            : daysLeft === 0
-                              ? "Due today"
-                              : `${daysLeft} days left`}
-                        </span>
-                      </div>
-                    </div> */}
 
                     <div className="flex items-center justify-between pt-2">
                       <Button variant="outline">View Details</Button>
@@ -424,24 +322,7 @@ export function sessions() {
                       <h3 className="font-semibold mb-1">
                         {session.sessionTitle}
                       </h3>
-                      <div className="flex items-center space-x-2">
-                        {/* <Badge
-                          className={getDifficultyColor(
-                            session.sessionDifficulty
-                          )}
-                        >
-                          {session.sessionDifficulty}
-                        </Badge> */}
-                        {/* <Badge
-                          className={
-                            session.status === "passed"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }
-                        >
-                          {session.status === "passed" ? "Passed" : "Failed"}
-                        </Badge> */}
-                      </div>
+                      <div className="flex items-center space-x-2"></div>
                     </div>
                     {session.accuracyPercentage ? (
                       <div
@@ -464,14 +345,7 @@ export function sessions() {
                         Correct Answers
                       </div>
                     </div>
-                    {/* <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <div className="text-xl font-bold text-gray-900">
-                        {session.timeSpent}m
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Time Spent
-                      </div>
-                    </div> */}
+
                     <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <div className="text-xl font-bold text-gray-900">
                         {session.completedAt
@@ -492,32 +366,6 @@ export function sessions() {
                     </div>
                   </div>
 
-                  {/* Category Breakdown */}
-                  {/* <div className="mb-4">
-                    <h4 className="font-medium mb-3">Category Breakdown:</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                      {session.categoryScores.map((catScore, index) => (
-                        <div
-                          key={index}
-                          className="text-center p-3 border rounded-lg"
-                        >
-                          <div className="font-bold text-lg">
-                            {Math.round(
-                              (catScore.score / catScore.total) * 100
-                            )}
-                            %
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {catScore.category}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {catScore.score}/{catScore.total}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div> */}
-
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       {session.status === "passed" ? (
@@ -526,22 +374,10 @@ export function sessions() {
                         <AlertCircle className="w-5 h-5 text-red-600" />
                       )}
                       <span className="text-sm text-muted-foreground">
-                        {/* {session.status === "passed"
-                          ? "Congratulations! You passed this session."
-                          : "You can retake this session to improve your score."} */}
                         You can retake this session
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {/* <Button variant="outline" size="sm">
-                        <BarChart3 className="w-4 h-4 mr-2" />
-                        View Detailed Results
-                      </Button> */}
-                      {/* {session.status === "failed" && (
-                        <Button size="sm" className="pau-gradient">
-                          Retake session
-                        </Button>
-                      )} */}
                       <Button
                         size="sm"
                         className="pau-gradient"

@@ -68,11 +68,13 @@ export class TriviaParticipation {
   @JoinColumn({ name: 'triviaId' })
   trivia: Trivia;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @OneToMany(() => TriviaAnswer, (answer) => answer.participation)
+  @OneToMany(() => TriviaAnswer, (answer) => answer.participation, {
+    cascade: true,
+  })
   answers: TriviaAnswer[];
 
   // Helper methods

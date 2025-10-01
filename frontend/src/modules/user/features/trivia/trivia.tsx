@@ -3,13 +3,9 @@ import {
   Trophy,
   Star,
   Clock,
-  Zap,
   Target,
   Crown,
-  Medal,
-  Award,
   Calendar,
-  Users,
   TrendingUp,
   RefreshCw,
   AlertCircle,
@@ -26,7 +22,6 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  type CurrentTriviaResponse,
   type StartTriviaDto,
   type TriviaQuestion,
 } from "@/service/interfaces/trivia.interface";
@@ -186,17 +181,6 @@ export function Trivia() {
     }
   };
 
-  // const resetGame = () => {
-  //   setGameStarted(false);
-  //   setGameCompleted(false);
-  //   setCurrentQuestion(0);
-  //   setSelectedAnswer(null);
-  //   setQuestions([]);
-  //   setParticipationId(null);
-  //   setAnswers({});
-  //   refetch();
-  // };
-
   // Loading state
   if (isLoading) {
     return (
@@ -228,24 +212,6 @@ export function Trivia() {
       </Alert>
     );
   }
-
-  // No trivia available
-  // if (!triviaData?.trivia) {
-  //   return (
-  //     <Card className="pau-shadow text-center max-w-md mx-auto">
-  //       <CardContent className="p-12">
-  //         <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-  //         <h2 className="text-xl font-semibold text-gray-600 mb-2">
-  //           No Active Trivia
-  //         </h2>
-  //         <p className="text-muted-foreground">
-  //           {triviaData?.message ||
-  //             "Check back later for the next monthly challenge!"}
-  //         </p>
-  //       </CardContent>
-  //     </Card>
-  //   );
-  // }
 
   if (!triviaData?.trivia) {
     return (
@@ -315,7 +281,7 @@ export function Trivia() {
                       <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                         <span>{Math.round(user.averageScore)}% avg</span>
                         <span>•</span>
-                        <span>{user.triviaCount} trivias</span>
+                        <span>{user.triviaCount} trivia(s)</span>
                         <span>•</span>
                         <span>{user.user.role.department.name}</span>
                       </div>
@@ -359,7 +325,7 @@ export function Trivia() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div className="p-6 bg-blue-50 rounded-lg">
                 <div className="text-3xl font-bold text-blue-600">
                   {Math.round(finalScore)}%
@@ -375,7 +341,7 @@ export function Trivia() {
                   Correct Answers
                 </div>
               </div>
-              <div className="p-6 bg-purple-50 rounded-lg">
+              {/* <div className="p-6 bg-purple-50 rounded-lg">
                 <div className="text-3xl font-bold text-purple-600">
                   {participation?.timeSpent
                     ? Math.floor(participation.timeSpent / 60)
@@ -383,7 +349,7 @@ export function Trivia() {
                   m
                 </div>
                 <div className="text-sm text-muted-foreground">Time Taken</div>
-              </div>
+              </div> */}
             </div>
 
             <Button variant="outline" onClick={() => navigate({ to: "/" })}>
@@ -443,7 +409,7 @@ export function Trivia() {
                       <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                         <span>{Math.round(user.averageScore)}% avg</span>
                         <span>•</span>
-                        <span>{user.triviaCount} trivias</span>
+                        <span>{user.triviaCount} trivia(s)</span>
                       </div>
                     </div>
                   </div>
@@ -871,15 +837,6 @@ export function Trivia() {
               ? "Trivia Expired"
               : "Trivia Not Available"}
           </h2>
-          {/* <p className="text-muted-foreground mb-6">
-            {triviaData.userParticipation?.status === "expired"
-              ? "You ran out of time for this trivia challenge."
-              : triviaData.userParticipation?.status === "completed" ||
-                  triviaData.userParticipation?.status === "submitted"
-                ? "You have already completed this month's trivia."
-                : "This trivia is not currently active."}
-          </p> */}
-
           <p className="text-muted-foreground mb-6">
             {getParticipationStatusMessage(triviaData?.userParticipation)}
           </p>
@@ -977,7 +934,7 @@ export function Trivia() {
                     <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                       <span>{Math.round(user.averageScore)}% avg</span>
                       <span>•</span>
-                      <span>{user.triviaCount} trivias</span>
+                      <span>{user.triviaCount} trivia(s)</span>
                       <span>•</span>
                       <span>{user.user.role.department.name}</span>
                     </div>

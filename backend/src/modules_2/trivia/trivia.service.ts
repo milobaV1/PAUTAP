@@ -64,11 +64,15 @@ export class TriviaService {
   async createMonthlyTrivia() {
     const now = new Date();
     const scheduledAt = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      10,
-      0,
+      Date.UTC(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        9, // 9 AM UTC (10 AM WAT)
+        0,
+        0,
+        0,
+      ),
     ); // 10 AM today
     const existing = await this.triviaRepository.findOne({
       where: { scheduledAt },
@@ -88,30 +92,8 @@ export class TriviaService {
 
     const savedTrivia = await this.triviaRepository.save(trivia);
 
-    // // enqueue emails — workers will handle actual sending (retries, backoff)
-    // await this.emailQueue.add('send-trivia-notification', {
-    //   triviaId: savedTrivia.id,
-    // });
     const users = await this.userService.findAll();
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    // const url = `${frontendUrl}/trivia`;
-    // const jobs = users.map((user) => ({
-    //   name: 'send trivia', // job name
-    //   data: {
-    //     to: user.email,
-    //     subject: 'New Trivia',
-    //     html: `
-    //   <p>Hi</p>
-    //   <p>Click here to go to the trivia page <a href="${url}">reset-password</a></p>
-    // `,
-    //   },
-    //   opts: {
-    //     attempts: 3,
-    //     backoff: { type: 'exponential', delay: 5000 },
-    //     removeOnComplete: 10,
-    //     removeOnFail: 5,
-    //   },
-    // }));
 
     const url = `${frontendUrl}/trivia`;
 
@@ -207,7 +189,8 @@ export class TriviaService {
   async activateScheduledTrivias(): Promise<void> {
     console.log('[CRON] Checking for scheduled trivias to activate…');
     const now = new Date();
-    console.log(now);
+    console.log('Current time:', now.toISOString()); // Better logging
+    console.log('Current time UTC:', now.toUTCString());
     const scheduledTrivias = await this.triviaRepository.find({
       where: {
         status: TriviaStatus.SCHEDULED,
@@ -403,31 +386,6 @@ export class TriviaService {
     return savedAnswer;
   }
 
-  // async submitTrivia(participationId: string): Promise<TriviaParticipation> {
-  //   const participation = await this.participationRepository.findOne({
-  //     where: { id: participationId },
-  //     relations: ['answers'],
-  //   });
-
-  //   if (!participation) {
-  //     throw new NotFoundException('Participation not found');
-  //   }
-
-  //   if (participation.status !== ParticipationStatus.IN_PROGRESS) {
-  //     throw new BadRequestException('Participation is not in progress');
-  //   }
-
-  //   // Calculate final stats
-  //   const now = new Date();
-  //   participation.status = ParticipationStatus.SUBMITTED;
-  //   participation.completedAt = now;
-  //   participation.submittedAt = now;
-  //   participation.timeSpent = Math.floor(
-  //     (now.getTime() - participation.startedAt.getTime()) / 1000,
-  //   );
-
-  //   return this.participationRepository.save(participation);
-  // }
   async submitTrivia(participationId: string): Promise<TriviaParticipation> {
     const participation = await this.participationRepository.findOne({
       where: { id: participationId },

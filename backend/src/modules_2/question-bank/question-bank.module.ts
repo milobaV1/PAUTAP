@@ -9,14 +9,7 @@ import { QuestionUsage } from './entities/question-usage.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      QuestionBank,
-      // SessionAnswer,
-      // TrainingSession,
-      Role,
-      User,
-      QuestionUsage,
-    ]),
+    TypeOrmModule.forFeature([QuestionBank, Role, User, QuestionUsage]),
   ],
   controllers: [QuestionBankController],
   providers: [QuestionBankService],

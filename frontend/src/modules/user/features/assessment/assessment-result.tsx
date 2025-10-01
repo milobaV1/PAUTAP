@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Card,
@@ -18,10 +18,8 @@ import {
   Target,
   TrendingUp,
   Award,
-  Download,
   RefreshCw,
   BookOpen,
-  Share,
 } from "lucide-react";
 import { useSessionStore } from "@/store/session.store";
 import { retakeSession } from "./api/retake-session";
@@ -43,7 +41,6 @@ export function SessionResults({
   finalScore,
   categoryScores,
   certificateId,
-  completionTime,
 }: SessionResultsProps) {
   const navigate = useNavigate();
   const passingScore = 80; // Should match your backend logic
@@ -106,17 +103,11 @@ export function SessionResults({
     navigate({ to: "/session/$id", params: { id: sessionId } });
   };
 
-  const handleNavigate = (path: string, params?: Record<string, string>) => {
+  const handleNavigate = (path: string) => {
     switch (path) {
       case "dashboard":
         navigate({ to: "/" });
         break;
-      // case 'session-detail':
-      //   navigate({ to: '/sessions/$sessionId', params: { sessionId } });
-      //   break;
-      // case 'session-retake':
-      //   navigate({ to: '/sessions/$sessionId/quiz', params: { sessionId } });
-      //   break;
       case "certificate":
         navigate({ to: "/certificate" });
         break;
@@ -187,18 +178,6 @@ export function SessionResults({
             </div>
           </CardContent>
         </Card>
-
-        {/* <Card className="pau-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold mb-2 text-[#2e3f6f]">
-              {completionTime}m
-            </div>
-            <div className="text-sm text-muted-foreground">Time Spent</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Session duration
-            </div>
-          </CardContent>
-        </Card> */}
 
         <Card className="pau-shadow">
           <CardContent className="p-6 text-center">
@@ -406,27 +385,6 @@ export function SessionResults({
               <CardTitle>Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {/* <Button
-                variant="outline"
-                className="w-full justify-start"
-                //onClick={() => handleNavigate('session-detail')}
-              >
-                <BookOpen className="w-4 h-4 mr-2" />
-                Review Session Material
-              </Button>
-
-              <Button variant="outline" className="w-full justify-start">
-                <Download className="w-4 h-4 mr-2" />
-                Download Results
-              </Button>
-
-              {passed && (
-                <Button variant="outline" className="w-full justify-start">
-                  <Share className="w-4 h-4 mr-2" />
-                  Share Achievement
-                </Button>
-              )} */}
-
               <Button
                 variant="outline"
                 className="w-full justify-start"

@@ -18,134 +18,6 @@ import { CRISP } from 'src/core/enums/training.enum';
 import { ProgressStatus } from 'src/core/enums/user.enum';
 import { Certificate } from 'src/modules_2/certificate/entities/certificate.entity';
 
-// @Entity('user_session_progress')
-// @Unique(['user', 'session'])
-// @Index(['user', 'session', 'currentPart'])
-// export class UserSessionProgress {
-//   @PrimaryGeneratedColumn()
-//   id: number;
-
-//   @Column({ default: 1 })
-//   currentPart: number; // 1-5
-
-//   @Column({
-//     type: 'enum',
-//     enum: ProgressStatus,
-//     default: ProgressStatus.NOT_STARTED,
-//   })
-//   status: ProgressStatus;
-
-//   // Current question tracking within current part
-//   @Column({ default: 0 })
-//   currentQuestionIndex: number;
-
-//   // Part completion tracking
-//   @Column({ default: 0 })
-//   partCCompleted: number;
-
-//   @Column({ default: 0 })
-//   partRCompleted: number;
-
-//   @Column({ default: 0 })
-//   partICompleted: number;
-
-//   @Column({ default: 0 })
-//   partSCompleted: number;
-
-//   @Column({ default: 0 })
-//   partPCompleted: number;
-
-//   // Scoring
-//   @Column({ default: 0 })
-//   totalQuestionsAnswered: number;
-
-//   @Column({ default: 0 })
-//   totalCorrectAnswers: number;
-
-//   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-//   overallScore: number;
-
-//   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-//   partCScore: number;
-
-//   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-//   partRScore: number;
-
-//   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-//   partIScore: number;
-
-//   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-//   partSScore: number;
-
-//   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-//   partPScore: number;
-
-//   // Timestamps
-//   @Column({ nullable: true })
-//   startedAt: Date;
-
-//   @Column({ nullable: true })
-//   lastActiveAt: Date;
-
-//   @Column({ nullable: true })
-//   completedAt: Date;
-
-//   @Column({ nullable: true })
-//   partCCompletedAt: Date;
-
-//   @Column({ nullable: true })
-//   partRCompletedAt: Date;
-
-//   @Column({ nullable: true })
-//   partICompletedAt: Date;
-
-//   @Column({ nullable: true })
-//   partSCompletedAt: Date;
-
-//   @Column({ nullable: true })
-//   partPCompletedAt: Date;
-
-//   @CreateDateColumn()
-//   createdAt: Date;
-
-//   @UpdateDateColumn()
-//   updatedAt: Date;
-
-//   // Relations
-//   @ManyToOne(() => User)
-//   @JoinColumn({ name: 'userId' })
-//   user: User;
-
-//   @ManyToOne(() => Session)
-//   @JoinColumn({ name: 'sessionId' })
-//   session: Session;
-
-//   @ManyToOne(() => Role)
-//   @JoinColumn({ name: 'roleId' })
-//   role: Role;
-
-//   getProgressPercentage(): number {
-//     return (this.totalQuestionsAnswered / 50) * 100; // 50 total questions (10 per part)
-//   }
-
-//   getCurrentPartLetter(): CRISP {
-//     const parts: CRISP[] = [CRISP.C, CRISP.R, CRISP.I, CRISP.S, CRISP.P];
-//     return parts[this.currentPart - 1];
-//   }
-// }
-// import {
-//   Entity,
-//   PrimaryGeneratedColumn,
-//   Column,
-//   CreateDateColumn,
-//   UpdateDateColumn,
-//   ManyToOne,
-//   JoinColumn,
-//   Index,
-//   Unique,
-// } from 'typeorm';
-
-// User Progress Entity
 @Entity('user_session_progress')
 @Unique(['userId', 'sessionId'])
 @Index(['userId', 'sessionId'])
@@ -215,15 +87,21 @@ export class UserSessionProgress {
   updatedAt: Date;
 
   // Relations
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, (user) => user.sessionProgress, {
+    onDelete: 'CASCADE', // Add this
+  })
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => Session)
+  @ManyToOne(() => Session, {
+    onDelete: 'CASCADE', // Also add this for session
+  })
   @JoinColumn({ name: 'sessionId' })
   session: Session;
 
-  @ManyToOne(() => Role)
+  @ManyToOne(() => Role, {
+    onDelete: 'RESTRICT', // Keep RESTRICT for role
+  })
   @JoinColumn({ name: 'roleId' })
   role: Role;
 

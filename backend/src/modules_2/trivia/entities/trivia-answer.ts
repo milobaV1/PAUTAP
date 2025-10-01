@@ -34,7 +34,7 @@ export class TriviaAnswer {
   answeredAt: Date;
 
   // Relations
-  @ManyToOne(() => TriviaParticipation)
+  @ManyToOne(() => TriviaParticipation, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'participationId' })
   participation: TriviaParticipation;
 }

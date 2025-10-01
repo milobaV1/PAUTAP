@@ -12,6 +12,7 @@ import {
   HttpStatus,
   NotFoundException,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { SessionService } from './session.service';
 import {
@@ -30,22 +31,30 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { Public } from 'src/core/metadata/public.metadata';
 import { AdminSessionsResponse } from 'src/core/interfaces/session.interface';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { SystemAdminOnly } from 'src/core/metadata/role.metadata';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Sessions')
 @Controller('session')
+@UseGuards(RolesGuard)
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 
+  @SystemAdminOnly()
   @Post()
   @ApiOperation({ summary: 'Create a new session' })
   @ApiResponse({ status: 201, description: 'Session successfully created' })
   createSession(@Body() createSessionDto: CreateSessionDto) {
-    return this.sessionService.createSession(createSessionDto);
+    if (createSessionDto.isOnboardingSession == true) {
+      return this.sessionService.createOnboardingSession(createSessionDto);
+    } else {
+      return this.sessionService.createSession(createSessionDto);
+    }
   }
 
+  @SystemAdminOnly()
   @Get('admin/stats')
   @ApiOperation({ summary: 'Get all sessions for admin with pagination' })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
@@ -121,6 +130,31 @@ export class SessionController {
   }
   // You can also add a GET endpoint to fetch session progress, etc.
 
+  @Get('user/:userId/statuses/onboarding')
+  @ApiOperation({
+    summary: 'Get onboarding session for a user with their statuses',
+  })
+  @ApiParam({ name: 'userId', description: 'The ID of the user' })
+  @ApiQuery({
+    name: 'userRoleId',
+    required: true,
+    description: 'Role ID of the user to filter session',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns an array of session progress objects',
+  })
+  async getOnboardingSessions(
+    @Param('userId') userId: string,
+    @Query('userRoleId') userRoleId: number,
+  ) {
+    const sessionStatuses = await this.sessionService.getOnboardingSessions(
+      userId,
+      userRoleId,
+    );
+    return sessionStatuses;
+  }
+
   @Patch(':sessionId/status')
   async updateSessionStatus(
     @Param('sessionId') sessionId: string,
@@ -181,6 +215,7 @@ export class SessionController {
     }
   }
 
+  @SystemAdminOnly()
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a session by ID' })
@@ -196,6 +231,7 @@ export class SessionController {
     return this.sessionService.findOne(id);
   }
 
+  @SystemAdminOnly()
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateSessionDto: UpdateSessionDto) {
     // console.log('Data from update backend: ', updateUserDto);

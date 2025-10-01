@@ -1,6 +1,5 @@
 import { client } from "@/lib/api/client";
 import { getAxiosError } from "@/lib/api/error";
-import type { CreateSessionDto } from "@/service/interfaces/session.interface";
 import type { CreateUser } from "@/service/interfaces/user.interface";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 

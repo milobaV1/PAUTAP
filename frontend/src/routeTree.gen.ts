@@ -24,17 +24,14 @@ import { Route as AuthuserLayoutIndexRouteImport } from './routes/_auth/(user)/_
 import { Route as AdminAuthAdminLayoutIndexRouteImport } from './routes/_admin-auth/admin/_layout/index'
 import { Route as AuthuserLayoutTriviaIndexRouteImport } from './routes/_auth/(user)/_layout/trivia/index'
 import { Route as AuthuserLayoutSessionIndexRouteImport } from './routes/_auth/(user)/_layout/session/index'
-import { Route as AuthuserLayoutProgramIndexRouteImport } from './routes/_auth/(user)/_layout/program/index'
+import { Route as AuthuserLayoutProfileIndexRouteImport } from './routes/_auth/(user)/_layout/profile/index'
 import { Route as AuthuserLayoutCertificateIndexRouteImport } from './routes/_auth/(user)/_layout/certificate/index'
 import { Route as AdminAuthAdminLayoutUserIndexRouteImport } from './routes/_admin-auth/admin/_layout/user/index'
 import { Route as AdminAuthAdminLayoutSessionIndexRouteImport } from './routes/_admin-auth/admin/_layout/session/index'
 import { Route as AdminAuthAdminLayoutQuestionIndexRouteImport } from './routes/_admin-auth/admin/_layout/question/index'
 import { Route as AuthuserLayoutSessionIdIndexRouteImport } from './routes/_auth/(user)/_layout/session/$id/index'
-import { Route as AuthuserLayoutProgramIdIndexRouteImport } from './routes/_auth/(user)/_layout/program/$id/index'
 import { Route as AuthuserLayoutSessionIdResultRouteImport } from './routes/_auth/(user)/_layout/session/$id/result'
 import { Route as AuthuserLayoutSessionIdCategoryCategoryIdIndexRouteImport } from './routes/_auth/(user)/_layout/session/$id/category/$categoryId/index'
-import { Route as AuthuserLayoutProgramIdCourseCourseIdIndexRouteImport } from './routes/_auth/(user)/_layout/program/$id/course/$courseId/index'
-import { Route as AuthuserLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRouteImport } from './routes/_auth/(user)/_layout/program/$id/course/$courseId/assessment/$assessmentId'
 
 const AuthuserRouteImport = createFileRoute('/_auth/(user)')()
 const AdminAuthAdminRouteImport = createFileRoute('/_admin-auth/admin')()
@@ -112,10 +109,10 @@ const AuthuserLayoutSessionIndexRoute =
     path: '/session/',
     getParentRoute: () => AuthuserLayoutRoute,
   } as any)
-const AuthuserLayoutProgramIndexRoute =
-  AuthuserLayoutProgramIndexRouteImport.update({
-    id: '/program/',
-    path: '/program/',
+const AuthuserLayoutProfileIndexRoute =
+  AuthuserLayoutProfileIndexRouteImport.update({
+    id: '/profile/',
+    path: '/profile/',
     getParentRoute: () => AuthuserLayoutRoute,
   } as any)
 const AuthuserLayoutCertificateIndexRoute =
@@ -148,12 +145,6 @@ const AuthuserLayoutSessionIdIndexRoute =
     path: '/session/$id/',
     getParentRoute: () => AuthuserLayoutRoute,
   } as any)
-const AuthuserLayoutProgramIdIndexRoute =
-  AuthuserLayoutProgramIdIndexRouteImport.update({
-    id: '/program/$id/',
-    path: '/program/$id/',
-    getParentRoute: () => AuthuserLayoutRoute,
-  } as any)
 const AuthuserLayoutSessionIdResultRoute =
   AuthuserLayoutSessionIdResultRouteImport.update({
     id: '/session/$id/result',
@@ -166,20 +157,6 @@ const AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute =
     path: '/session/$id/category/$categoryId/',
     getParentRoute: () => AuthuserLayoutRoute,
   } as any)
-const AuthuserLayoutProgramIdCourseCourseIdIndexRoute =
-  AuthuserLayoutProgramIdCourseCourseIdIndexRouteImport.update({
-    id: '/program/$id/course/$courseId/',
-    path: '/program/$id/course/$courseId/',
-    getParentRoute: () => AuthuserLayoutRoute,
-  } as any)
-const AuthuserLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRoute =
-  AuthuserLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRouteImport.update(
-    {
-      id: '/program/$id/course/$courseId/assessment/$assessmentId',
-      path: '/program/$id/course/$courseId/assessment/$assessmentId',
-      getParentRoute: () => AuthuserLayoutRoute,
-    } as any,
-  )
 
 export interface FileRoutesByFullPath {
   '/forgot-password': typeof authForgotPasswordRoute
@@ -194,15 +171,12 @@ export interface FileRoutesByFullPath {
   '/admin/session': typeof AdminAuthAdminLayoutSessionIndexRoute
   '/admin/user': typeof AdminAuthAdminLayoutUserIndexRoute
   '/certificate': typeof AuthuserLayoutCertificateIndexRoute
-  '/program': typeof AuthuserLayoutProgramIndexRoute
+  '/profile': typeof AuthuserLayoutProfileIndexRoute
   '/session': typeof AuthuserLayoutSessionIndexRoute
   '/trivia': typeof AuthuserLayoutTriviaIndexRoute
   '/session/$id/result': typeof AuthuserLayoutSessionIdResultRoute
-  '/program/$id': typeof AuthuserLayoutProgramIdIndexRoute
   '/session/$id': typeof AuthuserLayoutSessionIdIndexRoute
-  '/program/$id/course/$courseId': typeof AuthuserLayoutProgramIdCourseCourseIdIndexRoute
   '/session/$id/category/$categoryId': typeof AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute
-  '/program/$id/course/$courseId/assessment/$assessmentId': typeof AuthuserLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
@@ -216,15 +190,12 @@ export interface FileRoutesByTo {
   '/admin/session': typeof AdminAuthAdminLayoutSessionIndexRoute
   '/admin/user': typeof AdminAuthAdminLayoutUserIndexRoute
   '/certificate': typeof AuthuserLayoutCertificateIndexRoute
-  '/program': typeof AuthuserLayoutProgramIndexRoute
+  '/profile': typeof AuthuserLayoutProfileIndexRoute
   '/session': typeof AuthuserLayoutSessionIndexRoute
   '/trivia': typeof AuthuserLayoutTriviaIndexRoute
   '/session/$id/result': typeof AuthuserLayoutSessionIdResultRoute
-  '/program/$id': typeof AuthuserLayoutProgramIdIndexRoute
   '/session/$id': typeof AuthuserLayoutSessionIdIndexRoute
-  '/program/$id/course/$courseId': typeof AuthuserLayoutProgramIdCourseCourseIdIndexRoute
   '/session/$id/category/$categoryId': typeof AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute
-  '/program/$id/course/$courseId/assessment/$assessmentId': typeof AuthuserLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -245,15 +216,12 @@ export interface FileRoutesById {
   '/_admin-auth/admin/_layout/session/': typeof AdminAuthAdminLayoutSessionIndexRoute
   '/_admin-auth/admin/_layout/user/': typeof AdminAuthAdminLayoutUserIndexRoute
   '/_auth/(user)/_layout/certificate/': typeof AuthuserLayoutCertificateIndexRoute
-  '/_auth/(user)/_layout/program/': typeof AuthuserLayoutProgramIndexRoute
+  '/_auth/(user)/_layout/profile/': typeof AuthuserLayoutProfileIndexRoute
   '/_auth/(user)/_layout/session/': typeof AuthuserLayoutSessionIndexRoute
   '/_auth/(user)/_layout/trivia/': typeof AuthuserLayoutTriviaIndexRoute
   '/_auth/(user)/_layout/session/$id/result': typeof AuthuserLayoutSessionIdResultRoute
-  '/_auth/(user)/_layout/program/$id/': typeof AuthuserLayoutProgramIdIndexRoute
   '/_auth/(user)/_layout/session/$id/': typeof AuthuserLayoutSessionIdIndexRoute
-  '/_auth/(user)/_layout/program/$id/course/$courseId/': typeof AuthuserLayoutProgramIdCourseCourseIdIndexRoute
   '/_auth/(user)/_layout/session/$id/category/$categoryId/': typeof AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute
-  '/_auth/(user)/_layout/program/$id/course/$courseId/assessment/$assessmentId': typeof AuthuserLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -270,15 +238,12 @@ export interface FileRouteTypes {
     | '/admin/session'
     | '/admin/user'
     | '/certificate'
-    | '/program'
+    | '/profile'
     | '/session'
     | '/trivia'
     | '/session/$id/result'
-    | '/program/$id'
     | '/session/$id'
-    | '/program/$id/course/$courseId'
     | '/session/$id/category/$categoryId'
-    | '/program/$id/course/$courseId/assessment/$assessmentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -292,15 +257,12 @@ export interface FileRouteTypes {
     | '/admin/session'
     | '/admin/user'
     | '/certificate'
-    | '/program'
+    | '/profile'
     | '/session'
     | '/trivia'
     | '/session/$id/result'
-    | '/program/$id'
     | '/session/$id'
-    | '/program/$id/course/$courseId'
     | '/session/$id/category/$categoryId'
-    | '/program/$id/course/$courseId/assessment/$assessmentId'
   id:
     | '__root__'
     | '/_admin-auth'
@@ -320,15 +282,12 @@ export interface FileRouteTypes {
     | '/_admin-auth/admin/_layout/session/'
     | '/_admin-auth/admin/_layout/user/'
     | '/_auth/(user)/_layout/certificate/'
-    | '/_auth/(user)/_layout/program/'
+    | '/_auth/(user)/_layout/profile/'
     | '/_auth/(user)/_layout/session/'
     | '/_auth/(user)/_layout/trivia/'
     | '/_auth/(user)/_layout/session/$id/result'
-    | '/_auth/(user)/_layout/program/$id/'
     | '/_auth/(user)/_layout/session/$id/'
-    | '/_auth/(user)/_layout/program/$id/course/$courseId/'
     | '/_auth/(user)/_layout/session/$id/category/$categoryId/'
-    | '/_auth/(user)/_layout/program/$id/course/$courseId/assessment/$assessmentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -448,11 +407,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthuserLayoutSessionIndexRouteImport
       parentRoute: typeof AuthuserLayoutRoute
     }
-    '/_auth/(user)/_layout/program/': {
-      id: '/_auth/(user)/_layout/program/'
-      path: '/program'
-      fullPath: '/program'
-      preLoaderRoute: typeof AuthuserLayoutProgramIndexRouteImport
+    '/_auth/(user)/_layout/profile/': {
+      id: '/_auth/(user)/_layout/profile/'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthuserLayoutProfileIndexRouteImport
       parentRoute: typeof AuthuserLayoutRoute
     }
     '/_auth/(user)/_layout/certificate/': {
@@ -490,13 +449,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthuserLayoutSessionIdIndexRouteImport
       parentRoute: typeof AuthuserLayoutRoute
     }
-    '/_auth/(user)/_layout/program/$id/': {
-      id: '/_auth/(user)/_layout/program/$id/'
-      path: '/program/$id'
-      fullPath: '/program/$id'
-      preLoaderRoute: typeof AuthuserLayoutProgramIdIndexRouteImport
-      parentRoute: typeof AuthuserLayoutRoute
-    }
     '/_auth/(user)/_layout/session/$id/result': {
       id: '/_auth/(user)/_layout/session/$id/result'
       path: '/session/$id/result'
@@ -509,20 +461,6 @@ declare module '@tanstack/react-router' {
       path: '/session/$id/category/$categoryId'
       fullPath: '/session/$id/category/$categoryId'
       preLoaderRoute: typeof AuthuserLayoutSessionIdCategoryCategoryIdIndexRouteImport
-      parentRoute: typeof AuthuserLayoutRoute
-    }
-    '/_auth/(user)/_layout/program/$id/course/$courseId/': {
-      id: '/_auth/(user)/_layout/program/$id/course/$courseId/'
-      path: '/program/$id/course/$courseId'
-      fullPath: '/program/$id/course/$courseId'
-      preLoaderRoute: typeof AuthuserLayoutProgramIdCourseCourseIdIndexRouteImport
-      parentRoute: typeof AuthuserLayoutRoute
-    }
-    '/_auth/(user)/_layout/program/$id/course/$courseId/assessment/$assessmentId': {
-      id: '/_auth/(user)/_layout/program/$id/course/$courseId/assessment/$assessmentId'
-      path: '/program/$id/course/$courseId/assessment/$assessmentId'
-      fullPath: '/program/$id/course/$courseId/assessment/$assessmentId'
-      preLoaderRoute: typeof AuthuserLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRouteImport
       parentRoute: typeof AuthuserLayoutRoute
     }
   }
@@ -573,32 +511,24 @@ const AdminAuthRouteWithChildren = AdminAuthRoute._addFileChildren(
 interface AuthuserLayoutRouteChildren {
   AuthuserLayoutIndexRoute: typeof AuthuserLayoutIndexRoute
   AuthuserLayoutCertificateIndexRoute: typeof AuthuserLayoutCertificateIndexRoute
-  AuthuserLayoutProgramIndexRoute: typeof AuthuserLayoutProgramIndexRoute
+  AuthuserLayoutProfileIndexRoute: typeof AuthuserLayoutProfileIndexRoute
   AuthuserLayoutSessionIndexRoute: typeof AuthuserLayoutSessionIndexRoute
   AuthuserLayoutTriviaIndexRoute: typeof AuthuserLayoutTriviaIndexRoute
   AuthuserLayoutSessionIdResultRoute: typeof AuthuserLayoutSessionIdResultRoute
-  AuthuserLayoutProgramIdIndexRoute: typeof AuthuserLayoutProgramIdIndexRoute
   AuthuserLayoutSessionIdIndexRoute: typeof AuthuserLayoutSessionIdIndexRoute
-  AuthuserLayoutProgramIdCourseCourseIdIndexRoute: typeof AuthuserLayoutProgramIdCourseCourseIdIndexRoute
   AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute: typeof AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute
-  AuthuserLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRoute: typeof AuthuserLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRoute
 }
 
 const AuthuserLayoutRouteChildren: AuthuserLayoutRouteChildren = {
   AuthuserLayoutIndexRoute: AuthuserLayoutIndexRoute,
   AuthuserLayoutCertificateIndexRoute: AuthuserLayoutCertificateIndexRoute,
-  AuthuserLayoutProgramIndexRoute: AuthuserLayoutProgramIndexRoute,
+  AuthuserLayoutProfileIndexRoute: AuthuserLayoutProfileIndexRoute,
   AuthuserLayoutSessionIndexRoute: AuthuserLayoutSessionIndexRoute,
   AuthuserLayoutTriviaIndexRoute: AuthuserLayoutTriviaIndexRoute,
   AuthuserLayoutSessionIdResultRoute: AuthuserLayoutSessionIdResultRoute,
-  AuthuserLayoutProgramIdIndexRoute: AuthuserLayoutProgramIdIndexRoute,
   AuthuserLayoutSessionIdIndexRoute: AuthuserLayoutSessionIdIndexRoute,
-  AuthuserLayoutProgramIdCourseCourseIdIndexRoute:
-    AuthuserLayoutProgramIdCourseCourseIdIndexRoute,
   AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute:
     AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute,
-  AuthuserLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRoute:
-    AuthuserLayoutProgramIdCourseCourseIdAssessmentAssessmentIdRoute,
 }
 
 const AuthuserLayoutRouteWithChildren = AuthuserLayoutRoute._addFileChildren(

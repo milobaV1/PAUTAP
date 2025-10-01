@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -39,6 +40,22 @@ export class CreateSessionDto {
   @IsOptional()
   @IsNumber()
   timeLimit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Is this an on-boarding session?',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isOnboardingSession?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Number or questions per category',
+    example: 5,
+  })
+  @IsOptional()
+  @IsNumber()
+  questionsPerCategory?: number;
 
   // @ApiProperty({
   //   description: 'Difficulty level of the session',

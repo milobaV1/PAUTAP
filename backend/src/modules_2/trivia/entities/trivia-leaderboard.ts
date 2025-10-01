@@ -59,7 +59,7 @@ export class TriviaLeaderboard {
   updatedAt: Date;
 
   // Relations
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 }

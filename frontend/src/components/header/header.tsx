@@ -1,7 +1,8 @@
-import { Menu, Bell, Badge, LogOut } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { Button } from "../ui/button";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthState } from "@/store/auth.store";
+import { useSessionStore } from "@/store/session.store";
 
 export function Header({
   setSidebarOpen,
@@ -10,9 +11,11 @@ export function Header({
 }) {
   const navigate = useNavigate();
   const { logOut } = useAuthState();
+  const { clearSession } = useSessionStore();
 
   const handleLogout = () => {
     logOut();
+    clearSession();
     navigate({ to: "/login" });
   };
   return (
@@ -27,12 +30,6 @@ export function Header({
       </Button>
 
       <div className="flex items-center space-x-4">
-        {/* <Button variant="ghost" size="sm" className="relative">
-          <Bell className="w-5 h-5" />
-          <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs">
-            3
-          </Badge>
-        </Button> */}
         <Button variant="ghost" size="sm" onClick={() => handleLogout()}>
           <LogOut className="w-5 h-5" />
           Logout

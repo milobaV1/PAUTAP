@@ -1,13 +1,4 @@
-import {
-  LayoutDashboard,
-  Users,
-  BookOpen,
-  Target,
-  Calendar,
-  Settings,
-  X,
-} from "lucide-react";
-import { useState } from "react";
+import { LayoutDashboard, Users, Target, Calendar, X } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -36,12 +27,6 @@ export function AdminSidebar({
       icon: Users,
       to: "/admin/user",
     },
-    // {
-    //   id: "course-management",
-    //   label: "Course Management",
-    //   icon: BookOpen,
-    //   to: "/admin/course",
-    // },
     {
       id: "question-management",
       label: "Question Bank",
@@ -54,12 +39,6 @@ export function AdminSidebar({
       icon: Calendar,
       to: "/admin/session",
     },
-    // {
-    //   id: "admin-settings",
-    //   label: "Settings",
-    //   icon: Settings,
-    //   to: "/admin/settings",
-    // },
   ];
 
   const isCurrentPage = (path: string) => {

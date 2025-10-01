@@ -99,18 +99,6 @@ export class CertificateService {
       certificateId: cert.certificateId,
     });
 
-    // 3. Save file
-    // const certDir = path.join(__dirname, '../../../uploads/certificates');
-    // if (!fs.existsSync(certDir)) fs.mkdirSync(certDir, { recursive: true });
-    // const filePath = path.join(certDir, `${cert.certificateId}.pdf`);
-    // fs.writeFileSync(filePath, pdfBuffer);
-
-    // cert.filePath = filePath;
-    // return this.certRepo.save({
-    //   ...cert,
-    //   filePath,
-    // });
-
     const filePath = await this.saveCertificateFile(
       cert.certificateId,
       pdfBuffer,
@@ -140,136 +128,6 @@ export class CertificateService {
     issuedAt: Date;
     certificateId: string;
   }): Promise<Buffer> {
-    //     const template = `
-    // <html>
-    //   <head>
-    //     <style>
-    //       body {
-    //         font-family: 'Arial', sans-serif;
-    //         margin: 0;
-    //         padding: 0;
-    //         background: #f9fafb;
-    //         color: #2e3f6f;
-    //       }
-    //       .certificate {
-    //         width: 1000px;
-    //         margin: 40px auto;
-    //         padding: 60px;
-    //         background: #fff;
-    //         border: 12px solid #2e3f6f;
-    //         position: relative;
-    //       }
-    //       .header {
-    //         text-align: center;
-    //         margin-bottom: 40px;
-    //       }
-    //       .header h1 {
-    //         font-size: 40px;
-    //         margin: 0;
-    //         font-weight: bold;
-    //       }
-    //       .header p {
-    //         font-size: 18px;
-    //         margin-top: 10px;
-    //         color: #555;
-    //       }
-    //       .recipient {
-    //         text-align: center;
-    //         margin: 50px 0;
-    //       }
-    //       .recipient h2 {
-    //         font-size: 36px;
-    //         margin: 0;
-    //         font-weight: bold;
-    //         border-bottom: 3px solid #2e3f6f;
-    //         display: inline-block;
-    //         padding-bottom: 8px;
-    //       }
-    //       .session {
-    //         text-align: center;
-    //         margin: 40px 0;
-    //       }
-    //       .session h3 {
-    //         font-size: 28px;
-    //         margin: 0;
-    //       }
-    //       .details {
-    //         display: flex;
-    //         justify-content: space-between;
-    //         margin-top: 60px;
-    //         font-size: 14px;
-    //         color: #444;
-    //       }
-    //       .details div {
-    //         text-align: center;
-    //         flex: 1;
-    //       }
-    //       .footer {
-    //         text-align: center;
-    //         margin-top: 60px;
-    //         font-size: 12px;
-    //         color: #777;
-    //         border-top: 1px solid #ccc;
-    //         padding-top: 15px;
-    //       }
-    //     </style>
-    //   </head>
-    //   <body>
-    //     <div class="certificate">
-    //       <div class="header">
-    //         <h1>Certificate of Completion</h1>
-    //         <p>This certifies that</p>
-    //       </div>
-
-    //       <div class="recipient">
-    //         <h2>${data.name}</h2>
-    //       </div>
-
-    //       <div class="session">
-    //         <p>has successfully completed</p>
-    //         <h3>${data.sessionTitle}</h3>
-    //       </div>
-
-    //       <div class="details">
-    //         <div>
-    //           <p><strong>Date of Issue</strong></p>
-    //           <p>${data.issuedAt.toDateString()}</p>
-    //         </div>
-    //         <div>
-    //           <p><strong>Certificate ID</strong></p>
-    //           <p>${data.certificateId}</p>
-    //         </div>
-    //       </div>
-
-    //       <div class="footer">
-    //         This certificate can be verified at pau.edu.ng/verify using the Certificate ID above.
-    //       </div>
-    //     </div>
-    //   </body>
-    // </html>
-    // `;
-
-    // const template = `
-    //   <html>
-    //     <head>
-    //       <style>
-    //         body { text-align: center; font-family: Arial; padding: 50px; }
-    //         .title { font-size: 32px; font-weight: bold; }
-    //         .subtitle { font-size: 20px; margin-top: 20px; }
-    //         .id { margin-top: 30px; font-size: 12px; color: gray; }
-    //       </style>
-    //     </head>
-    //     <body>
-    //       <div class="title">Certificate of Completion</div>
-    //       <div class="subtitle">This is to certify that</div>
-    //       <h1>${data.name}</h1>
-    //       <div class="subtitle">has successfully completed the training session</div>
-    //       <h2>${data.sessionId}</h2>
-    //       <p>Issued on ${data.issuedAt.toDateString()}</p>
-    //       <div class="id">Certificate ID: ${data.certificateId}</div>
-    //     </body>
-    //   </html>
-    // `;
     const template = `
     <html>
   <head>
@@ -502,19 +360,6 @@ export class CertificateService {
       where: { id },
     });
   }
-
-  // async revokeCertificate(
-  //   certificateId: string,
-  //   reason?: string,
-  // ): Promise<Certificate> {
-  //   const cert = await this.certRepo.findOne({ where: { certificateId } });
-  //   if (!cert) throw new NotFoundException('Certificate not found');
-
-  //   cert.isValid = false;
-  //   cert.notes = reason || 'Certificate revoked';
-
-  //   return this.certRepo.save(cert);
-  // }
 
   async getUserCertificatesWithDetails(
     userId: string,

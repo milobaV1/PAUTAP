@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   Request,
+  UseGuards,
 } from '@nestjs/common';
 import { TriviaService } from './trivia.service';
 import { CreateTriviaDto } from './dto/create-trivia.dto';
@@ -15,8 +16,12 @@ import { UpdateTriviaDto } from './dto/update-trivia.dto';
 import { LeaderboardQueryDto } from './dto/leaderboard-query.dto';
 import { StartTriviaDto } from './dto/start-trivia.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @Controller('trivia')
+@UseGuards(RolesGuard)
 export class TriviaController {
   constructor(private readonly triviaService: TriviaService) {}
 

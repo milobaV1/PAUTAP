@@ -33,23 +33,25 @@ export class AdminSeeder implements OnApplicationBootstrap {
     console.log('🌱 No users found. Seeding initial data...');
 
     let superDepartment = await departmentRepo.findOne({
-      where: { name: 'Super' },
+      where: { name: 'System Administration' },
     });
 
     if (!superDepartment) {
-      superDepartment = departmentRepo.create({ name: 'Super' });
+      superDepartment = departmentRepo.create({
+        name: 'System Administration',
+      });
       await departmentRepo.save(superDepartment);
-      console.log('Super user department created');
+      console.log('System Administration department created');
     }
 
-    let adminRole = await roleRepo.findOne({ where: { name: 'super_admin' } });
+    let adminRole = await roleRepo.findOne({ where: { name: 'System Admin' } });
     if (!adminRole) {
       adminRole = roleRepo.create({
-        name: 'super_admin',
+        name: 'System Admin',
         department: superDepartment,
       });
       await roleRepo.save(adminRole);
-      console.log('Created Super Admin role.');
+      console.log('Created System Admin role.');
     }
 
     const hashedPassword = await bcrypt.hash(adminPassword, 10);

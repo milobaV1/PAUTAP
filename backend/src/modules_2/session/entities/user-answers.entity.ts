@@ -38,7 +38,9 @@ export class UserAnswer {
   answeredAt: Date;
 
   // Relations
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'userId' })
   user: User;
 

@@ -3,7 +3,6 @@ import { getAxiosError } from "@/lib/api/error";
 import type { CreateSessionDto } from "@/service/interfaces/session.interface";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-// accepts partial update (PATCH), or full replacement (PUT) depending on backend
 export async function updateSession(
   id: string,
   data: Partial<CreateSessionDto>

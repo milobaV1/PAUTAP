@@ -1,4 +1,4 @@
-import { Menu, Bell, Users, LogOut } from "lucide-react";
+import { Menu, Users, LogOut } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAuthState } from "@/store/auth.store";
 import { useNavigate } from "@tanstack/react-router";
@@ -31,10 +31,6 @@ export function AdminHeader({
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* <Button variant="ghost" size="sm">
-              <Bell className="w-4 h-4" />
-            </Button> */}
-
             <div className="flex items-center space-x-3">
               <div className="text-right">
                 <p className="text-sm font-medium">{`${user?.first_name} ${user?.last_name}`}</p>

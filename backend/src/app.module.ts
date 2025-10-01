@@ -4,12 +4,6 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeormConfigAsync } from './infrastructure/database/database.config';
-// import { UsersModule } from './modules/users/users.module';
-// import { CourseContentModule } from './modules/course-content/course-content.module';
-// import { AuthModule } from './modules/auth/auth.module';
-// import { CertificateModule } from './modules/certificate/certificate.module';
-// import { QuestionBankModule } from './modules/question-bank/question-bank.module';
-// import { SessionModule } from './modules/session/session.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './modules_2/auth/guards/jwt-auth.guard';
 import { AdminSeeder } from './core/seeds/admin.seeder';
@@ -24,22 +18,19 @@ import { CacheableMemory } from 'cacheable';
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TriviaModule } from './modules_2/trivia/trivia.module';
-import { TriviaSeeder } from './core/seeds/trivia.seeder';
+//import { TriviaSeeder } from './core/seeds/trivia.seeder';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { EmailModule } from './modules_2/email/email.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AdminModule } from './modules_2/admin/admin.module';
+import { HealthController } from './health.controller';
+import { User } from './modules_2/users/entities/user.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync(typeormConfigAsync),
-    // AuthModule,
-    // CourseContentModule,
-    // CertificateModule,
-    // QuestionBankModule,
-    // SessionModule,
-    // UsersModule,
+    TypeOrmModule.forFeature([User]),
     AuthModule,
     CertificateModule,
     EmailModule,
@@ -67,7 +58,6 @@ import { AdminModule } from './modules_2/admin/admin.module';
         port: 6379,
       },
     }),
-    //BullModule.registerQueue({ name: 'email' }, { name: 'leaderboard' }),
     ScheduleModule.forRoot(),
     MailerModule.forRootAsync({
       imports: [ConfigModule],
@@ -76,7 +66,7 @@ import { AdminModule } from './modules_2/admin/admin.module';
         transport: {
           host: configService.get<string>('EMAIL_HOST'),
           port: configService.get<number>('EMAIL_PORT'),
-          secure: false,
+          secure: configService.get<string>('EMAIL_SECURE') === 'true',
           auth: {
             user: configService.get<string>('EMAIL_USERNAME'),
             pass: configService.get<string>('EMAIL_PASSWORD'),
@@ -93,11 +83,11 @@ import { AdminModule } from './modules_2/admin/admin.module';
       ],
     }),
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   providers: [
     AppService,
     AdminSeeder,
-    TriviaSeeder,
+    //TriviaSeeder,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

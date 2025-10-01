@@ -14,12 +14,10 @@ import {
   Award,
   TrendingUp,
   Target,
-  Eye,
-  Settings,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useGetAdminDashboard } from "./api/get-dashboard-stats";
 import { useNavigate } from "@tanstack/react-router";
 

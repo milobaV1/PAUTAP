@@ -8,6 +8,7 @@ import { Department } from './entities/department.entity';
 import { UserSessionProgress } from '../session/entities/user-session-progress.entity';
 import { TriviaParticipation } from '../trivia/entities/trivia-participation.entity';
 import { Certificate } from '../certificate/entities/certificate.entity';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { Certificate } from '../certificate/entities/certificate.entity';
       TriviaParticipation,
       Certificate,
     ]),
+    EmailModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],
