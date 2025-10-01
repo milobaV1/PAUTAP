@@ -42,7 +42,7 @@ export function Trivia() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
   const [participationId, setParticipationId] = useState<string | null>(null);
-  const [answers, setAnswers] = useState<
+  const [, setAnswers] = useState<
     Record<string, { answer: number; timeSpent: number }>
   >({});
   const [questionStartTime, setQuestionStartTime] = useState<number>(

@@ -32,7 +32,6 @@ import {
 import {
   Search,
   Plus,
-  Edit,
   Trash2,
   Eye,
   FileText,
@@ -67,7 +66,7 @@ const sessionSchema = z.object({
 export function TrainingSessionManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateSession, setShowCreateSession] = useState(false);
-  const { mutateAsync: createSession, isPending, isError } = useCreateSession();
+  const { mutateAsync: createSession, isPending } = useCreateSession();
   const { mutate: deleteSession } = useDeleteSession();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null

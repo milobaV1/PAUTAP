@@ -45,7 +45,7 @@ export function sessions() {
 
   console.log("Onboarding user check? ", isOnboardingUser);
 
-  const { data, isLoading, isError, error } = isOnboardingUser
+  const { data } = isOnboardingUser
     ? useGetOnboardingSession(sessionData)
     : useGetSessions(sessionData);
   //const { data, isLoading, isError, error } = useGetSessions(sessionData);

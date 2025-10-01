@@ -55,11 +55,7 @@ export function ResetPassword() {
 
   const search = useSearch({ from: "/(auth)/reset-password" });
   const token = search.token;
-  const {
-    mutateAsync: resetPassword,
-    isPending,
-    isSuccess,
-  } = useResetPassword();
+  const { mutateAsync: resetPassword, isPending } = useResetPassword();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

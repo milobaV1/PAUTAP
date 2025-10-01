@@ -13,7 +13,3 @@ export const Route = createFileRoute("/_admin-auth")({
     }
   },
 });
-
-function RouteComponent() {
-  return <div>Hello "/_admin"!</div>;
-}

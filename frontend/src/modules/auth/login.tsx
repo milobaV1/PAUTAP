@@ -44,7 +44,7 @@ const loginSchema = z.object({
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const { mutateAsync: getLogin, isPending, isError } = useGetLogin();
+  const { mutateAsync: getLogin, isPending } = useGetLogin();
   const { mutateAsync: getUser } = useGetUser();
 
   const form = useForm<z.infer<typeof loginSchema>>({

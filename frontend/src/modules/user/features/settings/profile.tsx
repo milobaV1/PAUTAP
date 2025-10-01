@@ -187,7 +187,7 @@ export function Profile() {
       return;
     }
 
-    const { newPassword, confirmPassword } = values;
+    const { newPassword } = values;
     const value: UpdatePasswordDto = {
       newPassword,
     };

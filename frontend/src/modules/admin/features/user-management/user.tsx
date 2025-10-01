@@ -35,15 +35,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import {
-  Users,
-  Search,
-  UserPlus,
-  Trash2,
-  Eye,
-  Award,
-  EyeOff,
-} from "lucide-react";
+import { Users, Search, UserPlus, Trash2, Eye, Award } from "lucide-react";
 import z from "zod";
 import { roleMap, roles } from "@/lib/roles";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -75,12 +67,12 @@ export function UserManagement() {
   const [selectedRole, setSelectedRole] = useState("all");
   const [showAddUser, setShowAddUser] = useState(false);
   // const [showPassword, setShowPassword] = useState(false);
-  const { mutateAsync: createUser, isPending, isError } = useCreateUser();
+  const { mutateAsync: createUser, isPending } = useCreateUser();
   const { mutate: deleteUser } = useDeleteUser();
   const [page, setPage] = useState(1);
   const limit = 5;
   const { data, isLoading } = useGetUserForAdmin(page, limit);
-  const [showUserModal, setShowUserModal] = useState(false);
+  //const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const form = useForm<CreateUserFormValues>({
@@ -97,10 +89,10 @@ export function UserManagement() {
 
   //const userId = decodedDto?.sub.id;
 
-  const handleViewUser = (userId: string) => {
-    setSelectedUserId(userId);
-    setShowUserModal(true);
-  };
+  // const handleViewUser = (userId: string) => {
+  //   setSelectedUserId(userId);
+  //   setShowUserModal(true);
+  // };
 
   async function handleSubmit(values: CreateUserFormValues) {
     const { role, ...rest } = values;
@@ -448,7 +440,7 @@ export function UserManagement() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleViewUser(user.id)}
+                        onClick={() => setSelectedUserId(user.id)}
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
