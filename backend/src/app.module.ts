@@ -57,11 +57,15 @@ import { User } from './modules_2/users/entities/user.entity';
         };
       },
     }),
-    BullModule.forRoot({
-      connection: {
-        host: 'redis2', // same container name as in docker-compose
-        port: 6379,
-      },
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('REDIS_HOST') || 'redis2',
+          port: configService.get('REDIS_PORT') || 6379,
+        },
+      }),
     }),
     ScheduleModule.forRoot(),
     MailerModule.forRootAsync({
