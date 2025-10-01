@@ -41,13 +41,18 @@ import { User } from './modules_2/users/entities/user.entity';
     AdminModule,
     CacheModule.registerAsync({
       isGlobal: true,
-      useFactory: async () => {
+      imports: [ConfigModule], // Add this
+      inject: [ConfigService], // Add this
+      useFactory: async (configService: ConfigService) => {
+        const redisHost = configService.get('REDIS_HOST') || 'redis2';
+        const redisPort = configService.get('REDIS_PORT') || '6379';
+
         return {
           stores: [
             new Keyv({
               store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
             }),
-            createKeyv('redis://redis2:6379'),
+            createKeyv(`redis://${redisHost}:${redisPort}`),
           ],
         };
       },
