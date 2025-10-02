@@ -20,16 +20,33 @@ export class AuthService {
     @InjectQueue('email') private readonly emailQueue: Queue,
   ) {}
 
-  async validateUser(email: string, pass: string): Promise<any> {
-    const user = await this.userService.findOne('email', email);
+  // async validateUser(email: string, pass: string): Promise<any> {
+  //   const user = await this.userService.findOne('email', email);
 
-    if (user && (await bcrypt.compare(pass, user.password))) {
-      const { password, ...result } = user;
-      return result;
+  //   if (user && (await bcrypt.compare(pass, user.password))) {
+  //     const { password, ...result } = user;
+  //     return result;
+  //   }
+  //   return null;
+  // }
+  async validateUser(email: string, pass: string): Promise<any> {
+    console.log('Validating user:', email);
+    const user = await this.userService.findOne('email', email);
+    console.log('User found:', !!user);
+
+    if (user) {
+      const passwordMatch = await bcrypt.compare(pass, user.password);
+      console.log('Password match:', passwordMatch);
+
+      if (passwordMatch) {
+        const { password, ...result } = user;
+        console.log('Returning user');
+        return result;
+      }
     }
+    console.log('Validation failed');
     return null;
   }
-
   login(user: any) {
     const payload = {
       email: user.email,
