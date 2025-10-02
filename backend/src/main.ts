@@ -5,7 +5,12 @@ import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Disable for Swagger
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
   app.setGlobalPrefix('api');
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
