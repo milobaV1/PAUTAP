@@ -33,6 +33,8 @@ export class AuthService {
     console.log('Validating user:', email);
     const user = await this.userService.findOne('email', email);
     console.log('User found:', !!user);
+    console.log('User password type:', typeof user?.password); // Add this
+    console.log('User password length:', user?.password?.length); // Add this
 
     if (user) {
       const passwordMatch = await bcrypt.compare(pass, user.password);
