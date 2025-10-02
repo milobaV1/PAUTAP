@@ -103,7 +103,7 @@ export class UsersController {
     return this.usersService.createRole(createRoleDto);
   }
 
-  @Get()
+  @Get('/role')
   getAllRoles() {
     return this.usersService.getAllRoles();
   }
