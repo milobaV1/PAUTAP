@@ -530,7 +530,7 @@ export class UsersService {
 
   async getAllRoles() {
     const roles = await this.roleRepo.find({
-      relations: ['user'],
+      relations: ['users'],
     });
 
     return roles;
