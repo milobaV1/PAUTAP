@@ -299,7 +299,9 @@ export function TrainingSessionManagement() {
             <HelpCircle className="w-8 h-8 text-purple-600" />
             <div className="ml-4">
               <p className="text-2xl font-bold">{data.totalQuestions}</p>
-              <p className="text-sm text-muted-foreground">Total Questions</p>
+              <p className="text-sm text-muted-foreground">
+                Total Questions Usage
+              </p>
             </div>
           </CardContent>
         </Card>

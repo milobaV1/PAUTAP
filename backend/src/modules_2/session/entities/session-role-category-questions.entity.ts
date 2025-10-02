@@ -52,7 +52,7 @@ export class SessionRoleCategoryQuestion {
   @OneToMany(() => UserAnswer, (answer) => answer.sessionRoleCategoryQuestion)
   userAnswers: UserAnswer[];
 
-  @ManyToOne(() => Session)
+  @ManyToOne(() => Session, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'sessionId' })
   session: Session;
 
