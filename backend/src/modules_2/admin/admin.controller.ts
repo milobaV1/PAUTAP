@@ -4,6 +4,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminDashboardStats } from 'src/core/interfaces/admin.interface';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { SystemAdminOnly } from 'src/core/metadata/role.metadata';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiBearerAuth('access-token')
 @Controller('admin')
@@ -12,6 +13,7 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @SystemAdminOnly()
+  @SkipThrottle()
   @Get('/dashboard/stats')
   @ApiOperation({
     summary: 'Get admin dashboard statistics',

@@ -33,6 +33,7 @@ import {
 } from 'src/core/interfaces/user.interface';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { SystemAdminOnly } from 'src/core/metadata/role.metadata';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiBearerAuth('access-token')
 @Controller('users')
@@ -151,6 +152,7 @@ export class UsersController {
   }
 
   @SystemAdminOnly()
+  @SkipThrottle()
   @Get('/admin/stats')
   async getAdminStatsUser(
     @Query('page') page = '1',

@@ -38,7 +38,7 @@ export class CertificateProcessor extends WorkerHost {
         `Certificate ${cert.certificateId} successfully generated for user ${user.id}`,
       );
       const appUrl = this.configService.get<string>('APP_URL');
-      const downloadUrl: string = `${appUrl}/certificates/download/${cert.id}`;
+      const downloadUrl: string = `${appUrl}/certificate`;
       const verifyUrl: string = `${appUrl}/certificates/verify/${cert.id}`;
 
       // await this.emailQueue.add(
@@ -139,7 +139,7 @@ export class CertificateProcessor extends WorkerHost {
               You have successfully completed <b>${sessionId}</b>. We’re excited to recognize your achievement with this official certificate.
             </p>
             <p style="text-align: center;">
-              <a href="${downloadUrl}" class="button">Download Your Certificate</a>
+              <a href="${downloadUrl}" class="button">View Your Certificate</a>
             </p>
             <div class="certificate-info">
               <p><strong>Certificate ID:</strong> ${cert.certificateId}</p>

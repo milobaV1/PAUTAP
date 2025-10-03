@@ -425,7 +425,7 @@ export function UserManagement() {
                         {user.totalCertificates}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Certificates
+                        Certificate(s)
                       </div>
                     </div>
 
@@ -433,7 +433,9 @@ export function UserManagement() {
                       <div className="font-medium">
                         {user.totalCertificates}
                       </div>
-                      <div className="text-muted-foreground">Certificates</div>
+                      <div className="text-muted-foreground">
+                        Certificate(s)
+                      </div>
                     </div>
 
                     <div className="flex items-center space-x-2 flex-shrink-0">

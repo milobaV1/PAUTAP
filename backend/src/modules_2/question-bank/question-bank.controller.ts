@@ -21,6 +21,7 @@ import {
 import { AdminQuestionsResponse } from 'src/core/interfaces/question.interface';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { SystemAdminOnly } from 'src/core/metadata/role.metadata';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiBearerAuth('access-token')
 @Controller('question-bank')
@@ -53,6 +54,7 @@ export class QuestionBankController {
   }
 
   @SystemAdminOnly()
+  @SkipThrottle()
   @Get('admin')
   @ApiOperation({ summary: 'Get paginated list of admin questions' })
   @ApiQuery({

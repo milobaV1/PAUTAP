@@ -34,6 +34,7 @@ import {
 import { AdminSessionsResponse } from 'src/core/interfaces/session.interface';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { SystemAdminOnly } from 'src/core/metadata/role.metadata';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Sessions')
@@ -55,6 +56,7 @@ export class SessionController {
   }
 
   @SystemAdminOnly()
+  @SkipThrottle()
   @Get('admin/stats')
   @ApiOperation({ summary: 'Get all sessions for admin with pagination' })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })

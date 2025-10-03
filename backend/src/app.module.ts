@@ -87,7 +87,7 @@ import { User } from './modules_2/users/entities/user.entity';
       throttlers: [
         {
           ttl: 60000,
-          limit: 10,
+          limit: 15,
         },
       ],
     }),
