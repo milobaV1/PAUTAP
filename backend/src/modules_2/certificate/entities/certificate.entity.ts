@@ -54,7 +54,7 @@ export class Certificate {
   user: User;
 
   @ManyToOne(() => Session, {
-    onDelete: 'RESTRICT', // Don't allow session deletion if certificates exist
+    onDelete: 'CASCADE', // Don't allow session deletion if certificates exist
   })
   @JoinColumn({ name: 'sessionId' })
   session: Session;

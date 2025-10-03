@@ -48,7 +48,9 @@ export class UserAnswer {
   @JoinColumn({ name: 'questionId' })
   question: QuestionBank;
 
-  @ManyToOne(() => SessionRoleCategoryQuestion)
+  @ManyToOne(() => SessionRoleCategoryQuestion, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'sessionRoleCategoryQuestionId' })
   sessionRoleCategoryQuestion: SessionRoleCategoryQuestion;
 }

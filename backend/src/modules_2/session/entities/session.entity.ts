@@ -48,6 +48,8 @@ export class Session {
   )
   roleCategoryQuestions: SessionRoleCategoryQuestion[];
 
-  @OneToMany(() => UserSessionProgress, (progress) => progress.session)
+  @OneToMany(() => UserSessionProgress, (progress) => progress.session, {
+    cascade: true,
+  })
   userProgress: UserSessionProgress[];
 }

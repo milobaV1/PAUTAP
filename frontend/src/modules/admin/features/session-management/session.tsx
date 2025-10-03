@@ -300,7 +300,7 @@ export function TrainingSessionManagement() {
             <div className="ml-4">
               <p className="text-2xl font-bold">{data.totalQuestions}</p>
               <p className="text-sm text-muted-foreground">
-                Total Questions Usage
+                Total Question Usage
               </p>
             </div>
           </CardContent>

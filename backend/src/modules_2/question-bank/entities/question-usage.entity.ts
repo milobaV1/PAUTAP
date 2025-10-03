@@ -48,7 +48,7 @@ export class QuestionUsage {
   @JoinColumn({ name: 'roleId' })
   role: Role;
 
-  @ManyToOne(() => Session)
+  @ManyToOne(() => Session, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'lastUsedInSessionId' })
   lastUsedInSession: Session;
 }
