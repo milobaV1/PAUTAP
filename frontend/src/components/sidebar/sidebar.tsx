@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { isAdmin } from "@/utils/auth-extension";
 import { useAuthState } from "@/store/auth.store";
+import Logo from "../../../public/logo2.png";
 
 export function Sidebar({
   sidebarOpen,
@@ -65,10 +66,10 @@ export function Sidebar({
         {/* Sidebar header */}
         <div className="flex items-center justify-between h-16 px-6 pau-gradient">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-[#2e3f6f]" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+              <img src={Logo} alt="Logo" className="w-full h-full" />
             </div>
-            <h1 className="text-white font-semibold">PAU Learning</h1>
+            <h1 className="text-white font-semibold text-lg">PAU Learning</h1>
           </div>
           <Button
             variant="ghost"

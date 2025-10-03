@@ -13,7 +13,7 @@ import type { LoginInterface } from "@/service/interfaces/user.interface";
 import { useAuthState, type DecodedToken } from "@/store/auth.store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
-import { BookOpen, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -28,6 +28,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useGetLogin } from "./api/login";
+import Logo from "../../../public/logo2.png";
 
 const loginSchema = z.object({
   email: z
@@ -94,7 +95,7 @@ export function LoginPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 pau-gradient rounded-full mb-4">
-            <BookOpen className="w-8 h-8 text-white" />
+            <img src={Logo} alt="Logo" className="w-full h-full" />
           </div>
           <h1 className="text-2xl font-bold text-[#2e3f6f]">
             PAU Learning Platform

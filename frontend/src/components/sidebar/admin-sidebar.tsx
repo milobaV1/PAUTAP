@@ -3,6 +3,7 @@ import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { useLocation, useNavigate } from "@tanstack/react-router";
+import Logo from "../../../public/logo.svg";
 
 export function AdminSidebar({
   sidebarOpen,
@@ -79,8 +80,8 @@ export function AdminSidebar({
           </div>
           {/* Sidebar header */}
           <div className="flex items-center space-x-4 h-16 px-6">
-            <div className="w-8 h-8 bg-[#2e3f6f] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">PAU</span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+              <img src={Logo} alt="Logo" className="w-full h-full" />
             </div>
             <div>
               <h1 className="text-xl font-semibold text-[#2e3f6f]">
