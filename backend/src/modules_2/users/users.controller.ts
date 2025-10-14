@@ -157,8 +157,13 @@ export class UsersController {
   async getAdminStatsUser(
     @Query('page') page = '1',
     @Query('limit') limit = '5',
+    @Query('search') search = '',
   ): Promise<AdminStatsUserResponse> {
-    return this.usersService.getAdminStatsUser(Number(page), Number(limit));
+    return this.usersService.getAdminStatsUser(
+      Number(page),
+      Number(limit),
+      search,
+    );
   }
 
   @Patch(':id/update-password')

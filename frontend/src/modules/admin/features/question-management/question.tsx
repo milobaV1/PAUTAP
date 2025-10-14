@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Target,
   Search,
@@ -79,6 +79,8 @@ const questionSchema = z.object({
 export function QuestionManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddQuestion, setShowAddQuestion] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+
   const [page, setPage] = useState(1);
   const limit = 5;
 
@@ -87,7 +89,7 @@ export function QuestionManagement() {
     isLoading,
     isError: isGetQuestionError,
     error: getQuestionError,
-  } = useAdminQuestions(page, limit);
+  } = useAdminQuestions(page, limit, debouncedSearch);
 
   const { mutate: addQuestion, isPending, isError, error } = useAddQuestion();
   const { mutate: deleteQuestion } = useDeleteQuestion();
@@ -107,6 +109,10 @@ export function QuestionManagement() {
       roles: [],
     },
   });
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   async function onSubmit(values: z.infer<typeof questionSchema>) {
     const { questionType, roles, explanation, options, ...rest } = values;

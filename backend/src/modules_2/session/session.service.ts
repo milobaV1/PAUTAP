@@ -14,7 +14,7 @@ import {
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Session } from './entities/session.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, ILike, In, Repository } from 'typeorm';
 import { SessionRoleCategoryQuestion } from './entities/session-role-category-questions.entity';
 import { UserAnswer } from './entities/user-answers.entity';
 import { UserSessionProgress } from './entities/user-session-progress.entity';
@@ -1278,7 +1278,13 @@ export class SessionService {
     await this.userSessionProgressRepo.save(progress);
   }
 
-  async getAdminSessions(page = 1, limit = 5): Promise<AdminSessionsResponse> {
+  async getAdminSessions(
+    page = 1,
+    limit = 5,
+    search = '',
+  ): Promise<AdminSessionsResponse> {
+    const whereClause = search ? { title: ILike(`%${search}%`) } : {};
+
     const [sessions, totalSessions] = await this.sessionRepo.findAndCount({
       skip: (page - 1) * limit,
       take: limit,

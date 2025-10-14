@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGetUserForAdmin } from "./api/get-user-stats";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -75,12 +75,13 @@ export function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [showAddUser, setShowAddUser] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
   // const [showPassword, setShowPassword] = useState(false);
   const { mutateAsync: createUser, isPending } = useCreateUser();
   const { mutate: deleteUser } = useDeleteUser();
   const [page, setPage] = useState(1);
   const limit = 5;
-  const { data, isLoading } = useGetUserForAdmin(page, limit);
+  const { data, isLoading } = useGetUserForAdmin(page, limit, debouncedSearch);
   //const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
@@ -102,6 +103,11 @@ export function UserManagement() {
   //   setSelectedUserId(userId);
   //   setShowUserModal(true);
   // };
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   async function handleSubmit(values: CreateUserFormValues) {
     const { role, ...rest } = values;

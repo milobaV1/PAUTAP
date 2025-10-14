@@ -71,13 +71,21 @@ export class QuestionBankController {
     example: 5,
     description: 'Number of items per page (default: 5)',
   })
+  @ApiQuery({
+    name: 'search',
+    type: String,
+    required: false,
+    description: 'Search term to filter questions by text',
+  })
   async getAdminQuestions(
     @Query('page') page = '1',
     @Query('limit') limit = '5',
+    @Query('search') search = '',
   ): Promise<AdminQuestionsResponse> {
     return this.questionBankService.getAdminQuestions(
       Number(page),
       Number(limit),
+      search,
     );
   }
 

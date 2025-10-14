@@ -3,10 +3,14 @@ import { getAxiosError } from "@/lib/api/error";
 import type { AdminSessionsResponse } from "@/service/interfaces/session.interface";
 import { useQuery } from "@tanstack/react-query";
 
-export async function getSessionsForAdmin(page = 1, limit = 5) {
+export async function getSessionsForAdmin(
+  page = 1,
+  limit = 5,
+  searchTerm = ""
+) {
   try {
     const response = await client.get(`/session/admin/stats`, {
-      params: { page, limit },
+      params: { page, limit, search: searchTerm },
     });
     return response.data as AdminSessionsResponse;
   } catch (error) {
@@ -15,10 +19,14 @@ export async function getSessionsForAdmin(page = 1, limit = 5) {
   }
 }
 
-export function useGetSessionsForAdmin(page: number, limit: number) {
+export function useGetSessionsForAdmin(
+  page: number,
+  limit: number,
+  searchTerm: string
+) {
   return useQuery({
-    queryKey: ["admin-session", page, limit],
-    queryFn: () => getSessionsForAdmin(page, limit),
+    queryKey: ["admin-session", page, limit, searchTerm],
+    queryFn: () => getSessionsForAdmin(page, limit, searchTerm),
     placeholderData: (previousData) => previousData,
   });
 }

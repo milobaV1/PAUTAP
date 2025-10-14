@@ -69,8 +69,13 @@ export class SessionController {
   async getAdminSessions(
     @Query('page') page = 1,
     @Query('limit') limit = 5,
+    @Query('search') search = '',
   ): Promise<AdminSessionsResponse> {
-    return this.sessionService.getAdminSessions(Number(page), Number(limit));
+    return this.sessionService.getAdminSessions(
+      Number(page),
+      Number(limit),
+      search,
+    );
   }
 
   @Post(':id/start')

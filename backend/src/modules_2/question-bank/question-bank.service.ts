@@ -7,7 +7,7 @@ import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
 import { UpdateQuestionBankDto } from './dto/update-question-bank.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QuestionBank } from './entities/question-bank.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, ILike, In, Repository } from 'typeorm';
 import { Role } from '../users/entities/role.entity';
 import { QuestionUsage } from './entities/question-usage.entity';
 import {
@@ -178,9 +178,15 @@ export class QuestionBankService {
   async getAdminQuestions(
     page = 1,
     limit = 5,
+    search = '',
   ): Promise<AdminQuestionsResponse> {
     console.log('SERVICE CALLED with', { page, limit });
+
+    const whereClause = search
+      ? { questionText: ILike(`%${search}%`) } // <-- case-insensitive partial match
+      : {};
     const [questions, totalQuestions] = await this.questionRepo.findAndCount({
+      where: whereClause,
       relations: ['usages'],
       skip: (page - 1) * limit,
       take: limit,

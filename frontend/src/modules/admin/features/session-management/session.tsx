@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -66,6 +66,7 @@ const sessionSchema = z.object({
 export function TrainingSessionManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateSession, setShowCreateSession] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
   const { mutateAsync: createSession, isPending } = useCreateSession();
   const { mutate: deleteSession } = useDeleteSession();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
@@ -84,8 +85,16 @@ export function TrainingSessionManagement() {
       questionsPerCategory: 5,
     },
   });
-  const { data, isLoading } = useGetSessionsForAdmin(page, limit);
+  const { data, isLoading } = useGetSessionsForAdmin(
+    page,
+    limit,
+    debouncedSearch
+  );
 
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
   if (isLoading) {
     return <div>Loading...</div>;
   }

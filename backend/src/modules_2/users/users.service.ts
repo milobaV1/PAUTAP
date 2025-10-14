@@ -1005,6 +1005,7 @@ export class UsersService {
   async getAdminStatsUser(
     page = 1,
     limit = 5,
+    search = '',
   ): Promise<AdminStatsUserResponse> {
     // Get global totals (not paginated)
     const totalUsers = await this.userRepo.count();
@@ -1014,7 +1015,7 @@ export class UsersService {
     const globalSessionStats = await this.calculateGlobalSessionStats();
 
     // Get paginated users for the list
-    const users = await this.userRepo
+    const query = this.userRepo
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
       .leftJoinAndSelect('role.department', 'department')
@@ -1028,7 +1029,20 @@ export class UsersService {
         'user.created_at',
         'role.name',
         'department.name',
-      ])
+      ]);
+
+    if (search && search.trim() !== '') {
+      query.where(
+        `LOWER(user.first_name) LIKE LOWER(:search)
+     OR LOWER(user.last_name) LIKE LOWER(:search)
+     OR LOWER(user.email) LIKE LOWER(:search)
+     OR LOWER(role.name) LIKE LOWER(:search)
+     OR LOWER(department.name) LIKE LOWER(:search)`,
+        { search: `%${search}%` },
+      );
+    }
+
+    const users = await query
       .orderBy('user.created_at', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
