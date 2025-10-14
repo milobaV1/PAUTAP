@@ -1006,13 +1006,14 @@ export class UsersService {
     page = 1,
     limit = 5,
   ): Promise<AdminStatsUserResponse> {
-    // total users
+    // Get global totals (not paginated)
     const totalUsers = await this.userRepo.count();
-
-    // total certificates
     const totalCertificates = await this.certificateRepo.count();
 
-    // Get paginated users first
+    // Calculate global session stats from ALL users
+    const globalSessionStats = await this.calculateGlobalSessionStats();
+
+    // Get paginated users for the list
     const users = await this.userRepo
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
@@ -1033,7 +1034,7 @@ export class UsersService {
       .take(limit)
       .getMany();
 
-    // Now fetch session progress for these users
+    // Now fetch session progress for these paginated users
     const userIds = users.map((u) => u.id);
     const userSessionsMap = new Map();
 
@@ -1048,7 +1049,6 @@ export class UsersService {
         ])
         .getMany();
 
-      // Group sessions by userId
       sessions.forEach((session) => {
         if (!userSessionsMap.has(session.userId)) {
           userSessionsMap.set(session.userId, []);
@@ -1060,7 +1060,6 @@ export class UsersService {
     const formattedUsers: UserWithStats[] = users.map((u: any) => {
       const userSessions = userSessionsMap.get(u.id) || [];
 
-      // Calculate session stats
       const validSessions = userSessions.filter(
         (sp: any) => sp.overallScore !== null && sp.overallScore !== undefined,
       );
@@ -1101,14 +1100,48 @@ export class UsersService {
       };
     });
 
-    console.log('Formatted Users with Session Stats: ', formattedUsers);
-
     return {
       totalUsers,
       totalCertificates,
+      totalSessionsAttempted: globalSessionStats.totalAttempts,
+      averageSessionScore: globalSessionStats.averageScore,
       users: formattedUsers,
       page,
       limit,
+    };
+  }
+
+  // Helper method to calculate stats for ALL users
+  private async calculateGlobalSessionStats(): Promise<{
+    totalAttempts: number;
+    averageScore: number;
+  }> {
+    const allSessions = await this.progressRepo
+      .createQueryBuilder('sessionProgress')
+      .select(['sessionProgress.status', 'sessionProgress.overallScore'])
+      .getMany();
+
+    const totalAttempts = allSessions.length;
+
+    const validSessions = allSessions.filter(
+      (sp) => sp.overallScore !== null && sp.overallScore !== undefined,
+    );
+
+    let averageScore = 0;
+
+    if (validSessions.length > 0) {
+      const total = validSessions.reduce((sum, sp) => {
+        const score = Number(sp.overallScore) || 0;
+        return sum + (isNaN(score) ? 0 : score);
+      }, 0);
+
+      const avg = total / validSessions.length;
+      averageScore = isNaN(avg) ? 0 : Math.round(avg * 100) / 100;
+    }
+
+    return {
+      totalAttempts,
+      averageScore,
     };
   }
 }

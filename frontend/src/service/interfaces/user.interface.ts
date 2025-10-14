@@ -90,6 +90,8 @@ export interface UserWithStats {
 export interface AdminStatsUserResponse {
   totalUsers: number;
   totalCertificates: number;
+  totalSessionsAttempted: number; // Global stat
+  averageSessionScore: number; // Global stat - now a number
   users: UserWithStats[];
   page: number;
   limit: number;

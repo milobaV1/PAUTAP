@@ -49,6 +49,8 @@ export interface AdminStatsUserResponse {
   totalUsers: number;
   //totalActiveUsers: number;
   totalCertificates: number;
+  totalSessionsAttempted: number;
+  averageSessionScore: number;
   users: UserWithStats[];
   page: number;
   limit: number;

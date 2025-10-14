@@ -141,6 +141,8 @@ export function UserManagement() {
   const totalUsers = data?.totalUsers ?? 0;
   const totalCertificates = data?.totalCertificates ?? 0;
   const totalPages = Math.ceil(data ? data.totalUsers / data.limit : 1);
+  const totalSessionsAttempted = data?.totalSessionsAttempted ?? 0; // NEW
+  const averageSessionScore = data?.averageSessionScore ?? "0"; // NEW
 
   // Filtering
   const filteredUsers = users.filter((user) => {
@@ -367,12 +369,7 @@ export function UserManagement() {
             <div className="flex items-center">
               <Activity className="w-8 h-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-2xl font-bold">
-                  {users.reduce(
-                    (sum, u) => sum + (u.sessionStats?.totalAttempts || 0),
-                    0
-                  )}
-                </p>
+                <p className="text-2xl font-bold">{totalSessionsAttempted}</p>
                 <p className="text-sm text-muted-foreground">
                   Total Sessions Attempted
                 </p>
@@ -385,29 +382,7 @@ export function UserManagement() {
             <div className="flex items-center">
               <Zap className="w-8 h-8 text-purple-600" />
               <div className="ml-4">
-                <p className="text-2xl font-bold">
-                  {(() => {
-                    const totalScore = users.reduce((sum, u) => {
-                      const score = u.sessionStats?.averageScore;
-                      const numScore =
-                        typeof score === "string"
-                          ? parseFloat(score)
-                          : score || 0;
-                      return sum + (isNaN(numScore) ? 0 : numScore);
-                    }, 0);
-
-                    const usersWithAttempts = users.filter(
-                      (u) => (u.sessionStats?.totalAttempts || 0) > 0
-                    ).length;
-                    const avgScore =
-                      usersWithAttempts > 0
-                        ? (totalScore / usersWithAttempts).toFixed(2)
-                        : "0";
-
-                    return isNaN(parseFloat(avgScore)) ? "0" : avgScore;
-                  })()}
-                  %
-                </p>
+                <p className="text-2xl font-bold">{averageSessionScore}%</p>
                 <p className="text-sm text-muted-foreground">
                   Avg Session Score
                 </p>
