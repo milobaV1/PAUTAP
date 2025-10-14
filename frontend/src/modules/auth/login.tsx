@@ -28,7 +28,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useGetLogin } from "./api/login";
-import Logo from "../../../public/logo2.png";
+import Logo from "../../assets/logo2.png";
 
 const loginSchema = z.object({
   email: z

@@ -69,14 +69,30 @@ export class AdminService {
   }
 
   private async getOverallCompletionRate(): Promise<number> {
-    const totalProgress = await this.userSessionProgressRepository.count();
-    const completedProgress = await this.userSessionProgressRepository.count({
-      where: { status: ProgressStatus.COMPLETED },
-    });
+    // Get distinct users who have attempted any session
+    const usersAttempted = await this.userSessionProgressRepository
+      .createQueryBuilder('progress')
+      .select('DISTINCT progress.userId')
+      .getRawMany();
 
-    return totalProgress > 0
-      ? Math.round((completedProgress / totalProgress) * 100 * 100) / 100
-      : 0;
+    const totalUsersAttempted = usersAttempted.length;
+
+    if (totalUsersAttempted === 0) {
+      return 0;
+    }
+
+    // Get distinct users who have completed at least one session
+    const usersCompleted = await this.userSessionProgressRepository
+      .createQueryBuilder('progress')
+      .select('DISTINCT progress.userId')
+      .where('progress.status = :status', { status: ProgressStatus.COMPLETED })
+      .getRawMany();
+
+    const totalUsersCompleted = usersCompleted.length;
+
+    return (
+      Math.round((totalUsersCompleted / totalUsersAttempted) * 100 * 100) / 100
+    );
   }
 
   private async getSessionsStats(
@@ -94,16 +110,26 @@ export class AdminService {
 
     const sessionStats = await Promise.all(
       sessions.map(async (session) => {
-        const totalEnrolled = await this.userSessionProgressRepository.count({
-          where: { sessionId: session.id },
-        });
+        // Get distinct users who attempted this session
+        const usersAttempted = await this.userSessionProgressRepository
+          .createQueryBuilder('progress')
+          .select('DISTINCT progress.userId')
+          .where('progress.sessionId = :sessionId', { sessionId: session.id })
+          .getRawMany();
 
-        const totalCompleted = await this.userSessionProgressRepository.count({
-          where: {
-            sessionId: session.id,
+        const totalEnrolled = usersAttempted.length;
+
+        // Get distinct users who completed this session
+        const usersCompleted = await this.userSessionProgressRepository
+          .createQueryBuilder('progress')
+          .select('DISTINCT progress.userId')
+          .where('progress.sessionId = :sessionId', { sessionId: session.id })
+          .andWhere('progress.status = :status', {
             status: ProgressStatus.COMPLETED,
-          },
-        });
+          })
+          .getRawMany();
+
+        const totalCompleted = usersCompleted.length;
 
         const completionRate =
           totalEnrolled > 0
@@ -122,6 +148,5 @@ export class AdminService {
     );
 
     return sessionStats.sort((a, b) => b.completionRate - a.completionRate);
-    //total,
   }
 }

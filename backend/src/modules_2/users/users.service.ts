@@ -950,6 +950,58 @@ export class UsersService {
     };
   }
 
+  // async getAdminStatsUser(
+  //   page = 1,
+  //   limit = 5,
+  // ): Promise<AdminStatsUserResponse> {
+  //   // total users
+  //   const totalUsers = await this.userRepo.count();
+
+  //   // total certificates
+  //   const totalCertificates = await this.certificateRepo.count();
+
+  //   // users with details + cert count
+  //   const users = await this.userRepo
+  //     .createQueryBuilder('user')
+  //     .leftJoinAndSelect('user.role', 'role')
+  //     .leftJoinAndSelect('role.department', 'department')
+  //     .leftJoin('user.certificates', 'certificate')
+  //     .loadRelationCountAndMap('user.totalCertificates', 'user.certificates')
+  //     .select([
+  //       'user.id',
+  //       'user.first_name',
+  //       'user.last_name',
+  //       'user.email',
+  //       'user.created_at',
+  //       'role.name',
+  //       'department.name',
+  //     ])
+  //     .orderBy('user.created_at', 'DESC')
+  //     .skip((page - 1) * limit)
+  //     .take(limit)
+  //     .getMany();
+
+  //   const formattedUsers: UserWithStats[] = users.map((u: any) => ({
+  //     id: u.id,
+  //     first_name: u.first_name,
+  //     last_name: u.last_name,
+  //     email: u.email,
+  //     createdAt: u.created_at,
+  //     role: u.role?.name || 'N/A',
+  //     department: u.role?.department?.name || 'N/A',
+  //     totalCertificates: u.totalCertificates || 0,
+  //   }));
+  //   console.log('Formatted Users: ', formattedUsers);
+
+  //   return {
+  //     totalUsers,
+  //     totalCertificates,
+  //     users: formattedUsers,
+  //     page,
+  //     limit,
+  //   };
+  // }
+
   async getAdminStatsUser(
     page = 1,
     limit = 5,
@@ -960,7 +1012,7 @@ export class UsersService {
     // total certificates
     const totalCertificates = await this.certificateRepo.count();
 
-    // users with details + cert count
+    // Get paginated users first
     const users = await this.userRepo
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
@@ -981,17 +1033,75 @@ export class UsersService {
       .take(limit)
       .getMany();
 
-    const formattedUsers: UserWithStats[] = users.map((u: any) => ({
-      id: u.id,
-      first_name: u.first_name,
-      last_name: u.last_name,
-      email: u.email,
-      createdAt: u.created_at,
-      role: u.role?.name || 'N/A',
-      department: u.role?.department?.name || 'N/A',
-      totalCertificates: u.totalCertificates || 0,
-    }));
-    console.log('Formatted Users: ', formattedUsers);
+    // Now fetch session progress for these users
+    const userIds = users.map((u) => u.id);
+    const userSessionsMap = new Map();
+
+    if (userIds.length > 0) {
+      const sessions = await this.progressRepo
+        .createQueryBuilder('sessionProgress')
+        .where('sessionProgress.userId IN (:...userIds)', { userIds })
+        .select([
+          'sessionProgress.userId',
+          'sessionProgress.status',
+          'sessionProgress.overallScore',
+        ])
+        .getMany();
+
+      // Group sessions by userId
+      sessions.forEach((session) => {
+        if (!userSessionsMap.has(session.userId)) {
+          userSessionsMap.set(session.userId, []);
+        }
+        userSessionsMap.get(session.userId).push(session);
+      });
+    }
+
+    const formattedUsers: UserWithStats[] = users.map((u: any) => {
+      const userSessions = userSessionsMap.get(u.id) || [];
+
+      // Calculate session stats
+      const validSessions = userSessions.filter(
+        (sp: any) => sp.overallScore !== null && sp.overallScore !== undefined,
+      );
+
+      const sessionStats = {
+        totalAttempts: userSessions.length,
+        completed: userSessions.filter((sp: any) => sp.status === 'completed')
+          .length,
+        inProgress: userSessions.filter(
+          (sp: any) => sp.status === 'in_progress',
+        ).length,
+        notStarted: userSessions.filter(
+          (sp: any) => sp.status === 'not_started',
+        ).length,
+        averageScore:
+          validSessions.length > 0
+            ? (() => {
+                const total = validSessions.reduce((sum: number, sp: any) => {
+                  const score = Number(sp.overallScore) || 0;
+                  return sum + (isNaN(score) ? 0 : score);
+                }, 0);
+                const avg = total / validSessions.length;
+                return isNaN(avg) ? '0' : avg.toFixed(2);
+              })()
+            : '0',
+      };
+
+      return {
+        id: u.id,
+        first_name: u.first_name,
+        last_name: u.last_name,
+        email: u.email,
+        createdAt: u.created_at,
+        role: u.role?.name || 'N/A',
+        department: u.role?.department?.name || 'N/A',
+        totalCertificates: u.totalCertificates || 0,
+        sessionStats,
+      };
+    });
+
+    console.log('Formatted Users with Session Stats: ', formattedUsers);
 
     return {
       totalUsers,

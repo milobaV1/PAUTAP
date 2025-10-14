@@ -48,6 +48,33 @@ export interface DashboardResponse {
   // incompleteSessions: IncompleteSession[];
 }
 
+// export interface UserWithStats {
+//   id: string;
+//   first_name: string;
+//   last_name: string;
+//   email: string;
+//   createdAt: Date;
+//   role: string;
+//   department: string;
+//   totalCertificates: number;
+// }
+
+// export interface AdminStatsUserResponse {
+//   totalUsers: number;
+//   totalCertificates: number;
+//   users: UserWithStats[];
+//   page: number;
+//   limit: number;
+// }
+
+export interface SessionStats {
+  totalAttempts: number;
+  completed: number;
+  inProgress: number;
+  notStarted: number;
+  averageScore: string | number;
+}
+
 export interface UserWithStats {
   id: string;
   first_name: string;
@@ -57,6 +84,7 @@ export interface UserWithStats {
   role: string;
   department: string;
   totalCertificates: number;
+  sessionStats: SessionStats;
 }
 
 export interface AdminStatsUserResponse {

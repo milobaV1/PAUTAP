@@ -35,7 +35,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { Users, Search, UserPlus, Trash2, Eye, Award } from "lucide-react";
+import {
+  Users,
+  Search,
+  UserPlus,
+  Trash2,
+  Eye,
+  Award,
+  Zap,
+  Activity,
+} from "lucide-react";
 import z from "zod";
 import { roleMap, roles } from "@/lib/roles";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -353,6 +362,59 @@ export function UserManagement() {
             </div>
           </CardContent>
         </Card>
+        <Card className="pau-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Activity className="w-8 h-8 text-green-600" />
+              <div className="ml-4">
+                <p className="text-2xl font-bold">
+                  {users.reduce(
+                    (sum, u) => sum + (u.sessionStats?.totalAttempts || 0),
+                    0
+                  )}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Total Sessions Attempted
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="pau-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Zap className="w-8 h-8 text-purple-600" />
+              <div className="ml-4">
+                <p className="text-2xl font-bold">
+                  {(() => {
+                    const totalScore = users.reduce((sum, u) => {
+                      const score = u.sessionStats?.averageScore;
+                      const numScore =
+                        typeof score === "string"
+                          ? parseFloat(score)
+                          : score || 0;
+                      return sum + (isNaN(numScore) ? 0 : numScore);
+                    }, 0);
+
+                    const usersWithAttempts = users.filter(
+                      (u) => (u.sessionStats?.totalAttempts || 0) > 0
+                    ).length;
+                    const avgScore =
+                      usersWithAttempts > 0
+                        ? (totalScore / usersWithAttempts).toFixed(2)
+                        : "0";
+
+                    return isNaN(parseFloat(avgScore)) ? "0" : avgScore;
+                  })()}
+                  %
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Avg Session Score
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search and Filter */}
@@ -392,6 +454,73 @@ export function UserManagement() {
         <CardContent>
           <div className="space-y-4">
             {filteredUsers.map((user) => (
+              // <div
+              //   key={user.id}
+              //   className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+              // >
+              //   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              //     <div className="flex items-start space-x-3 min-w-0 flex-1">
+              //       <Avatar className="w-12 h-12 flex-shrink-0">
+              //         <AvatarFallback>
+              //           {user.email[0].toUpperCase()}
+              //         </AvatarFallback>
+              //       </Avatar>
+              //       <div className="min-w-0 flex-1">
+              //         <h2 className="text-lg font-semibold truncate">
+              //           {user.first_name} {user.last_name}
+              //         </h2>
+              //         <h4 className="font-medium text-sm break-all">
+              //           {user.email}
+              //         </h4>
+              //         <p className="text-sm text-muted-foreground">
+              //           {user.department} • {user.role}
+              //         </p>
+              //         <p className="text-xs text-muted-foreground">
+              //           Joined {new Date(user.createdAt).toLocaleDateString()}
+              //         </p>
+              //       </div>
+              //     </div>
+
+              //     <div className="flex items-center justify-between md:justify-end md:space-x-6">
+              //       <div className="text-center text-sm md:hidden">
+              //         <div className="font-medium">
+              //           {user.totalCertificates}
+              //         </div>
+              //         <div className="text-xs text-muted-foreground">
+              //           Certificate(s)
+              //         </div>
+              //       </div>
+
+              //       <div className="hidden md:flex text-center text-sm">
+              //         <div className="font-medium">
+              //           {user.totalCertificates}
+              //         </div>
+              //         <div className="text-muted-foreground">
+              //           Certificate(s)
+              //         </div>
+              //       </div>
+
+              //       <div className="flex items-center space-x-2 flex-shrink-0">
+              //         <Button
+              //           variant="ghost"
+              //           size="sm"
+              //           onClick={() => setSelectedUserId(user.id)}
+              //         >
+              //           <Eye className="w-4 h-4" />
+              //         </Button>
+              //         <Button
+              //           variant="ghost"
+              //           size="sm"
+              //           className="text-red-600 hover:text-red-700"
+              //           onClick={() => user.id && handleDelete(user.id)}
+              //           disabled={!user.id}
+              //         >
+              //           <Trash2 className="w-4 h-4" />
+              //         </Button>
+              //       </div>
+              //     </div>
+              //   </div>
+              // </div>
               <div
                 key={user.id}
                 className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
@@ -419,25 +548,56 @@ export function UserManagement() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between md:justify-end md:space-x-6">
-                    <div className="text-center text-sm md:hidden">
-                      <div className="font-medium">
-                        {user.totalCertificates}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Certificate(s)
-                      </div>
-                    </div>
-
-                    <div className="hidden md:flex text-center text-sm">
-                      <div className="font-medium">
-                        {user.totalCertificates}
-                      </div>
-                      <div className="text-muted-foreground">
-                        Certificate(s)
+                  <div className="flex flex-col md:flex-row md:items-center md:gap-6 gap-4">
+                    {/* Certificates */}
+                    <div className="flex items-center justify-between md:justify-end md:space-x-4">
+                      <div className="text-sm">
+                        <div className="font-medium">
+                          {user.totalCertificates}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Certificate(s)
+                        </div>
                       </div>
                     </div>
 
+                    {/* Session Stats */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="text-center">
+                        <div className="font-medium">
+                          {user.sessionStats?.totalAttempts || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Attempts
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium text-green-600">
+                          {user.sessionStats?.completed || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Completed
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium text-blue-600">
+                          {user.sessionStats?.inProgress || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          In Progress
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium text-orange-600">
+                          {user.sessionStats?.averageScore}%
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Avg Score
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
                     <div className="flex items-center space-x-2 flex-shrink-0">
                       <Button
                         variant="ghost"

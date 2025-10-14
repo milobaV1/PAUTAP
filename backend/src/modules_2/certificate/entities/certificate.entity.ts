@@ -1,3 +1,4 @@
+import { CertificateSource } from 'src/core/enums/certificate.enum';
 import { Session } from 'src/modules_2/session/entities/session.entity';
 import { UserSessionProgress } from 'src/modules_2/session/entities/user-session-progress.entity';
 import { User } from 'src/modules_2/users/entities/user.entity';
@@ -14,8 +15,8 @@ import {
 } from 'typeorm';
 
 @Entity()
-@Unique(['userId', 'sessionId']) // Ensures one certificate per user per session
-@Index(['certificateId']) // For quick lookups by certificate ID
+@Index(['userId', 'source'])
+@Index(['certificateId'])
 export class Certificate {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -26,17 +27,30 @@ export class Certificate {
   @Column()
   userId: string;
 
-  @Column()
-  sessionId: string;
+  @Column({ nullable: true })
+  sessionId: string | null; // Nullable for external certificates
 
   @Column()
   filePath: string;
 
-  @Column()
-  score: number;
+  @Column({
+    type: 'enum',
+    enum: CertificateSource,
+    default: CertificateSource.INTERNAL,
+  })
+  source: CertificateSource;
 
-  // @Column({ type: 'jsonb' })
-  // criteriaMet: any;
+  @Column({ type: 'int', nullable: true })
+  score: number | null; // Nullable for external certificates
+
+  @Column({ nullable: true })
+  title: string; // Custom title for external certificates (e.g., "Udemy Python Course")
+
+  @Column({ nullable: true })
+  issuedBy: string; // Organization/platform that issued it (e.g., "Udemy", "Coursera")
+
+  @Column({ nullable: true, type: 'date' })
+  issuedDate: Date; // When the external certificate was issued
 
   @Column({ type: 'timestamp', nullable: true })
   validUntil: Date;

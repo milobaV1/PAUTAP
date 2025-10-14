@@ -16,6 +16,7 @@ import { CompletionMetrics } from 'src/core/interfaces/session.interface';
 import { UserSessionProgress } from '../session/entities/user-session-progress.entity';
 import puppeteer from 'puppeteer';
 import { CertificateListDto } from 'src/core/interfaces/certificate.interface';
+import { CertificateSource } from 'src/core/enums/certificate.enum';
 @Injectable()
 export class CertificateService {
   constructor(
@@ -361,43 +362,166 @@ export class CertificateService {
     });
   }
 
+  // async getUserCertificatesWithDetails(
+  //   userId: string,
+  // ): Promise<CertificateListDto[]> {
+  //   // Get certificates for a specific user
+  //   const certificates = await this.certRepo
+  //     .createQueryBuilder('certificate')
+  //     .leftJoinAndSelect('certificate.session', 'session')
+  //     .where('certificate.userId = :userId', { userId })
+  //     .select([
+  //       'certificate.id',
+  //       'certificate.certificateId',
+  //       'certificate.score',
+  //       'certificate.createdAt',
+  //       'session.title',
+  //       'session.description',
+  //       'session.createdAt',
+  //     ])
+  //     .getMany();
+
+  //   // Calculate average score for this user
+  //   const avgResult = await this.certRepo
+  //     .createQueryBuilder('certificate')
+  //     .select('AVG(certificate.score)', 'averageScore')
+  //     .where('certificate.userId = :userId', { userId })
+  //     .getRawOne();
+
+  //   const averageScore = parseFloat(avgResult.averageScore) || 0;
+
+  //   return certificates.map((cert) => ({
+  //     id: cert.id,
+  //     certificateId: cert.certificateId,
+  //     sessionName: cert.session?.title || 'Unknown Session',
+  //     sessionDescription: cert.session?.description || '',
+  //     sessionCreatedAt: cert.session?.createdAt || cert.createdAt,
+  //     score: cert.score,
+  //     createdAt: cert.createdAt,
+  //     averageScore: Number(averageScore.toFixed(2)),
+  //   }));
+  // }
+
   async getUserCertificatesWithDetails(
     userId: string,
+    source?: CertificateSource,
   ): Promise<CertificateListDto[]> {
-    // Get certificates for a specific user
-    const certificates = await this.certRepo
+    let query = this.certRepo
       .createQueryBuilder('certificate')
       .leftJoinAndSelect('certificate.session', 'session')
-      .where('certificate.userId = :userId', { userId })
+      .where('certificate.userId = :userId', { userId });
+
+    if (source) {
+      query = query.andWhere('certificate.source = :source', { source });
+    }
+
+    const certificates = await query
       .select([
         'certificate.id',
         'certificate.certificateId',
         'certificate.score',
         'certificate.createdAt',
+        'certificate.source',
+        'certificate.title',
+        'certificate.issuedBy',
+        'certificate.issuedDate',
         'session.title',
         'session.description',
         'session.createdAt',
       ])
+      .orderBy('certificate.createdAt', 'DESC')
       .getMany();
 
-    // Calculate average score for this user
+    // Calculate average score for internal certificates only
     const avgResult = await this.certRepo
       .createQueryBuilder('certificate')
       .select('AVG(certificate.score)', 'averageScore')
       .where('certificate.userId = :userId', { userId })
+      .andWhere('certificate.source = :source', {
+        source: CertificateSource.INTERNAL,
+      })
       .getRawOne();
 
-    const averageScore = parseFloat(avgResult.averageScore) || 0;
+    const averageScore = parseFloat(avgResult?.averageScore || 0) || 0;
 
     return certificates.map((cert) => ({
       id: cert.id,
       certificateId: cert.certificateId,
-      sessionName: cert.session?.title || 'Unknown Session',
+      source: cert.source,
+      sessionName: cert.session?.title || cert.title || 'Unknown',
       sessionDescription: cert.session?.description || '',
-      sessionCreatedAt: cert.session?.createdAt || cert.createdAt,
+      sessionCreatedAt:
+        cert.session?.createdAt || cert.issuedDate || cert.createdAt,
       score: cert.score,
       createdAt: cert.createdAt,
-      averageScore: Number(averageScore.toFixed(2)),
+      issuedBy: cert.issuedBy,
+      issuedDate: cert.issuedDate,
+      averageScore:
+        cert.source === CertificateSource.INTERNAL
+          ? Number(averageScore.toFixed(2))
+          : null,
     }));
+  }
+
+  async uploadExternalCertificate(
+    userId: string,
+    file: Express.Multer.File,
+    dto: CreateCertificateDto,
+  ): Promise<Certificate> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const certificateId = `EXT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Save the uploaded file
+    const filePath = await this.saveUploadedCertificateFile(
+      certificateId,
+      file.buffer,
+    );
+
+    const cert = new Certificate();
+    cert.certificateId = certificateId;
+    cert.userId = userId;
+    cert.sessionId = null;
+    cert.filePath = filePath;
+    cert.source = CertificateSource.EXTERNAL;
+    cert.score = null;
+    cert.title = dto.title;
+    cert.issuedBy = dto.issuedBy || '';
+    if (dto.issuedDate) {
+      cert.issuedDate = new Date(dto.issuedDate);
+    }
+
+    const savedCert = await this.certRepo.save(cert);
+
+    console.log(
+      `External certificate ${certificateId} uploaded for user ${userId}`,
+    );
+
+    return savedCert;
+  }
+
+  private async saveUploadedCertificateFile(
+    certificateId: string,
+    fileBuffer: Buffer,
+  ): Promise<string> {
+    const certDir = path.join(
+      process.cwd(),
+      'uploads',
+      'certificates',
+      'external',
+    );
+    if (!fs.existsSync(certDir)) {
+      fs.mkdirSync(certDir, { recursive: true });
+    }
+
+    // Preserve original file extension
+    const ext = '.pdf'; // or detect from MIME type
+    const filePath = path.join(certDir, `${certificateId}${ext}`);
+    fs.writeFileSync(filePath, fileBuffer);
+
+    return filePath;
   }
 }

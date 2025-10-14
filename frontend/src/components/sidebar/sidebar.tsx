@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { isAdmin } from "@/utils/auth-extension";
 import { useAuthState } from "@/store/auth.store";
-import Logo from "../../../public/logo2.png";
+import Logo from "../../assets/logo2.png";
 
 export function Sidebar({
   sidebarOpen,

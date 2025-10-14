@@ -3,7 +3,7 @@ import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import Logo from "../../../public/logo.svg";
+import Logo from "../../assets/logo.svg";
 
 export function AdminSidebar({
   sidebarOpen,

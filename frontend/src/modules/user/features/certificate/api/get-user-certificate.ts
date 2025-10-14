@@ -3,10 +3,14 @@ import type { CertificateListDto } from "@/service/interfaces/certificate.interf
 import { useMutation } from "@tanstack/react-query";
 
 export async function getUserCertificates(
-  userId: string
+  userId: string,
+  source?: "internal" | "external"
 ): Promise<CertificateListDto[] | undefined> {
   try {
-    const response = await client.get(`/certificates/user/${userId}`);
+    const endpoint = source
+      ? `/certificates/user/${userId}/${source}`
+      : `/certificates/user/${userId}`;
+    const response = await client.get(endpoint);
     return response.data as CertificateListDto[];
   } catch (error) {
     console.error("Get user error: ", error);
@@ -15,6 +19,12 @@ export async function getUserCertificates(
 
 export function useGetUserCertificates() {
   return useMutation({
-    mutationFn: getUserCertificates,
+    mutationFn: ({
+      userId,
+      source,
+    }: {
+      userId: string;
+      source?: "internal" | "external";
+    }) => getUserCertificates(userId, source),
   });
 }
