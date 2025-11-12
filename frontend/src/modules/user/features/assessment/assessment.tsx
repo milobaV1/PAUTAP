@@ -38,7 +38,6 @@ export function sessions() {
   const { user, decodedDto } = useAuthState();
   const sessionData: getSessions = {
     userId: decodedDto?.sub.id,
-    userRoleId: decodedDto?.sub.roleId,
   };
 
   const isOnboardingUser = user?.is_onboarding ?? false;

@@ -27,32 +27,7 @@ export class QuestionBankService {
     private dataSource: DataSource,
   ) {}
   async create(createQuestionBankDto: CreateQuestionBankDto) {
-    const { roleIds, ...rest } = createQuestionBankDto;
-    let roles: Role[] = [];
-    if (roleIds && roleIds.length > 0) {
-      roles = await this.roleRepo.find({
-        where: {
-          id: In(roleIds),
-        },
-      });
-
-      // This is to validate that all requested roles were found
-      if (roles.length !== roleIds.length) {
-        const foundRoleIds = roles.map((role) => role.id);
-        const missingRoleIds = roleIds.filter(
-          (id) => !foundRoleIds.includes(id),
-        );
-        throw new BadRequestException(
-          `Roles with IDs [${missingRoleIds.join(', ')}] not found`,
-        );
-      }
-    }
-
-    //const question = this.questionRepo.create(createQuestionBankDto);
-    const question = this.questionRepo.create({
-      ...rest,
-      roles: roles,
-    });
+    const question = this.questionRepo.create(createQuestionBankDto);
 
     return await this.questionRepo.save(question);
   }
@@ -66,32 +41,9 @@ export class QuestionBankService {
       const questionsToSave: QuestionBank[] = [];
 
       for (const dto of createQuestionBankDtos) {
-        const { roleIds, ...rest } = dto;
-        let roles: Role[] = [];
-
-        if (roleIds && roleIds.length > 0) {
-          roles = await queryRunner.manager.getRepository(Role).find({
-            where: { id: In(roleIds) },
-          });
-
-          // validate role IDs
-          if (roles.length !== roleIds.length) {
-            const foundRoleIds = roles.map((role) => role.id);
-            const missingRoleIds = roleIds.filter(
-              (id) => !foundRoleIds.includes(id),
-            );
-            throw new BadRequestException(
-              `Roles with IDs [${missingRoleIds.join(', ')}] not found`,
-            );
-          }
-        }
-
         const question = queryRunner.manager
           .getRepository(this.questionRepo.target)
-          .create({
-            ...rest,
-            roles,
-          });
+          .create(dto);
 
         questionsToSave.push(question);
       }
@@ -112,8 +64,10 @@ export class QuestionBankService {
 
   async findAll() {
     const question = await this.questionRepo.find({
-      relations: ['usages', 'roles'],
+      relations: ['usages'],
     });
+
+    return question;
   }
 
   async findOne(id: string): Promise<QuestionBank> {
@@ -122,19 +76,11 @@ export class QuestionBankService {
 
     const question = await this.questionRepo
       .createQueryBuilder('question')
-      .leftJoinAndSelect('question.roles', 'role')
       .leftJoinAndSelect('question.usages', 'usage')
       .where('question.id = :id', { id })
       .getOne();
 
     console.log('Question found:', !!question);
-    if (question) {
-      console.log('Roles count:', question.roles?.length || 0);
-      console.log(
-        'Roles data:',
-        question.roles?.map((r) => ({ id: r.id, name: r.name })),
-      );
-    }
 
     if (!question) throw new NotFoundException('Question not found');
     return question;
@@ -147,21 +93,7 @@ export class QuestionBankService {
     if (!question) throw new NotFoundException('Question not found');
 
     // Handle regular fields
-    const { roleIds, ...otherFields } = updateQuestionBankDto;
-    Object.assign(question, otherFields);
-
-    // Handle roles separately if provided
-    if (roleIds && Array.isArray(roleIds)) {
-      console.log('Setting roles with IDs:', roleIds);
-      const roleEntities = await this.roleRepo.find({
-        where: { id: In(roleIds) },
-      });
-      console.log(
-        'Found role entities:',
-        roleEntities.map((r) => ({ id: r.id, name: r.name })),
-      );
-      question.roles = roleEntities;
-    }
+    Object.assign(question, updateQuestionBankDto);
 
     await this.questionRepo.save(question);
     return this.findOne(id);

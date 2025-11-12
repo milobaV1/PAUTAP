@@ -31,8 +31,8 @@ export class UserSessionProgress {
   @Column()
   sessionId: string;
 
-  @Column()
-  roleId: number;
+  // @Column()
+  // roleId: number;
 
   @Column({
     type: 'enum',
@@ -99,11 +99,11 @@ export class UserSessionProgress {
   @JoinColumn({ name: 'sessionId' })
   session: Session;
 
-  @ManyToOne(() => Role, {
-    onDelete: 'RESTRICT', // Keep RESTRICT for role
-  })
-  @JoinColumn({ name: 'roleId' })
-  role: Role;
+  // @ManyToOne(() => Role, {
+  //   onDelete: 'RESTRICT', // Keep RESTRICT for role
+  // })
+  // @JoinColumn({ name: 'roleId' })
+  // role: Role;
 
   @OneToOne(() => Certificate, (certificate) => certificate.userProgress)
   certificate: Certificate;

@@ -5,3 +5,8 @@ export enum ProgressStatus {
   PAUSED = 'paused',
   //EXPIRED = 'expired',
 }
+
+export enum UserLevel {
+  HEAD_OF_DEPT = 'head_of_dept',
+  NORMAL = 'normal',
+}

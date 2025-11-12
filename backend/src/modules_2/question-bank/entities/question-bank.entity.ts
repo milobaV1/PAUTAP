@@ -63,13 +63,13 @@ export class QuestionBank {
   )
   question_history: UserQuestionHistory[];
 
-  @ManyToMany(() => Role, (role) => role.questions)
-  @JoinTable({
-    name: 'question_roles',
-    joinColumn: { name: 'question_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
-  })
-  roles: Role[];
+  // @ManyToMany(() => Role, (role) => role.questions)
+  // @JoinTable({
+  //   name: 'question_roles',
+  //   joinColumn: { name: 'question_id', referencedColumnName: 'id' },
+  //   inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+  // })
+  // roles: Role[];
 
   // @ManyToMany(() => Session, (session) => session.questions)
   // sessions: Session[];

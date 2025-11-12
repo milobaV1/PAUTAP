@@ -55,3 +55,29 @@ export interface AdminStatsUserResponse {
   page: number;
   limit: number;
 }
+
+export interface HODStatsUserResponse {
+  totalUsers: number;
+  //totalActiveUsers: number;
+  totalCertificates: number;
+  users: UserWithStats[];
+  page: number;
+  limit: number;
+}
+
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface DateFilterParams {
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface GetUserDetailsParams {
+  sessionsPagination?: PaginationParams;
+  certificatesPagination?: PaginationParams;
+  sessionsDateFilter?: DateFilterParams;
+  certificatesDateFilter?: DateFilterParams;
+}

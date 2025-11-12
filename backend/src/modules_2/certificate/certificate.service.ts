@@ -67,7 +67,6 @@ export class CertificateService {
     // 4. Get completion progress for detailed breakdown
     const progress = await this.progressRepo.findOne({
       where: { userId, sessionId },
-      relations: ['role'],
     });
 
     if (!progress || !progress.isCompleted()) {
@@ -92,7 +91,7 @@ export class CertificateService {
       email: user.email,
       sessionTitle: session.title,
       sessionDescription: session.description,
-      roleName: progress.role.name,
+      roleName: user.role.name,
       score,
       passingScore,
       completionDate: progress.completedAt,

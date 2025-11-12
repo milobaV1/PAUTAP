@@ -127,12 +127,9 @@ export class SessionController {
     status: 200,
     description: 'Returns an array of session progress objects',
   })
-  async getUserSessionWithStatuses(
-    @Param('userId') userId: string,
-    @Query('userRoleId') userRoleId: number,
-  ) {
+  async getUserSessionWithStatuses(@Param('userId') userId: string) {
     const sessionStatuses =
-      await this.sessionService.getUserSessionWithStatuses(userId, userRoleId);
+      await this.sessionService.getUserSessionWithStatuses(userId);
     return sessionStatuses;
   }
   // You can also add a GET endpoint to fetch session progress, etc.
@@ -151,14 +148,9 @@ export class SessionController {
     status: 200,
     description: 'Returns an array of session progress objects',
   })
-  async getOnboardingSessions(
-    @Param('userId') userId: string,
-    @Query('userRoleId') userRoleId: number,
-  ) {
-    const sessionStatuses = await this.sessionService.getOnboardingSessions(
-      userId,
-      userRoleId,
-    );
+  async getOnboardingSessions(@Param('userId') userId: string) {
+    const sessionStatuses =
+      await this.sessionService.getOnboardingSessions(userId);
     return sessionStatuses;
   }
 

@@ -13,7 +13,7 @@ import { QuestionBank } from './question-bank.entity';
 import { Session } from 'src/modules_2/session/entities/session.entity';
 
 @Entity('question_usage')
-@Unique(['question', 'role'])
+@Unique(['question'])
 export class QuestionUsage {
   @PrimaryGeneratedColumn()
   id: number;
@@ -21,8 +21,8 @@ export class QuestionUsage {
   @Column()
   questionId: string;
 
-  @Column()
-  roleId: number;
+  // @Column()
+  // roleId: number;
 
   @Column({ default: 0 })
   usageCount: number;
@@ -44,9 +44,9 @@ export class QuestionUsage {
   @JoinColumn({ name: 'questionId' })
   question: QuestionBank;
 
-  @ManyToOne(() => Role)
-  @JoinColumn({ name: 'roleId' })
-  role: Role;
+  // @ManyToOne(() => Role)
+  // @JoinColumn({ name: 'roleId' })
+  // role: Role;
 
   @ManyToOne(() => Session, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'lastUsedInSessionId' })

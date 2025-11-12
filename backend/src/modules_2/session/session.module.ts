@@ -11,6 +11,7 @@ import { Certificate } from '../certificate/entities/certificate.entity';
 import { QuestionBank } from '../question-bank/entities/question-bank.entity';
 import { Role } from '../users/entities/role.entity';
 import { CertificateModule } from '../certificate/certificate.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CertificateModule } from '../certificate/certificate.module';
       Role,
     ]),
     CertificateModule,
+    EmailModule,
   ],
   controllers: [SessionController],
   providers: [SessionService],

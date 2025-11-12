@@ -9,6 +9,7 @@ import { UserSessionProgress } from '../session/entities/user-session-progress.e
 import { TriviaParticipation } from '../trivia/entities/trivia-participation.entity';
 import { Certificate } from '../certificate/entities/certificate.entity';
 import { EmailModule } from '../email/email.module';
+import { Session } from '../session/entities/session.entity';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { EmailModule } from '../email/email.module';
       Role,
       Department,
       UserSessionProgress,
+      Session,
       TriviaParticipation,
       Certificate,
     ]),

@@ -6,11 +6,12 @@ import {
   X,
   LayoutDashboard,
   User,
+  Users,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { isAdmin } from "@/utils/auth-extension";
+import { isAdmin, isHOD } from "@/utils/auth-extension";
 import { useAuthState } from "@/store/auth.store";
 import Logo from "../../assets/logo2.png";
 
@@ -47,6 +48,7 @@ export function Sidebar({
   };
 
   const admin = isAdmin();
+  const HOD = isHOD();
   return (
     <div>
       {/* Mobile sidebar overlay */}
@@ -110,6 +112,21 @@ export function Sidebar({
               >
                 <LayoutDashboard className="w-4 h-4 mr-3" />
                 Back to Admin Portal
+              </Button>
+            </div>
+          ) : (
+            ""
+          )}
+
+          {HOD ? (
+            <div className="pt-4 border-t">
+              <Button
+                variant="ghost"
+                className="w-full justify-start h-10 text-blue-600 hover:bg-blue-50"
+                onClick={() => navigate({ to: "/users" })}
+              >
+                <Users className="w-4 h-4 mr-3" />
+                View Staff Members
               </Button>
             </div>
           ) : (

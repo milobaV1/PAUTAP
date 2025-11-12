@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
@@ -17,7 +18,7 @@ import {
 } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateDepartmentDto } from './dto/create-department.dto';
-import { CreateRoleDto } from './dto/create-role.dto';
+import { CreateRoleDto, RoleDto } from './dto/create-role.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -30,10 +31,12 @@ import { User } from './entities/user.entity';
 import {
   AdminStatsUserResponse,
   DashboardResponse,
+  HODStatsUserResponse,
 } from 'src/core/interfaces/user.interface';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { SystemAdminOnly } from 'src/core/metadata/role.metadata';
 import { SkipThrottle } from '@nestjs/throttler';
+import { GetUserDetailsDto } from './dto/get-user-details.dto';
 
 @ApiBearerAuth('access-token')
 @Controller('users')
@@ -128,6 +131,17 @@ export class UsersController {
     return rest;
   }
 
+  @Get(':id/details')
+  @ApiOperation({ summary: 'Get a user by ID' })
+  @ApiResponse({ status: 200, description: 'Successfully fetched the user.' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  async findUserByIdWithDetails(
+    @Param('id') id: string,
+    @Query() queryParams: GetUserDetailsDto,
+  ) {
+    return this.usersService.findByIdWithDetails(id, queryParams);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
@@ -163,6 +177,44 @@ export class UsersController {
       Number(page),
       Number(limit),
       search,
+    );
+  }
+
+  // @SkipThrottle()
+  // @Get('/hod/stats')
+  // async getHODStatsUser(
+  //   @Query('role') roleId: string,
+  //   @Query('page') page = '1',
+  //   @Query('limit') limit = '5',
+  //   @Query('search') search = '',
+  // ): Promise<HODStatsUserResponse> {
+  //   return this.usersService.getHODStatsUser(
+  //     Number(roleId),
+  //     Number(page),
+  //     Number(limit),
+  //     search,
+  //   );
+  // }
+  @SkipThrottle()
+  @Get('hod/stats')
+  async getHODStatsUser(
+    @Query('roleId') roleIdStr: string,
+    @Query('page') pageStr?: string,
+    @Query('limit') limitStr?: string,
+    @Query('search') search?: string,
+  ) {
+    const roleId = parseInt(roleIdStr, 10);
+
+    // Validate roleId
+    if (isNaN(roleId)) {
+      throw new BadRequestException('Invalid roleId parameter');
+    }
+
+    return this.usersService.getHODStatsUser(
+      roleId,
+      pageStr ? parseInt(pageStr, 10) : 1,
+      limitStr ? parseInt(limitStr, 10) : 5,
+      search || '',
     );
   }
 

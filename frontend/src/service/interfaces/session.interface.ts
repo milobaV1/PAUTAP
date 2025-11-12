@@ -14,7 +14,6 @@ export interface CategoryProgress {
 
 export interface getSessions {
   userId: string | undefined;
-  userRoleId: number | undefined;
 }
 
 export interface Answer {

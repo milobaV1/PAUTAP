@@ -17,17 +17,14 @@ import { CRISP } from 'src/core/enums/training.enum';
 import { UserAnswer } from './user-answers.entity';
 
 @Entity('session_role_question_categories')
-@Unique(['sessionId', 'roleId', 'crispCategory'])
-@Index(['sessionId', 'roleId'])
+@Unique(['sessionId', 'crispCategory'])
+@Index(['sessionId'])
 export class SessionRoleCategoryQuestion {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
   sessionId: string;
-
-  @Column()
-  roleId: number;
 
   @Column({
     type: 'enum',
@@ -56,9 +53,9 @@ export class SessionRoleCategoryQuestion {
   @JoinColumn({ name: 'sessionId' })
   session: Session;
 
-  @ManyToOne(() => Role)
-  @JoinColumn({ name: 'roleId' })
-  role: Role;
+  // @ManyToOne(() => Role)
+  // @JoinColumn({ name: 'roleId' })
+  // role: Role;
 
   // Helper method to get randomized questions
   getRandomizedQuestions(): string[] {

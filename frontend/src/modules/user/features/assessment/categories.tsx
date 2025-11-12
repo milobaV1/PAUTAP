@@ -55,7 +55,6 @@ export function CategorySelection() {
       startSessionMutation.mutate({
         sessionId: id,
         userId: decodedDto.sub.id,
-        roleId: decodedDto.sub.roleId,
       });
     }
   }, [id, currentSessionData, decodedDto]);

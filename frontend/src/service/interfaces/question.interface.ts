@@ -14,7 +14,7 @@ export interface addQuestionDto {
 
   // difficultyLevel?: Difficulty;
 
-  roles?: number[];
+  //roles?: number[];
 }
 
 // src/modules_2/question-bank/dto/admin-question-response.dto.ts
