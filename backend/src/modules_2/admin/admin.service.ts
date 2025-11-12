@@ -57,7 +57,13 @@ export class AdminService {
   }
 
   private async getTotalUsers(): Promise<number> {
-    return await this.userRepository.count();
+    const query = this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.role', 'role')
+      .where('role.id != :excludedRole', { excludedRole: 1 });
+
+    const totalUsers = await query.getCount();
+    return totalUsers;
   }
 
   private async getTotalSessions(): Promise<number> {
