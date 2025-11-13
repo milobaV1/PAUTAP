@@ -8,9 +8,9 @@ export class Baseline1763001144282 implements MigrationInterface {
       `DROP INDEX IF EXISTS "public"."IDX_0ae1c71d8a6cf7fd49961bd21f"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "session_role_question_categories" DROP CONSTRAINT "UQ_a899cfd8eca5beb951f469701e9"`,
+      `ALTER TABLE "session_role_question_categories" DROP CONSTRAINT IF EXISTS "UQ_a899cfd8eca5beb951f469701e9"`,
     );
-    await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "level"`);
+    await queryRunner.query(`ALTER TABLE "user" DROP COLUMN IF EXISTS "level"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "public"."user_level_enum"`);
     await queryRunner.query(
       `ALTER TABLE "session_role_question_categories" ADD "roleId" integer NOT NULL`,
@@ -22,10 +22,10 @@ export class Baseline1763001144282 implements MigrationInterface {
       `ALTER TABLE "question_usage" ADD "roleId" integer NOT NULL`,
     );
     await queryRunner.query(
-      `ALTER TABLE "question_usage" DROP CONSTRAINT "FK_c996fbdf9155b3d4a6285528e6e"`,
+      `ALTER TABLE "question_usage" DROP CONSTRAINT IF EXISTS "FK_c996fbdf9155b3d4a6285528e6e"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "question_usage" DROP CONSTRAINT "UQ_c996fbdf9155b3d4a6285528e6e"`,
+      `ALTER TABLE "question_usage" DROP CONSTRAINT IF EXISTS "UQ_c996fbdf9155b3d4a6285528e6e"`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_55814112faea998edc60452bfc" ON "session_role_question_categories" ("sessionId", "roleId") `,
