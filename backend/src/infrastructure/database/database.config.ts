@@ -43,7 +43,7 @@ export const typeormConfigAsync = {
       TriviaParticipation,
       TriviaLeaderboard,
     ],
-    synchronize: true, // disable in production
+    synchronize: false, // disable in production
     autoLoadEntities: true,
   }),
 };
