@@ -24,6 +24,18 @@ export const roles = [
   { value: "careers", label: "Careers" },
   { value: "faculty", label: "Faculty" },
   { value: "support_staff", label: "Support Staff" },
+  { value: "exam_and_records", label: "Exams and Records" },
+  { value: "museum", label: "Museum" },
+  { value: "library", label: "Library" },
+  { value: "purchasing", label: "Purchasing" },
+  { value: "dvc_office", label: "DVC's Office" },
+  {
+    value: "community_relations_development",
+    label: "Community Relations and Development",
+  },
+  { value: "professional_education", label: "Professional Education" },
+  { value: "nollywood_studies_centre", label: "Nollywood Studies Centre" },
+  { value: "academic_education", label: "Academic Education" },
 ];
 
 export const roleMap: Record<string, number> = {
@@ -60,6 +72,15 @@ export const roleMap: Record<string, number> = {
 
   // Group 6 (support staff)
   support_staff: 23,
+  exam_and_records: 24,
+  museum: 25,
+  library: 26,
+  purchasing: 27,
+  dvc_office: 28,
+  community_relations_development: 29,
+  professional_education: 30,
+  nollywood_studies_centre: 31,
+  academic_education: 32,
 };
 
 export function getRoleIds(selectedRoles: string[]): number[] {
