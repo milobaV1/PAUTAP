@@ -56,15 +56,15 @@ export class CreateQuestionBankDto {
   // @IsOptional()
   // difficultyLevel?: Difficulty;
 
-  @ApiProperty({
-    type: [Number],
-    example: [1, 2],
-    description: 'Array of role IDs (1–10)',
-    required: false,
-  })
-  @IsArray()
-  @ArrayMinSize(1)
-  @IsNumber({}, { each: true })
-  @IsOptional()
-  roleIds?: number[];
+  // @ApiProperty({
+  //   type: [Number],
+  //   example: [1, 2],
+  //   description: 'Array of role IDs (1–10)',
+  //   required: false,
+  // })
+  // @IsArray()
+  // @ArrayMinSize(1)
+  // @IsNumber({}, { each: true })
+  // @IsOptional()
+  // roleIds?: number[];
 }

@@ -19,6 +19,7 @@ import { TriviaLeaderboard } from 'src/modules_2/trivia/entities/trivia-leaderbo
 import { UserSessionProgress } from 'src/modules_2/session/entities/user-session-progress.entity';
 import { UserAnswer } from 'src/modules_2/session/entities/user-answers.entity';
 import { TriviaParticipation } from 'src/modules_2/trivia/entities/trivia-participation.entity';
+import { UserLevel } from 'src/core/enums/user.enum';
 
 @Entity()
 export class User {
@@ -33,6 +34,9 @@ export class User {
 
   @Column({ unique: true })
   email: string;
+
+  @Column({ type: 'enum', enum: UserLevel, default: UserLevel.NORMAL })
+  level: UserLevel;
 
   @Column({ default: false })
   is_onboarding: boolean;

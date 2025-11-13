@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -36,7 +35,7 @@ import {
 } from "@/components/ui/form";
 import { Edit, CheckCircle, XCircle, Eye, Target } from "lucide-react";
 import { CRISP } from "@/service/enums/crisp.enum";
-import { roles, getRoleIds } from "@/lib/roles";
+import { roles } from "@/lib/roles";
 
 interface QuestionDetailsModalProps {
   questionId: string | null;
@@ -50,7 +49,7 @@ const questionSchema = z.object({
   options: z.array(z.object({ text: z.string().min(1) })).optional(),
   correctAnswer: z.number().optional(),
   explanation: z.string().max(500).optional(),
-  roles: z.array(z.enum(roles.map((r) => r.value))).min(1),
+  //roles: z.array(z.enum(roles.map((r) => r.value))).min(1),
 });
 
 type QuestionFormValues = z.infer<typeof questionSchema>;
@@ -77,7 +76,7 @@ export function QuestionDetailsModal({
       options: [{ text: "" }, { text: "" }, { text: "" }, { text: "" }],
       correctAnswer: 0,
       explanation: "",
-      roles: [],
+      //roles: [],
     },
   });
 
@@ -87,18 +86,18 @@ export function QuestionDetailsModal({
       console.log("Question roles from API:", question.roles);
       console.log("Available roles array:", roles);
 
-      const questionRoles =
-        question.roles
-          ?.map((role) => {
-            const matchedRole = roles.find(
-              (r) => r.label.toLowerCase() === role.name.toLowerCase()
-            );
-            console.log(`Mapping "${role.name}" to "${matchedRole?.value}"`);
-            return matchedRole?.value || "";
-          })
-          .filter(Boolean) || [];
+      // const questionRoles =
+      //   question.roles
+      //     ?.map((role) => {
+      //       const matchedRole = roles.find(
+      //         (r) => r.label.toLowerCase() === role.name.toLowerCase()
+      //       );
+      //       console.log(`Mapping "${role.name}" to "${matchedRole?.value}"`);
+      //       return matchedRole?.value || "";
+      //     })
+      //     .filter(Boolean) || [];
 
-      console.log("Final mapped roles:", questionRoles);
+      //console.log("Final mapped roles:", questionRoles);
 
       form.reset({
         crispType: question.crispCategory,
@@ -106,7 +105,7 @@ export function QuestionDetailsModal({
         options: question.options.map((opt) => ({ text: opt })),
         correctAnswer: question.correctAnswer,
         explanation: question.explanation || "",
-        roles: questionRoles,
+        //roles: questionRoles,
       });
     }
   }, [question, form]);
@@ -114,17 +113,17 @@ export function QuestionDetailsModal({
   const handleSave = async (values: QuestionFormValues) => {
     if (!question) return;
 
-    const { roles: selectedRoles, ...rest } = values;
-    const roleIds = getRoleIds(selectedRoles);
+    // const { roles: selectedRoles, ...rest } = values;
+    // const roleIds = getRoleIds(selectedRoles);
 
     try {
       const payload = {
-        crispCategory: rest.crispType,
-        questionText: rest.questionText,
-        options: rest.options ? rest.options.map((opt) => opt.text) : [],
-        correctAnswer: rest.correctAnswer ?? 0,
-        explanation: rest.explanation,
-        roleIds,
+        crispCategory: values.crispType,
+        questionText: values.questionText,
+        options: values.options ? values.options.map((opt) => opt.text) : [],
+        correctAnswer: values.correctAnswer ?? 0,
+        explanation: values.explanation,
+        //roleIds,
       };
 
       await updateQuestion({ id: question.id, data: payload });
@@ -382,7 +381,7 @@ export function QuestionDetailsModal({
               />
 
               {/* Roles */}
-              <FormItem>
+              {/* <FormItem>
                 <FormLabel>Roles</FormLabel>
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   {roles.map((role) => (
@@ -427,7 +426,7 @@ export function QuestionDetailsModal({
                     />
                   ))}
                 </div>
-              </FormItem>
+              </FormItem> */}
 
               <div className="flex justify-end space-x-3 pt-4">
                 <Button
@@ -436,17 +435,17 @@ export function QuestionDetailsModal({
                   onClick={() => {
                     setEditMode(false);
                     if (question) {
-                      const questionRoles =
-                        question.roles
-                          ?.map((role) => {
-                            const matchedRole = roles.find(
-                              (r) =>
-                                r.label.toLowerCase() ===
-                                role.name.toLowerCase()
-                            );
-                            return matchedRole?.value || "";
-                          })
-                          .filter(Boolean) || [];
+                      // const questionRoles =
+                      //   question.roles
+                      //     ?.map((role) => {
+                      //       const matchedRole = roles.find(
+                      //         (r) =>
+                      //           r.label.toLowerCase() ===
+                      //           role.name.toLowerCase()
+                      //       );
+                      //       return matchedRole?.value || "";
+                      //     })
+                      //     .filter(Boolean) || [];
 
                       form.reset({
                         crispType: question.crispCategory,
@@ -454,7 +453,7 @@ export function QuestionDetailsModal({
                         options: question.options.map((opt) => ({ text: opt })),
                         correctAnswer: question.correctAnswer,
                         explanation: question.explanation || "",
-                        roles: questionRoles,
+                        //roles: questionRoles,
                       });
                     }
                   }}

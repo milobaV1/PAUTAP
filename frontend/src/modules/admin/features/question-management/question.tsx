@@ -42,13 +42,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { CRISP } from "@/service/enums/crisp.enum";
-import { roles, getRoleIds } from "@/lib/roles";
 
 import type { addQuestionDto } from "@/service/interfaces/question.interface";
 import { useAddQuestion } from "./api/add-quetion";
 import { useAdminQuestions } from "./api/get-questions";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -73,13 +71,14 @@ const questionSchema = z.object({
   options: z.array(z.object({ text: z.string().min(1) })).optional(),
   correctAnswer: z.number().optional(),
   explanation: z.string().max(500).optional(),
-  roles: z.array(z.enum(roles.map((r) => r.value))).min(1),
+  //roles: z.array(z.enum(roles.map((r) => r.value))).min(1),
 });
 
 export function QuestionManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddQuestion, setShowAddQuestion] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  const [deleteQuestionId, setDeleteQuestionId] = useState<string | null>(null);
 
   const [page, setPage] = useState(1);
   const limit = 5;
@@ -106,17 +105,17 @@ export function QuestionManagement() {
       options: [{ text: "" }, { text: "" }, { text: "" }, { text: "" }],
       correctAnswer: 0,
       explanation: "",
-      roles: [],
+      //roles: [],
     },
   });
   useEffect(() => {
-    const handler = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+    const handler = setTimeout(() => setDebouncedSearch(searchTerm), 300);
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
   async function onSubmit(values: z.infer<typeof questionSchema>) {
-    const { questionType, roles, explanation, options, ...rest } = values;
-    const roleIds = getRoleIds(roles);
+    const { questionType, explanation, options, ...rest } = values;
+    // const roleIds = getRoleIds(roles);
 
     try {
       const payload: addQuestionDto = {
@@ -125,7 +124,7 @@ export function QuestionManagement() {
         options: options ? options.map((opt) => opt.text) : [],
         correctAnswer: values.correctAnswer ?? 0,
         explanation,
-        roles: roleIds,
+        //roles: roleIds,
       };
       addQuestion(payload);
       toast.success("✅ Question created successfully");
@@ -311,7 +310,7 @@ export function QuestionManagement() {
                 />
 
                 {/* Roles Checkboxes */}
-                <FormItem>
+                {/* <FormItem>
                   <FormLabel>Roles</FormLabel>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     {roles.map((role) => (
@@ -356,7 +355,7 @@ export function QuestionManagement() {
                       />
                     ))}
                   </div>
-                </FormItem>
+                </FormItem> */}
                 {isError && (
                   <div className="text-red-600 text-sm">
                     Error submitting question:{" "}
@@ -462,14 +461,54 @@ export function QuestionManagement() {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600"
-                      onClick={() => handleDelete(q.id)}
+                    <Dialog
+                      open={deleteQuestionId === q.id}
+                      onOpenChange={(open) =>
+                        !open && setDeleteQuestionId(null)
+                      }
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600"
+                          title="Delete Question"
+                          onClick={() => setDeleteQuestionId(q.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </DialogTrigger>
+
+                      <DialogContent className="max-w-sm">
+                        <DialogHeader>
+                          <DialogTitle>Confirm Delete</DialogTitle>
+                          <DialogDescription>
+                            Are you sure you want to delete this question? This
+                            action cannot be undone.
+                          </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="flex justify-end space-x-2 mt-4">
+                          <Button
+                            variant="outline"
+                            onClick={() => setDeleteQuestionId(null)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            className="pau-gradient"
+                            onClick={() => {
+                              if (deleteQuestionId) {
+                                handleDelete(deleteQuestionId);
+                                setDeleteQuestionId(null);
+                              }
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
 

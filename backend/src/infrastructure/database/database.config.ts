@@ -45,5 +45,6 @@ export const typeormConfigAsync = {
     ],
     synchronize: false, // disable in production
     autoLoadEntities: true,
+    migrationsRun: false,
   }),
 };

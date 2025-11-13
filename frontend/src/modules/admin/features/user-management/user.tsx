@@ -39,7 +39,6 @@ import {
   Users,
   Search,
   UserPlus,
-  Trash2,
   Eye,
   Award,
   Zap,
@@ -52,8 +51,10 @@ import { useForm } from "react-hook-form";
 import type { CreateUser } from "@/service/interfaces/user.interface";
 import { useCreateUser } from "./api/create-user";
 import { toast } from "sonner";
-import { useDeleteUser } from "./api/delete-user";
+//import { useDeleteUser } from "./api/delete-user";
 import { UserDetailsModal } from "./user-details";
+import { useNavigate } from "@tanstack/react-router";
+import { UserLevel } from "@/service/enums/user.enum";
 
 const createUserSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -64,6 +65,7 @@ const createUserSchema = z.object({
     .refine((value) => /^\S+@pau\.edu\.ng$/.test(value), {
       message: "Must be a valid PAU email",
     }),
+  level: z.enum(UserLevel),
   //password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.string().min(1, "Role is required"),
   is_onboarding: z.boolean().optional(),
@@ -72,13 +74,14 @@ const createUserSchema = z.object({
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
 
 export function UserManagement() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [showAddUser, setShowAddUser] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
   // const [showPassword, setShowPassword] = useState(false);
   const { mutateAsync: createUser, isPending } = useCreateUser();
-  const { mutate: deleteUser } = useDeleteUser();
+  //const { mutate: deleteUser } = useDeleteUser();
   const [page, setPage] = useState(1);
   const limit = 5;
   const { data, isLoading } = useGetUserForAdmin(page, limit, debouncedSearch);
@@ -91,6 +94,7 @@ export function UserManagement() {
       first_name: "",
       last_name: "",
       email: "",
+      level: UserLevel.NORMAL,
       //password: "",
       role: "",
       is_onboarding: false,
@@ -105,7 +109,7 @@ export function UserManagement() {
   // };
 
   useEffect(() => {
-    const handler = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+    const handler = setTimeout(() => setDebouncedSearch(searchTerm), 300);
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
@@ -126,40 +130,40 @@ export function UserManagement() {
     }
   }
 
-  const handleDelete = (id: string) => {
-    deleteUser(id, {
-      onSuccess: () => {
-        toast.success("✅ User deleted successfully");
-      },
-      onError: (error: any) => {
-        console.error("❌ Delete failed:", error);
-        toast.error("Failed to delete user");
-      },
-    });
+  // const handleDelete = (id: string) => {
+  //   deleteUser(id, {
+  //     onSuccess: () => {
+  //       toast.success("✅ User deleted successfully");
+  //     },
+  //     onError: (error: any) => {
+  //       console.error("❌ Delete failed:", error);
+  //       toast.error("Failed to delete user");
+  //     },
+  //   });
+  // };
+
+  const handleNavigate = (id: string) => {
+    navigate({ to: "/admin/user/$id", params: { id } });
   };
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
+  if (!data) {
+    return <div>No user</div>;
+  }
+
   const users = data?.users ?? [];
   console.log("Users: ", users);
   const totalUsers = data?.totalUsers ?? 0;
   const totalCertificates = data?.totalCertificates ?? 0;
-  const totalPages = Math.ceil(data ? data.totalUsers / data.limit : 1);
+  const totalPages = Math.ceil(data.totalUsers / data.limit);
   const totalSessionsAttempted = data?.totalSessionsAttempted ?? 0; // NEW
   const averageSessionScore = data?.averageSessionScore ?? "0"; // NEW
 
   // Filtering
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole =
-      selectedRole === "all" || user.role.toLowerCase() === selectedRole;
-    return matchesSearch && matchesRole;
-  });
-
+  const filteredUsers = users;
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -231,6 +235,33 @@ export function UserManagement() {
                           placeholder="user@pau.edu"
                           {...field}
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Level</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="normal">Normal</SelectItem>
+                            <SelectItem value="head_of_dept">
+                              Head of Department
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -583,11 +614,12 @@ export function UserManagement() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedUserId(user.id)}
+                        //onClick={() => setSelectedUserId(user.id)}
+                        onClick={() => handleNavigate(user.id)}
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="ghost"
                         size="sm"
                         className="text-red-600 hover:text-red-700"
@@ -595,7 +627,7 @@ export function UserManagement() {
                         disabled={!user.id}
                       >
                         <Trash2 className="w-4 h-4" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
                 </div>

@@ -5,7 +5,7 @@ export interface CompletionMetrics {
   overallScore: number;
   categoryScores: Record<string, number>;
   timeSpent: number;
-  roleRank: number;
+  //roleRank: number;
   finalScores: any;
 }
 
@@ -16,7 +16,7 @@ export interface SessionCompletionResult {
   categoryScores: Record<string, number>;
   certificateId: string;
   completionTime: number;
-  rank: number;
+  //rank: number;
 }
 
 // Interfaces

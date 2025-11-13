@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,9 +9,11 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  Brackets,
   DataSource,
   FindManyOptions,
   FindOptionsWhere,
+  ILike,
   In,
   Not,
   Repository,
@@ -19,10 +22,11 @@ import { Department } from './entities/department.entity';
 import { Role } from './entities/role.entity';
 import { User } from './entities/user.entity';
 import { CreateDepartmentDto } from './dto/create-department.dto';
-import { CreateRoleDto } from './dto/create-role.dto';
+import { CreateRoleDto, RoleDto } from './dto/create-role.dto';
 import * as bcrypt from 'bcrypt';
 import {
   AdminStatsUserResponse,
+  HODStatsUserResponse,
   UserQueryOptions,
   UserWithStats,
 } from 'src/core/interfaces/user.interface';
@@ -33,6 +37,8 @@ import { Certificate } from '../certificate/entities/certificate.entity';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
+import { Session } from '../session/entities/session.entity';
+import { GetUserDetailsDto } from './dto/get-user-details.dto';
 
 @Injectable()
 export class UsersService {
@@ -41,6 +47,7 @@ export class UsersService {
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Role) private roleRepo: Repository<Role>,
     @InjectRepository(Department) private deptRepo: Repository<Department>,
+    @InjectRepository(Session) private sessionRepo: Repository<Session>,
     @InjectRepository(UserSessionProgress)
     private readonly progressRepo: Repository<UserSessionProgress>,
     @InjectRepository(Certificate)
@@ -642,6 +649,392 @@ export class UsersService {
 
     return user;
   }
+  // async findByIdWithDetails(id: string) {
+  //   const user = await this.userRepo.findOne({
+  //     where: { id },
+  //     relations: [
+  //       'role',
+  //       'role.department',
+  //       'sessionProgress',
+  //       'sessionProgress.session',
+  //       'certificates',
+  //       'certificates.session',
+  //     ],
+  //   });
+
+  //   if (!user) {
+  //     throw new NotFoundException(`User with ID ${id} not found`);
+  //   }
+
+  //   // Fetch all available sessions
+  //   const allSessions = await this.sessionRepo.find({
+  //     where: { isActive: true },
+  //     order: { createdAt: 'DESC' },
+  //   });
+
+  //   // Create a map of user's progress by session ID for quick lookup
+  //   const progressMap = new Map(
+  //     user.sessionProgress?.map((progress) => [progress.sessionId, progress]) ||
+  //       [],
+  //   );
+
+  //   // Calculate statistics
+  //   const totalSessionsEnrolled = user.sessionProgress?.length || 0;
+  //   const completedSessions =
+  //     user.sessionProgress?.filter(
+  //       (progress) => progress.status === ProgressStatus.COMPLETED,
+  //     ).length || 0;
+  //   const inProgressSessions =
+  //     user.sessionProgress?.filter(
+  //       (progress) => progress.status === ProgressStatus.IN_PROGRESS,
+  //     ).length || 0;
+  //   const totalCertificates = user.certificates?.length || 0;
+
+  //   // Format all sessions with their progress (if any)
+  //   const sessionsWithProgress = allSessions.map((session) => {
+  //     const progress = progressMap.get(session.id);
+
+  //     if (progress) {
+  //       // User has progress on this session
+  //       return {
+  //         sessionId: session.id,
+  //         sessionTitle: session.title,
+  //         sessionDescription: session.description,
+  //         timeLimit: session.timeLimit,
+  //         questionsPerCategory: session.questionsPerCategory,
+  //         isOnboardingSession: session.isOnboardingSession,
+  //         sessionCreatedAt: session.createdAt,
+  //         hasProgress: true,
+  //         progress: {
+  //           status: progress.status,
+  //           currentCategory: progress.currentCategory,
+  //           currentQuestionIndex: progress.currentQuestionIndex,
+  //           totalQuestions: progress.totalQuestions,
+  //           answeredQuestions: progress.answeredQuestions,
+  //           correctlyAnsweredQuestions: progress.correctlyAnsweredQuestions,
+  //           overallScore: parseFloat(progress.overallScore.toString()),
+  //           categoryScores: progress.categoryScores,
+  //           progressPercentage: progress.getProgressPercentage(),
+  //           accuracyPercentage: progress.getAccuracyPercentage(),
+  //           startedAt: progress.startedAt,
+  //           lastActiveAt: progress.lastActiveAt,
+  //           completedAt: progress.completedAt,
+  //         },
+  //       };
+  //     } else {
+  //       // User has no progress on this session
+  //       return {
+  //         sessionId: session.id,
+  //         sessionTitle: session.title,
+  //         sessionDescription: session.description,
+  //         timeLimit: session.timeLimit,
+  //         questionsPerCategory: session.questionsPerCategory,
+  //         isOnboardingSession: session.isOnboardingSession,
+  //         sessionCreatedAt: session.createdAt,
+  //         hasProgress: false,
+  //         progress: null,
+  //       };
+  //     }
+  //   });
+
+  //   // Format certificates
+  //   const certificates =
+  //     user.certificates?.map((cert) => ({
+  //       id: cert.id,
+  //       certificateId: cert.certificateId,
+  //       sessionId: cert.sessionId,
+  //       sessionTitle: cert.session?.title,
+  //       filePath: cert.filePath,
+  //       source: cert.source,
+  //       score: cert.score,
+  //       title: cert.title,
+  //       issuedBy: cert.issuedBy,
+  //       issuedDate: cert.issuedDate,
+  //       validUntil: cert.validUntil,
+  //       createdAt: cert.createdAt,
+  //     })) || [];
+
+  //   return {
+  //     user: {
+  //       id: user.id,
+  //       firstName: user.first_name,
+  //       lastName: user.last_name,
+  //       email: user.email,
+  //       level: user.level,
+  //       isOnboarding: user.is_onboarding,
+  //       role: {
+  //         id: user.role?.id,
+  //         name: user.role?.name,
+  //         department: user.role?.department
+  //           ? {
+  //               id: user.role.department.id,
+  //               name: user.role.department.name,
+  //             }
+  //           : null,
+  //       },
+  //       createdAt: user.created_at,
+  //       updatedAt: user.updated_at,
+  //     },
+  //     sessions: sessionsWithProgress,
+  //     certificates,
+  //     statistics: {
+  //       totalAvailableSessions: allSessions.length,
+  //       totalSessionsEnrolled,
+  //       completedSessions,
+  //       inProgressSessions,
+  //       notStartedSessions: Math.max(
+  //         0,
+  //         totalSessionsEnrolled - (completedSessions + inProgressSessions),
+  //       ),
+  //       totalCertificates,
+  //       averageScore: this.calculateAverageScore(user.sessionProgress),
+  //       overallAccuracy: this.calculateOverallAccuracy(user.sessionProgress),
+  //     },
+  //   };
+  // }
+
+  async findByIdWithDetails(id: string, queryParams?: GetUserDetailsDto) {
+    const user = await this.userRepo.findOne({
+      where: { id },
+      relations: [
+        'role',
+        'role.department',
+        'sessionProgress',
+        'sessionProgress.session',
+        'certificates',
+        'certificates.session',
+      ],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Fetch all available sessions with optional date filtering
+    const sessionQueryBuilder = this.sessionRepo
+      .createQueryBuilder('session')
+      .where('session.isActive = :isActive', { isActive: true });
+
+    if (queryParams?.sessionsStartDate) {
+      sessionQueryBuilder.andWhere('session.createdAt >= :startDate', {
+        startDate: new Date(queryParams.sessionsStartDate),
+      });
+    }
+
+    if (queryParams?.sessionsEndDate) {
+      sessionQueryBuilder.andWhere('session.createdAt <= :endDate', {
+        endDate: new Date(queryParams.sessionsEndDate),
+      });
+    }
+
+    const totalSessions = await sessionQueryBuilder.getCount();
+
+    sessionQueryBuilder.orderBy('session.createdAt', 'DESC');
+
+    // Apply pagination for sessions
+    const sessionsPage = queryParams?.sessionsPage || 1;
+    const sessionsLimit = queryParams?.sessionsLimit || 5;
+    const sessionsOffset = (sessionsPage - 1) * sessionsLimit;
+
+    const allSessions = await sessionQueryBuilder
+      .skip(sessionsOffset)
+      .take(sessionsLimit)
+      .getMany();
+
+    // Create a map of user's progress by session ID for quick lookup
+    const progressMap = new Map(
+      user.sessionProgress?.map((progress) => [progress.sessionId, progress]) ||
+        [],
+    );
+
+    // Calculate statistics
+    const totalSessionsEnrolled = user.sessionProgress?.length || 0;
+    const completedSessions =
+      user.sessionProgress?.filter(
+        (progress) => progress.status === ProgressStatus.COMPLETED,
+      ).length || 0;
+    const inProgressSessions =
+      user.sessionProgress?.filter(
+        (progress) => progress.status === ProgressStatus.IN_PROGRESS,
+      ).length || 0;
+
+    // Filter certificates by date if provided
+    let filteredCertificates = user.certificates || [];
+
+    if (queryParams?.certificatesStartDate) {
+      const startDate = new Date(queryParams.certificatesStartDate);
+      filteredCertificates = filteredCertificates.filter(
+        (cert) => new Date(cert.issuedDate || cert.createdAt) >= startDate,
+      );
+    }
+
+    if (queryParams?.certificatesEndDate) {
+      const endDate = new Date(queryParams.certificatesEndDate);
+      filteredCertificates = filteredCertificates.filter(
+        (cert) => new Date(cert.issuedDate || cert.createdAt) <= endDate,
+      );
+    }
+
+    const totalCertificatesFiltered = filteredCertificates.length;
+
+    // Apply pagination for certificates
+    const certificatesPage = queryParams?.certificatesPage || 1;
+    const certificatesLimit = queryParams?.certificatesLimit || 5;
+    const certificatesOffset = (certificatesPage - 1) * certificatesLimit;
+
+    const paginatedCertificates = filteredCertificates.slice(
+      certificatesOffset,
+      certificatesOffset + certificatesLimit,
+    );
+
+    // Format all sessions with their progress (if any)
+    const sessionsWithProgress = allSessions.map((session) => {
+      const progress = progressMap.get(session.id);
+
+      if (progress) {
+        return {
+          sessionId: session.id,
+          sessionTitle: session.title,
+          sessionDescription: session.description,
+          timeLimit: session.timeLimit,
+          questionsPerCategory: session.questionsPerCategory,
+          isOnboardingSession: session.isOnboardingSession,
+          sessionCreatedAt: session.createdAt,
+          hasProgress: true,
+          progress: {
+            status: progress.status,
+            currentCategory: progress.currentCategory,
+            currentQuestionIndex: progress.currentQuestionIndex,
+            totalQuestions: progress.totalQuestions,
+            answeredQuestions: progress.answeredQuestions,
+            correctlyAnsweredQuestions: progress.correctlyAnsweredQuestions,
+            overallScore: parseFloat(progress.overallScore.toString()),
+            categoryScores: progress.categoryScores,
+            progressPercentage: progress.getProgressPercentage(),
+            accuracyPercentage: progress.getAccuracyPercentage(),
+            startedAt: progress.startedAt,
+            lastActiveAt: progress.lastActiveAt,
+            completedAt: progress.completedAt,
+          },
+        };
+      } else {
+        return {
+          sessionId: session.id,
+          sessionTitle: session.title,
+          sessionDescription: session.description,
+          timeLimit: session.timeLimit,
+          questionsPerCategory: session.questionsPerCategory,
+          isOnboardingSession: session.isOnboardingSession,
+          sessionCreatedAt: session.createdAt,
+          hasProgress: false,
+          progress: null,
+        };
+      }
+    });
+
+    // Format certificates
+    const certificates = paginatedCertificates.map((cert) => ({
+      id: cert.id,
+      certificateId: cert.certificateId,
+      sessionId: cert.sessionId,
+      sessionTitle: cert.session?.title,
+      filePath: cert.filePath,
+      source: cert.source,
+      score: cert.score,
+      title: cert.title,
+      issuedBy: cert.issuedBy,
+      issuedDate: cert.issuedDate,
+      validUntil: cert.validUntil,
+      createdAt: cert.createdAt,
+    }));
+
+    return {
+      user: {
+        id: user.id,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        email: user.email,
+        level: user.level,
+        isOnboarding: user.is_onboarding,
+        role: {
+          id: user.role?.id,
+          name: user.role?.name,
+          department: user.role?.department
+            ? {
+                id: user.role.department.id,
+                name: user.role.department.name,
+              }
+            : null,
+        },
+        createdAt: user.created_at,
+        updatedAt: user.updated_at,
+      },
+      sessions: sessionsWithProgress,
+      certificates,
+      statistics: {
+        totalAvailableSessions: totalSessions,
+        totalSessionsEnrolled,
+        completedSessions,
+        inProgressSessions,
+        notStartedSessions: Math.max(
+          0,
+          totalSessionsEnrolled - (completedSessions + inProgressSessions),
+        ),
+        totalCertificates: user.certificates?.length || 0,
+        averageScore: this.calculateAverageScore(user.sessionProgress),
+        overallAccuracy: this.calculateOverallAccuracy(user.sessionProgress),
+      },
+      pagination: {
+        sessions: {
+          currentPage: sessionsPage,
+          totalPages: Math.ceil(totalSessions / sessionsLimit),
+          totalItems: totalSessions,
+          itemsPerPage: sessionsLimit,
+        },
+        certificates: {
+          currentPage: certificatesPage,
+          totalPages: Math.ceil(totalCertificatesFiltered / certificatesLimit),
+          totalItems: totalCertificatesFiltered,
+          itemsPerPage: certificatesLimit,
+        },
+      },
+    };
+  }
+
+  private calculateAverageScore(sessionProgress: any[]): number {
+    if (!sessionProgress || sessionProgress.length === 0) return 0;
+
+    const completedSessions = sessionProgress.filter(
+      (progress) => progress.status === ProgressStatus.COMPLETED,
+    );
+
+    if (completedSessions.length === 0) return 0;
+
+    const totalScore = completedSessions.reduce(
+      (sum, progress) => sum + parseFloat(progress.overallScore.toString()),
+      0,
+    );
+
+    return parseFloat((totalScore / completedSessions.length).toFixed(2));
+  }
+
+  private calculateOverallAccuracy(sessionProgress: any[]): number {
+    if (!sessionProgress || sessionProgress.length === 0) return 0;
+
+    const totalAnswered = sessionProgress.reduce(
+      (sum, progress) => sum + progress.answeredQuestions,
+      0,
+    );
+
+    if (totalAnswered === 0) return 0;
+
+    const totalCorrect = sessionProgress.reduce(
+      (sum, progress) => sum + progress.correctlyAnsweredQuestions,
+      0,
+    );
+
+    return parseFloat(((totalCorrect / totalAnswered) * 100).toFixed(2));
+  }
 
   /**
    * Find user by email
@@ -806,7 +1199,9 @@ export class UsersService {
    */
   async remove(id: string): Promise<void> {
     const user = await this.findById(id, false);
-
+    if (user.role.id === 1) {
+      throw new ForbiddenException('Cannot delete super admin users');
+    }
     try {
       await this.userRepo.remove(user);
     } catch (error) {
@@ -1008,7 +1403,7 @@ export class UsersService {
     search = '',
   ): Promise<AdminStatsUserResponse> {
     // Get global totals (not paginated)
-    const totalUsers = await this.userRepo.count();
+    //const totalUsers = await this.userRepo.count();
     const totalCertificates = await this.certificateRepo.count();
 
     // Calculate global session stats from ALL users
@@ -1029,24 +1424,27 @@ export class UsersService {
         'user.created_at',
         'role.name',
         'department.name',
-      ]);
+      ])
+      .where('role.id != :excludedRole', { excludedRole: 1 }); // Add this line
+    console.log(query.getSql());
+    console.log(query.getParameters());
 
     if (search && search.trim() !== '') {
-      query.where(
-        `LOWER(user.first_name) LIKE LOWER(:search)
-     OR LOWER(user.last_name) LIKE LOWER(:search)
-     OR LOWER(user.email) LIKE LOWER(:search)
-     OR LOWER(role.name) LIKE LOWER(:search)
-     OR LOWER(department.name) LIKE LOWER(:search)`,
+      query.andWhere(
+        `LOWER(CONCAT(user.first_name, ' ', user.last_name)) LIKE LOWER(:search)
+   OR LOWER(user.email) LIKE LOWER(:search)`,
         { search: `%${search}%` },
       );
     }
 
-    const users = await query
+    console.log(query.getSql());
+    console.log(query.getParameters());
+
+    const [users, totalUsers] = await query
       .orderBy('user.created_at', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
-      .getMany();
+      .getManyAndCount();
 
     // Now fetch session progress for these paginated users
     const userIds = users.map((u) => u.id);
@@ -1119,6 +1517,76 @@ export class UsersService {
       totalCertificates,
       totalSessionsAttempted: globalSessionStats.totalAttempts,
       averageSessionScore: globalSessionStats.averageScore,
+      users: formattedUsers,
+      page,
+      limit,
+    };
+  }
+
+  async getHODStatsUser(
+    roleId: number,
+    page = 1,
+    limit = 5,
+    search = '',
+  ): Promise<HODStatsUserResponse> {
+    //const totalCertificates = await this.certificateRepo.count();
+    const totalCertificates = await this.certificateRepo
+      .createQueryBuilder('certificate')
+      .innerJoin('certificate.user', 'user')
+      .innerJoin('user.role', 'role')
+      .where('role.id = :roleId', { roleId })
+      .getCount();
+    // Calculate global session stats from ALL users
+    const query = this.userRepo
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'role')
+      .leftJoinAndSelect('role.department', 'department')
+      .leftJoin('user.certificates', 'certificate')
+      .loadRelationCountAndMap('user.totalCertificates', 'user.certificates')
+      .where('role.id = :roleId', { roleId })
+      .select([
+        'user.id',
+        'user.first_name',
+        'user.last_name',
+        'user.email',
+        'user.created_at',
+        'role.name',
+        'department.name',
+      ]);
+
+    if (search && search.trim() !== '') {
+      query.where(
+        `LOWER(CONCAT(user.first_name, ' ', user.last_name)) LIKE LOWER(:search)
+   OR LOWER(user.email) LIKE LOWER(:search)`,
+        { search: `%${search}%` },
+      );
+    }
+
+    console.log(query.getSql());
+    console.log(query.getParameters());
+
+    const [users, totalUsers] = await query
+      .orderBy('user.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    const formattedUsers: UserWithStats[] = users.map((u: any) => {
+      return {
+        id: u.id,
+        first_name: u.first_name,
+        last_name: u.last_name,
+        email: u.email,
+        createdAt: u.created_at,
+        role: u.role?.name || 'N/A',
+        department: u.role?.department?.name || 'N/A',
+        totalCertificates: u.totalCertificates || 0,
+      };
+    });
+
+    return {
+      totalUsers,
+      totalCertificates,
       users: formattedUsers,
       page,
       limit,

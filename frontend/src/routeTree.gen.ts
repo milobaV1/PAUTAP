@@ -22,6 +22,7 @@ import { Route as AuthuserLayoutRouteImport } from './routes/_auth/(user)/_layou
 import { Route as AdminAuthAdminLayoutRouteImport } from './routes/_admin-auth/admin/_layout'
 import { Route as AuthuserLayoutIndexRouteImport } from './routes/_auth/(user)/_layout/index'
 import { Route as AdminAuthAdminLayoutIndexRouteImport } from './routes/_admin-auth/admin/_layout/index'
+import { Route as AuthuserLayoutUsersIndexRouteImport } from './routes/_auth/(user)/_layout/users/index'
 import { Route as AuthuserLayoutTriviaIndexRouteImport } from './routes/_auth/(user)/_layout/trivia/index'
 import { Route as AuthuserLayoutSessionIndexRouteImport } from './routes/_auth/(user)/_layout/session/index'
 import { Route as AuthuserLayoutProfileIndexRouteImport } from './routes/_auth/(user)/_layout/profile/index'
@@ -29,7 +30,9 @@ import { Route as AuthuserLayoutCertificateIndexRouteImport } from './routes/_au
 import { Route as AdminAuthAdminLayoutUserIndexRouteImport } from './routes/_admin-auth/admin/_layout/user/index'
 import { Route as AdminAuthAdminLayoutSessionIndexRouteImport } from './routes/_admin-auth/admin/_layout/session/index'
 import { Route as AdminAuthAdminLayoutQuestionIndexRouteImport } from './routes/_admin-auth/admin/_layout/question/index'
+import { Route as AuthuserLayoutUsersIdIndexRouteImport } from './routes/_auth/(user)/_layout/users/$id/index'
 import { Route as AuthuserLayoutSessionIdIndexRouteImport } from './routes/_auth/(user)/_layout/session/$id/index'
+import { Route as AdminAuthAdminLayoutUserIdIndexRouteImport } from './routes/_admin-auth/admin/_layout/user/$id/index'
 import { Route as AuthuserLayoutSessionIdResultRouteImport } from './routes/_auth/(user)/_layout/session/$id/result'
 import { Route as AuthuserLayoutSessionIdCategoryCategoryIdIndexRouteImport } from './routes/_auth/(user)/_layout/session/$id/category/$categoryId/index'
 
@@ -97,6 +100,12 @@ const AdminAuthAdminLayoutIndexRoute =
     path: '/',
     getParentRoute: () => AdminAuthAdminLayoutRoute,
   } as any)
+const AuthuserLayoutUsersIndexRoute =
+  AuthuserLayoutUsersIndexRouteImport.update({
+    id: '/users/',
+    path: '/users/',
+    getParentRoute: () => AuthuserLayoutRoute,
+  } as any)
 const AuthuserLayoutTriviaIndexRoute =
   AuthuserLayoutTriviaIndexRouteImport.update({
     id: '/trivia/',
@@ -139,11 +148,23 @@ const AdminAuthAdminLayoutQuestionIndexRoute =
     path: '/question/',
     getParentRoute: () => AdminAuthAdminLayoutRoute,
   } as any)
+const AuthuserLayoutUsersIdIndexRoute =
+  AuthuserLayoutUsersIdIndexRouteImport.update({
+    id: '/users/$id/',
+    path: '/users/$id/',
+    getParentRoute: () => AuthuserLayoutRoute,
+  } as any)
 const AuthuserLayoutSessionIdIndexRoute =
   AuthuserLayoutSessionIdIndexRouteImport.update({
     id: '/session/$id/',
     path: '/session/$id/',
     getParentRoute: () => AuthuserLayoutRoute,
+  } as any)
+const AdminAuthAdminLayoutUserIdIndexRoute =
+  AdminAuthAdminLayoutUserIdIndexRouteImport.update({
+    id: '/user/$id/',
+    path: '/user/$id/',
+    getParentRoute: () => AdminAuthAdminLayoutRoute,
   } as any)
 const AuthuserLayoutSessionIdResultRoute =
   AuthuserLayoutSessionIdResultRouteImport.update({
@@ -174,8 +195,11 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthuserLayoutProfileIndexRoute
   '/session': typeof AuthuserLayoutSessionIndexRoute
   '/trivia': typeof AuthuserLayoutTriviaIndexRoute
+  '/users': typeof AuthuserLayoutUsersIndexRoute
   '/session/$id/result': typeof AuthuserLayoutSessionIdResultRoute
+  '/admin/user/$id': typeof AdminAuthAdminLayoutUserIdIndexRoute
   '/session/$id': typeof AuthuserLayoutSessionIdIndexRoute
+  '/users/$id': typeof AuthuserLayoutUsersIdIndexRoute
   '/session/$id/category/$categoryId': typeof AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -193,8 +217,11 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthuserLayoutProfileIndexRoute
   '/session': typeof AuthuserLayoutSessionIndexRoute
   '/trivia': typeof AuthuserLayoutTriviaIndexRoute
+  '/users': typeof AuthuserLayoutUsersIndexRoute
   '/session/$id/result': typeof AuthuserLayoutSessionIdResultRoute
+  '/admin/user/$id': typeof AdminAuthAdminLayoutUserIdIndexRoute
   '/session/$id': typeof AuthuserLayoutSessionIdIndexRoute
+  '/users/$id': typeof AuthuserLayoutUsersIdIndexRoute
   '/session/$id/category/$categoryId': typeof AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute
 }
 export interface FileRoutesById {
@@ -219,8 +246,11 @@ export interface FileRoutesById {
   '/_auth/(user)/_layout/profile/': typeof AuthuserLayoutProfileIndexRoute
   '/_auth/(user)/_layout/session/': typeof AuthuserLayoutSessionIndexRoute
   '/_auth/(user)/_layout/trivia/': typeof AuthuserLayoutTriviaIndexRoute
+  '/_auth/(user)/_layout/users/': typeof AuthuserLayoutUsersIndexRoute
   '/_auth/(user)/_layout/session/$id/result': typeof AuthuserLayoutSessionIdResultRoute
+  '/_admin-auth/admin/_layout/user/$id/': typeof AdminAuthAdminLayoutUserIdIndexRoute
   '/_auth/(user)/_layout/session/$id/': typeof AuthuserLayoutSessionIdIndexRoute
+  '/_auth/(user)/_layout/users/$id/': typeof AuthuserLayoutUsersIdIndexRoute
   '/_auth/(user)/_layout/session/$id/category/$categoryId/': typeof AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -241,8 +271,11 @@ export interface FileRouteTypes {
     | '/profile'
     | '/session'
     | '/trivia'
+    | '/users'
     | '/session/$id/result'
+    | '/admin/user/$id'
     | '/session/$id'
+    | '/users/$id'
     | '/session/$id/category/$categoryId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -260,8 +293,11 @@ export interface FileRouteTypes {
     | '/profile'
     | '/session'
     | '/trivia'
+    | '/users'
     | '/session/$id/result'
+    | '/admin/user/$id'
     | '/session/$id'
+    | '/users/$id'
     | '/session/$id/category/$categoryId'
   id:
     | '__root__'
@@ -285,8 +321,11 @@ export interface FileRouteTypes {
     | '/_auth/(user)/_layout/profile/'
     | '/_auth/(user)/_layout/session/'
     | '/_auth/(user)/_layout/trivia/'
+    | '/_auth/(user)/_layout/users/'
     | '/_auth/(user)/_layout/session/$id/result'
+    | '/_admin-auth/admin/_layout/user/$id/'
     | '/_auth/(user)/_layout/session/$id/'
+    | '/_auth/(user)/_layout/users/$id/'
     | '/_auth/(user)/_layout/session/$id/category/$categoryId/'
   fileRoutesById: FileRoutesById
 }
@@ -393,6 +432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuthAdminLayoutIndexRouteImport
       parentRoute: typeof AdminAuthAdminLayoutRoute
     }
+    '/_auth/(user)/_layout/users/': {
+      id: '/_auth/(user)/_layout/users/'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AuthuserLayoutUsersIndexRouteImport
+      parentRoute: typeof AuthuserLayoutRoute
+    }
     '/_auth/(user)/_layout/trivia/': {
       id: '/_auth/(user)/_layout/trivia/'
       path: '/trivia'
@@ -442,12 +488,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuthAdminLayoutQuestionIndexRouteImport
       parentRoute: typeof AdminAuthAdminLayoutRoute
     }
+    '/_auth/(user)/_layout/users/$id/': {
+      id: '/_auth/(user)/_layout/users/$id/'
+      path: '/users/$id'
+      fullPath: '/users/$id'
+      preLoaderRoute: typeof AuthuserLayoutUsersIdIndexRouteImport
+      parentRoute: typeof AuthuserLayoutRoute
+    }
     '/_auth/(user)/_layout/session/$id/': {
       id: '/_auth/(user)/_layout/session/$id/'
       path: '/session/$id'
       fullPath: '/session/$id'
       preLoaderRoute: typeof AuthuserLayoutSessionIdIndexRouteImport
       parentRoute: typeof AuthuserLayoutRoute
+    }
+    '/_admin-auth/admin/_layout/user/$id/': {
+      id: '/_admin-auth/admin/_layout/user/$id/'
+      path: '/user/$id'
+      fullPath: '/admin/user/$id'
+      preLoaderRoute: typeof AdminAuthAdminLayoutUserIdIndexRouteImport
+      parentRoute: typeof AdminAuthAdminLayoutRoute
     }
     '/_auth/(user)/_layout/session/$id/result': {
       id: '/_auth/(user)/_layout/session/$id/result'
@@ -471,6 +531,7 @@ interface AdminAuthAdminLayoutRouteChildren {
   AdminAuthAdminLayoutQuestionIndexRoute: typeof AdminAuthAdminLayoutQuestionIndexRoute
   AdminAuthAdminLayoutSessionIndexRoute: typeof AdminAuthAdminLayoutSessionIndexRoute
   AdminAuthAdminLayoutUserIndexRoute: typeof AdminAuthAdminLayoutUserIndexRoute
+  AdminAuthAdminLayoutUserIdIndexRoute: typeof AdminAuthAdminLayoutUserIdIndexRoute
 }
 
 const AdminAuthAdminLayoutRouteChildren: AdminAuthAdminLayoutRouteChildren = {
@@ -479,6 +540,7 @@ const AdminAuthAdminLayoutRouteChildren: AdminAuthAdminLayoutRouteChildren = {
     AdminAuthAdminLayoutQuestionIndexRoute,
   AdminAuthAdminLayoutSessionIndexRoute: AdminAuthAdminLayoutSessionIndexRoute,
   AdminAuthAdminLayoutUserIndexRoute: AdminAuthAdminLayoutUserIndexRoute,
+  AdminAuthAdminLayoutUserIdIndexRoute: AdminAuthAdminLayoutUserIdIndexRoute,
 }
 
 const AdminAuthAdminLayoutRouteWithChildren =
@@ -514,8 +576,10 @@ interface AuthuserLayoutRouteChildren {
   AuthuserLayoutProfileIndexRoute: typeof AuthuserLayoutProfileIndexRoute
   AuthuserLayoutSessionIndexRoute: typeof AuthuserLayoutSessionIndexRoute
   AuthuserLayoutTriviaIndexRoute: typeof AuthuserLayoutTriviaIndexRoute
+  AuthuserLayoutUsersIndexRoute: typeof AuthuserLayoutUsersIndexRoute
   AuthuserLayoutSessionIdResultRoute: typeof AuthuserLayoutSessionIdResultRoute
   AuthuserLayoutSessionIdIndexRoute: typeof AuthuserLayoutSessionIdIndexRoute
+  AuthuserLayoutUsersIdIndexRoute: typeof AuthuserLayoutUsersIdIndexRoute
   AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute: typeof AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute
 }
 
@@ -525,8 +589,10 @@ const AuthuserLayoutRouteChildren: AuthuserLayoutRouteChildren = {
   AuthuserLayoutProfileIndexRoute: AuthuserLayoutProfileIndexRoute,
   AuthuserLayoutSessionIndexRoute: AuthuserLayoutSessionIndexRoute,
   AuthuserLayoutTriviaIndexRoute: AuthuserLayoutTriviaIndexRoute,
+  AuthuserLayoutUsersIndexRoute: AuthuserLayoutUsersIndexRoute,
   AuthuserLayoutSessionIdResultRoute: AuthuserLayoutSessionIdResultRoute,
   AuthuserLayoutSessionIdIndexRoute: AuthuserLayoutSessionIdIndexRoute,
+  AuthuserLayoutUsersIdIndexRoute: AuthuserLayoutUsersIdIndexRoute,
   AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute:
     AuthuserLayoutSessionIdCategoryCategoryIdIndexRoute,
 }

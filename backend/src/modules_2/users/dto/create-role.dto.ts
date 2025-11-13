@@ -18,3 +18,13 @@ export class CreateRoleDto {
   @IsNotEmpty()
   departmentId: number;
 }
+
+export class RoleDto {
+  @ApiProperty({
+    example: 'a23e4567-e89b-12d3-a456-426614174000',
+    description: 'UUID of the assigned role',
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  role_id: number;
+}

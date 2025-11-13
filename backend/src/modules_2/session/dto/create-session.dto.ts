@@ -68,13 +68,6 @@ export class CreateSessionDto {
 
 export class StartSessionDto {
   @ApiProperty({
-    description: 'The role ID of the user starting the session',
-    example: 3,
-  })
-  @IsNumber()
-  roleId: number;
-
-  @ApiProperty({
     description: 'The UUID of the user',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })

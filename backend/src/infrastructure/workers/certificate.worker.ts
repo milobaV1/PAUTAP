@@ -17,8 +17,9 @@ export class CertificateProcessor extends WorkerHost {
   }
 
   async process(job: any) {
-    const { certificateId, user, sessionId, roleId, score, completionData } =
-      job.data;
+    const { certificateId, user, sessionId, score, completionData } = job.data;
+
+    console.log('This is the user for the certi: ', user);
 
     this.logger.log(
       `Processing certificate generation for user ${user.id}, session ${sessionId}, score: ${score}%`,
@@ -29,7 +30,7 @@ export class CertificateProcessor extends WorkerHost {
         certificateId,
         user.id,
         sessionId,
-        roleId,
+        user.role.id,
         score,
         completionData, // Pass the additional completion data
       );

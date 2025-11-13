@@ -46,6 +46,7 @@ export class SessionService {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectQueue('certificate') private readonly certificateQueue: Queue,
+    @InjectQueue('email') private readonly emailQueue: Queue,
     @InjectRepository(Certificate)
     private certificateRepo: Repository<Certificate>,
     @InjectRepository(Session)
@@ -69,11 +70,9 @@ export class SessionService {
     await queryRunner.startTransaction();
     try {
       const session = await queryRunner.manager.save(Session, createSessionDto);
-      const roles = await this.roleRepo.find();
 
-      await this.generateQuestionsForAllRoles(
+      await this.generateQuestions(
         session.id,
-        roles,
         session.questionsPerCategory,
         queryRunner.manager,
       );
@@ -113,7 +112,7 @@ export class SessionService {
     return completedSessions;
   }
 
-  async getUserSessionWithStatuses(userId: string, userRoleId: number) {
+  async getUserSessionWithStatuses(userId: string) {
     const sessionsWithProgress = await this.sessionRepo
       .createQueryBuilder('session')
       .leftJoinAndSelect(
@@ -122,13 +121,10 @@ export class SessionService {
         'progress.userId = :userId',
         { userId },
       )
-      .leftJoinAndSelect('progress.role', 'role')
       .leftJoinAndSelect(
         // Just JOIN, don't SELECT questions/answers
         'session.roleCategoryQuestions',
         'roleCategoryQuestions',
-        'roleCategoryQuestions.roleId = :roleId',
-        { roleId: userRoleId },
       )
       .where('session.isOnboardingSession = :isOnboarding', {
         isOnboarding: false,
@@ -186,7 +182,7 @@ export class SessionService {
   }
 
   // session.service.ts
-  async getOnboardingSessions(userId: string, userRoleId: number) {
+  async getOnboardingSessions(userId: string) {
     const query = this.sessionRepo
       .createQueryBuilder('session')
       .leftJoinAndSelect('session.roleCategoryQuestions', 'rcq')
@@ -200,7 +196,6 @@ export class SessionService {
         isOnboarding: true,
       })
       .andWhere('session.isActive = :isActive', { isActive: true })
-      .andWhere('rcq.roleId = :roleId', { roleId: userRoleId })
       .orderBy('session.createdAt', 'DESC');
 
     const sessions = await query.getMany();
@@ -286,19 +281,18 @@ export class SessionService {
     sessionId: string,
     startSessionDto: StartSessionDto,
   ) {
-    const { userId, roleId } = startSessionDto;
+    const { userId } = startSessionDto;
     // ... existing code until return statement
     const session = await this.getSession(sessionId);
 
     console.log('Session from start or resume session', session);
 
     // 2) Load role categories (cached if possible)
-    const roleCategories = await this.getCategoriesCached(sessionId, roleId);
+    const roleCategories = await this.getCategoriesCached(sessionId);
 
     // 3) Ensure or create progress
     let progress = await this.getOrCreateProgress(
       sessionId,
-      roleId,
       userId,
       roleCategories,
     );
@@ -372,9 +366,8 @@ export class SessionService {
     await this.sessionRepo.remove(session);
   }
 
-  private async generateQuestionsForAllRoles(
+  private async generateQuestions(
     sessionId: string,
-    roles: Role[],
     questionsPerCategory: number,
     manager: any,
   ): Promise<void> {
@@ -389,25 +382,21 @@ export class SessionService {
       [];
     const questionUsageUpdates: QuestionUsageDto[] = [];
 
-    for (const role of roles) {
-      for (const category of crispCategories) {
-        const selectedQuestions = await this.selectQuestionsForRoleAndCategory(
-          role.id,
-          category,
-          questionsPerCategory,
-          manager,
-        );
-        sessionRoleCategoryQuestions.push({
-          sessionId,
-          roleId: role.id,
-          crispCategory: category,
-          questionIds: selectedQuestions,
-          questionsCount: selectedQuestions.length,
-        });
-        selectedQuestions.forEach((questionId) => {
-          questionUsageUpdates.push({ questionId, roleId: role.id });
-        });
-      }
+    for (const category of crispCategories) {
+      const selectedQuestions = await this.selectQuestionsForCategory(
+        category,
+        questionsPerCategory,
+        manager,
+      );
+      sessionRoleCategoryQuestions.push({
+        sessionId,
+        crispCategory: category,
+        questionIds: selectedQuestions,
+        questionsCount: selectedQuestions.length,
+      });
+      selectedQuestions.forEach((questionId) => {
+        questionUsageUpdates.push({ questionId });
+      });
     }
 
     await manager.save(
@@ -422,19 +411,16 @@ export class SessionService {
     );
   }
 
-  private async selectQuestionsForRoleAndCategory(
-    roleId: number,
+  private async selectQuestionsForCategory(
     category: CRISP,
     questionsPerCategory: number,
     manager: any,
   ): Promise<string[]> {
     const questions = await manager
       .createQueryBuilder(QuestionBank, 'q')
-      .leftJoin('q.roles', 'qr')
-      .leftJoin('q.usages', 'qu', 'qu.roleId = :roleId', { roleId })
+      .leftJoin('q.usages', 'qu')
       .select(['q.id', 'COALESCE(qu.usageCount, 0) as usageCount'])
-      .where('qr.id = :roleId', { roleId })
-      .andWhere('q.crispCategory = :category', { category })
+      .where('q.crispCategory = :category', { category })
       .orderBy('COALESCE(qu.usageCount, 0)', 'ASC')
       .addOrderBy('RANDOM()') // Secondary randomization
       .limit(questionsPerCategory)
@@ -450,16 +436,15 @@ export class SessionService {
   ): Promise<void> {
     const usageMap = new Map<string, QuestionUsageDto>();
     updates.forEach((update) => {
-      if (update.questionId && update.roleId) {
-        const key = `${update.questionId}-${update.roleId}`;
+      if (update.questionId) {
+        const key = `${update.questionId}`;
         usageMap.set(key, update);
       }
     });
 
     const usageUpdates = Array.from(usageMap.values()).map(
-      ({ questionId, roleId }) => ({
+      ({ questionId }) => ({
         questionId,
-        roleId,
         usageCount: 1, // Set default value for new rows
         lastUsedAt: new Date(),
         lastUsedInSessionId: sessionId,
@@ -474,7 +459,7 @@ export class SessionService {
         .values(usageUpdates)
         .orUpdate(
           ['usageCount', 'lastUsedAt', 'lastUsedInSessionId', 'updatedAt'],
-          ['questionId', 'roleId'],
+          ['questionId'],
           {
             skipUpdateIfNoValuesChanged: true,
             upsertType: 'on-conflict-do-update',
@@ -498,13 +483,12 @@ export class SessionService {
 
   private async getOrCreateProgress(
     sessionId: string,
-    roleId: number,
     userId: string,
     roleCategories: SessionRoleCategoryQuestion[],
   ) {
     let progress = await this.userSessionProgressRepo.findOne({
       where: { user: { id: userId }, session: { id: sessionId } },
-      relations: ['user', 'session', 'role'],
+      relations: ['user', 'session'],
     });
 
     if (!progress) {
@@ -518,7 +502,6 @@ export class SessionService {
       progress = this.userSessionProgressRepo.create({
         userId,
         sessionId,
-        roleId,
         status: ProgressStatus.IN_PROGRESS,
         startedAt: new Date(),
         lastActiveAt: new Date(),
@@ -530,14 +513,12 @@ export class SessionService {
       return this.userSessionProgressRepo.save(progress);
     }
     // progress.lastActiveAt = new Date();
-    if (!progress.role || progress.role.id !== roleId)
-      throw new Error('Role must match'); //Not sure which
 
     return progress;
   }
 
-  private async getCategoriesCached(sessionId: string, roleId: number) {
-    const cacheKey = `session:${sessionId}:role:${roleId}:categories`;
+  private async getCategoriesCached(sessionId: string) {
+    const cacheKey = `session:${sessionId}:categories`;
 
     //Try reading from the cache first
     const cached =
@@ -546,7 +527,7 @@ export class SessionService {
 
     //If there is nothing in the cache, get from the db
     const roleCategories = await this.sessionRoleCategoryRepo.find({
-      where: { sessionId, roleId },
+      where: { sessionId },
     });
     if (!roleCategories.length)
       throw new NotFoundException('No questions for this session + role');
@@ -571,7 +552,7 @@ export class SessionService {
       // 1) Get final progress state
       const progress = await queryRunner.manager.findOne(UserSessionProgress, {
         where: { userId, sessionId },
-        relations: ['user', 'session', 'role'],
+        relations: ['user', 'session'],
       });
 
       if (!progress || progress.status !== 'completed') {
@@ -580,9 +561,14 @@ export class SessionService {
 
       const user = await queryRunner.manager.findOne(User, {
         where: { id: userId },
+        relations: ['role'],
       });
 
       if (!user) throw new NotFoundException('No user found');
+      const roleId = user.role.id;
+      const HODEmail = await this.getHODMail(roleId, queryRunner.manager);
+      const userName =
+        `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email;
 
       const session = await queryRunner.manager.findOne(Session, {
         where: { id: sessionId },
@@ -630,6 +616,8 @@ export class SessionService {
         passingScore: number;
       } | null = null;
 
+      console.log('This is the certi 1 info: ', certificateInfo);
+
       if (isEligibleForCertificate) {
         const certificateId = `CERT_${progress.sessionId}_${progress.userId}_${Date.now()}`;
 
@@ -640,7 +628,6 @@ export class SessionService {
             certificateId,
             user,
             sessionId: progress.sessionId,
-            roleId: progress.roleId,
             score: completionData.overallScore,
             completionData, // Pass the full completion data
           },
@@ -663,6 +650,8 @@ export class SessionService {
         };
       }
 
+      console.log('This is the certi 2 info: ', certificateInfo);
+
       // 5) Trigger notifications/events
       // await this.triggerCompletionEvents(progress, completionData);
 
@@ -671,6 +660,141 @@ export class SessionService {
 
       await queryRunner.commitTransaction();
 
+      if (HODEmail) {
+        await this.emailQueue.add(
+          'staff completion notification',
+          {
+            to: HODEmail,
+            subject: `📋 Staff Training Completion - ${userName}`,
+            html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                background-color: #f9fafb;
+                color: #2e3f6f;
+                margin: 0;
+                padding: 0;
+              }
+              .container {
+                max-width: 600px;
+                margin: 20px auto;
+                background: #ffffff;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+              }
+              h1 {
+                font-size: 22px;
+                margin-bottom: 20px;
+                text-align: center;
+                color: #2e3f6f;
+              }
+              p {
+                font-size: 16px;
+                line-height: 1.5;
+                color: #444;
+              }
+              .details {
+                background-color: #f3f4f6;
+                padding: 15px;
+                border-radius: 6px;
+                margin: 20px 0;
+              }
+              .details p {
+                margin: 8px 0;
+              }
+              .details strong {
+                color: #2e3f6f;
+              }
+              .score-badge {
+                display: inline-block;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-weight: bold;
+                font-size: 18px;
+                ${
+                  completionData.overallScore >= passingScore
+                    ? 'background-color: #d1fae5; color: #065f46;'
+                    : 'background-color: #fee2e2; color: #991b1b;'
+                }
+              }
+              .success-banner {
+                background-color: #d1fae5;
+                padding: 12px;
+                border-left: 4px solid #10b981;
+                margin: 20px 0;
+                border-radius: 4px;
+              }
+              .footer {
+                margin-top: 30px;
+                font-size: 12px;
+                color: #777;
+                text-align: center;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Training Session Completed 📋</h1>
+              <p>Dear HOD,</p>
+              <p>
+                A staff member from your department has successfully completed a training session.
+              </p>
+              
+              <div class="details">
+                <p><strong>Staff Name:</strong> ${userName}</p>
+                <p><strong>Email:</strong> ${user.email}</p>
+                <p><strong>Session:</strong> ${session?.title ?? 'N/A'}</p>
+                <p><strong>Completion Date:</strong> ${new Date().toLocaleDateString(
+                  'en-US',
+                  {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  },
+                )}</p>
+              </div>
+
+              <div style="text-align: center; margin: 20px 0;">
+                <p style="margin-bottom: 10px;"><strong>Final Score:</strong></p>
+                <span class="score-badge">${completionData.overallScore.toFixed(1)}%</span>
+              </div>
+
+              ${
+                isEligibleForCertificate
+                  ? `
+              <div class="success-banner">
+                <p style="margin: 0; color: #065f46;">
+                  ✅ <strong>Certificate Earned:</strong> The staff member has achieved a passing score and will receive a completion certificate.
+                </p>
+              </div>
+              `
+                  : ''
+              }
+              
+              <div class="footer">
+                <p>This is an automated notification from PAU Training Application.</p>
+                <p>For more details, please log in to the training platform.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+          },
+          {
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 5000 },
+            removeOnComplete: 10,
+            removeOnFail: 5,
+          },
+        );
+      }
+
       return {
         success: true,
         sessionTitle: session?.title ?? '',
@@ -678,7 +802,7 @@ export class SessionService {
         categoryScores: completionData.categoryScores,
         certificateId: certificateInfo?.certificateId ?? '',
         completionTime: completionData.timeSpent,
-        rank: completionData.roleRank,
+        //rank: completionData.roleRank,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -686,6 +810,21 @@ export class SessionService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  private async getHODMail(
+    roleId: number,
+    manager: any,
+  ): Promise<string | null> {
+    const result = await manager
+      .createQueryBuilder(User, 'u')
+      .leftJoin('u.role', 'r')
+      .where('r.id = :roleId', { roleId })
+      .andWhere('u.level = :level', { level: 'head_of_dept' })
+      .select('u.email', 'email')
+      .getRawOne();
+
+    return result?.email || null;
   }
 
   private async calculateCompletionMetrics(
@@ -719,18 +858,18 @@ export class SessionService {
     const timeSpent = this.calculateTimeSpent(answers);
 
     // Get user's rank among peers with same role
-    const roleRank = await this.calculateRoleRank(
-      userId,
-      sessionId,
-      overallScore,
-      manager,
-    );
+    // const roleRank = await this.calculateRoleRank(
+    //   userId,
+    //   sessionId,
+    //   overallScore,
+    //   manager,
+    // );
 
     return {
       overallScore,
       categoryScores,
       timeSpent,
-      roleRank,
+      //roleRank,
       finalScores: {
         overallScore,
         ...categoryScores,
@@ -832,7 +971,6 @@ export class SessionService {
       // 1) Get current progress
       const progress = await queryRunner.manager.findOne(UserSessionProgress, {
         where: { userId, sessionId },
-        relations: ['role'],
       });
 
       console.log('This is the progress before syncing: ', progress);
@@ -925,11 +1063,7 @@ export class SessionService {
     // Get total questions assigned to this user for this session
     const totalQuestionsQuery = await manager
       .createQueryBuilder(SessionRoleCategoryQuestion, 'srcq')
-      .innerJoin(
-        UserSessionProgress,
-        'usp',
-        'usp.roleId = srcq.roleId AND usp.sessionId = srcq.sessionId',
-      )
+      .innerJoin(UserSessionProgress, 'usp', 'usp.sessionId = srcq.sessionId')
       .where('usp.userId = :userId', { userId })
       .andWhere('usp.sessionId = :sessionId', { sessionId })
       .getMany();
@@ -948,11 +1082,7 @@ export class SessionService {
         'srcq',
         'ua.sessionRoleCategoryQuestionId = srcq.id',
       )
-      .innerJoin(
-        UserSessionProgress,
-        'usp',
-        'usp.roleId = srcq.roleId AND usp.sessionId = srcq.sessionId',
-      )
+      .innerJoin(UserSessionProgress, 'usp', 'usp.sessionId = srcq.sessionId')
       .where('ua.userId = :userId', { userId })
       .andWhere('usp.sessionId = :sessionId', { sessionId })
       .getCount();
@@ -1081,7 +1211,6 @@ export class SessionService {
       // Get the category data for this answer
       const categoryData = await this.getCategoryForQuestion(
         progress.sessionId,
-        progress.roleId,
         answer.questionId,
         manager,
       );
@@ -1177,12 +1306,12 @@ export class SessionService {
   // NEW: Get category data for a specific question
   private async getCategoryForQuestion(
     sessionId: string,
-    roleId: number,
+    // roleId: number,
     questionId: string,
     manager: any,
   ): Promise<SessionRoleCategoryQuestion | null> {
     const categories = await manager.find(SessionRoleCategoryQuestion, {
-      where: { sessionId, roleId },
+      where: { sessionId },
     });
 
     console.log(`Get categories for the question ${questionId}: `, categories);
@@ -1379,7 +1508,6 @@ export class SessionService {
           const sessionRoleCategoryQuestion =
             this.sessionRoleCategoryRepo.create({
               sessionId,
-              roleId: role.id,
               crispCategory: category,
               questionIds: questions.map((q) => q.id),
               questionsCount: questions.length,

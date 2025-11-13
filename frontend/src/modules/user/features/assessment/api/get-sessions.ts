@@ -15,9 +15,7 @@ export async function getSessions(
 ): Promise<SessionSummary[]> {
   try {
     console.log("This is point 6 of the api call");
-    const response = await client.get(
-      `/session/user/${data.userId}/statuses?userRoleId=${data.userRoleId}`
-    );
+    const response = await client.get(`/session/user/${data.userId}/statuses`);
     return response.data as SessionSummary[];
   } catch (error) {
     const msg = getAxiosError(error);
@@ -31,7 +29,7 @@ export async function getOnboardingSession(
   try {
     console.log("This is point 6 of the api call");
     const response = await client.get(
-      `/session/user/${data.userId}/statuses/onboarding?userRoleId=${data.userRoleId}`
+      `/session/user/${data.userId}/statuses/onboarding`
     );
     return response.data as SessionSummary[];
   } catch (error) {
@@ -43,14 +41,12 @@ export async function getOnboardingSession(
 // NEW: Function to start/resume session and get full data
 export async function startOrResumeSession(
   sessionId: string,
-  userId: string,
-  roleId: number
+  userId: string
 ): Promise<FullSessionData> {
   try {
     console.log("This is point 1 of the api call");
     const response = await client.post(`/session/${sessionId}/start`, {
       userId,
-      roleId,
     });
 
     console.log("This is point 5 of the api call");
@@ -63,11 +59,11 @@ export async function startOrResumeSession(
 
 // Hook for lightweight session list
 export function useGetSessions(data: getSessions) {
-  const { userId, userRoleId } = data;
+  const { userId } = data;
   const setSessions = useSessionStore((state) => state.setSessions);
   console.log("This is point 7 of the api call");
   return useQuery({
-    queryKey: ["sessions-summary", { userId, userRoleId }],
+    queryKey: ["sessions-summary", { userId }],
     queryFn: async () => {
       const sessions = await getSessions(data);
       console.log("Lightweight sessions from API:", sessions);
@@ -78,11 +74,11 @@ export function useGetSessions(data: getSessions) {
 }
 
 export function useGetOnboardingSession(data: getSessions) {
-  const { userId, userRoleId } = data;
+  const { userId } = data;
   const setSessions = useSessionStore((state) => state.setSessions);
   console.log("This is point 7 of the api call");
   return useQuery({
-    queryKey: ["onboarding-session-summary", { userId, userRoleId }],
+    queryKey: ["onboarding-session-summary", { userId }],
     queryFn: async () => {
       const sessions = await getOnboardingSession(data);
       console.log("Lightweight sessions from API:", sessions);
@@ -105,12 +101,10 @@ export function useStartOrResumeSession() {
     mutationFn: ({
       sessionId,
       userId,
-      roleId,
     }: {
       sessionId: string;
       userId: string;
-      roleId: number;
-    }) => startOrResumeSession(sessionId, userId, roleId),
+    }) => startOrResumeSession(sessionId, userId),
 
     onSuccess: (fullSessionData) => {
       console.log("This is point 4 of the api call");

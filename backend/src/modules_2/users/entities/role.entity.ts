@@ -37,9 +37,9 @@ export class Role {
   @OneToMany(() => User, (user) => user.role)
   users: User[];
 
-  @OneToMany(() => QuestionUsage, (usage) => usage.role)
-  questionUsages: QuestionUsage[];
+  // @OneToMany(() => QuestionUsage, (usage) => usage.role)
+  // questionUsages: QuestionUsage[];
 
-  @ManyToMany(() => QuestionBank, (question) => question.roles)
-  questions: QuestionBank[];
+  // @ManyToMany(() => QuestionBank, (question) => question.roles)
+  // questions: QuestionBank[];
 }
