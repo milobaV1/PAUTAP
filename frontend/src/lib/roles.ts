@@ -36,6 +36,27 @@ export const roles = [
   { value: "professional_education", label: "Professional Education" },
   { value: "nollywood_studies_centre", label: "Nollywood Studies Centre" },
   { value: "academic_education", label: "Academic Education" },
+  { value: "philosophy", label: "Philosophy" },
+  { value: "ethics_and_anthropology", label: "Ethics and anthropology" },
+  { value: "general_studies", label: "General studies" },
+  { value: "english", label: "English" },
+  { value: "mass_communication", label: "Mass Communication" },
+  {
+    value: "information_science_media_studies",
+    label: "Information Science and Media Studies",
+  },
+  { value: "film_multimedia_studies", label: "Film and Multimedia studies" },
+  { value: "business_administration", label: "Business Administration" },
+  { value: "economics", label: "Economics" },
+  { value: "accounting", label: "Accounting" },
+  { value: "finance", label: "Finance" },
+  { value: "mechanical_engineering", label: "Mechanical Engineering" },
+  {
+    value: "electrical_electronics_engineering",
+    label: "Electrical and Electronics Engineering",
+  },
+  { value: "computer_science", label: "Computer Science" },
+  { value: "basic_sciences", label: "Basic Sciences" },
 ];
 
 export const roleMap: Record<string, number> = {
@@ -81,6 +102,29 @@ export const roleMap: Record<string, number> = {
   professional_education: 30,
   nollywood_studies_centre: 31,
   academic_education: 32,
+
+  // IOH Department
+  philosophy: 33,
+  ethics_and_anthropology: 34,
+  general_studies: 35,
+  english: 36,
+
+  // SMC Department
+  mass_communication: 37,
+  information_science_media_studies: 38,
+  film_multimedia_studies: 39,
+
+  // SMSS Department
+  business_administration: 40,
+  economics: 41,
+  accounting: 42,
+  finance: 43,
+
+  // SST Department
+  mechanical_engineering: 44,
+  electrical_electronics_engineering: 45,
+  computer_science: 46,
+  basic_sciences: 47,
 };
 
 export function getRoleIds(selectedRoles: string[]): number[] {
