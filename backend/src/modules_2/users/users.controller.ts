@@ -227,6 +227,7 @@ export class UsersController {
     @Query('search') search?: string,
   ) {
     const departmentId = parseInt(departmentIdStr, 10);
+    console.log('This is the department id during dean check: ', departmentId);
 
     // Validate roleId
     if (isNaN(departmentId)) {

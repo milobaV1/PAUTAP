@@ -1607,6 +1607,11 @@ export class UsersService {
       .where('role.department_id = :departmentId', { departmentId })
       .getCount();
 
+    console.log(
+      'This is the total no of certificates during dean check: ',
+      totalCertificates,
+    );
+
     // Get all users in the department
     const query = this.userRepo
       .createQueryBuilder('user')
