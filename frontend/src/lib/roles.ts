@@ -58,6 +58,11 @@ export const roles = [
   { value: "computer_science", label: "Computer Science" },
   { value: "basic_sciences", label: "Basic Sciences" },
   { value: "media", label: "Media" },
+  { value: "director_of_ioh", label: "Director of IOH" },
+  { value: "dean_of_smc", label: "Dean of SMC" },
+  { value: "dean_of_sst", label: "Dean of SST" },
+  { value: "dean_of_smss", label: "Dean of SMSS" },
+  { value: "director_of_services", label: "Director of Services" },
 ];
 
 export const roleMap: Record<string, number> = {
@@ -127,6 +132,13 @@ export const roleMap: Record<string, number> = {
   computer_science: 46,
   basic_sciences: 47,
   media: 48,
+
+  //Deans/Directors
+  director_of_ioh: 49,
+  dean_of_smc: 50,
+  dean_of_sst: 51,
+  dean_of_smss: 52,
+  director_of_services: 53,
 };
 
 export function getRoleIds(selectedRoles: string[]): number[] {

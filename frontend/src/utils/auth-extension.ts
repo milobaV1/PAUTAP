@@ -21,3 +21,18 @@ export const isHOD = () => {
   // Your admin check logic here
   return state.user && state.user.level === UserLevel.HEAD_OF_DEPT;
 };
+
+export const isDean = () => {
+  const state = useAuthState.getState();
+  console.log("isDean check:", state);
+  // Your admin check logic here
+  return (
+    state.decodedDto && [49, 50, 51, 52].includes(state.decodedDto.sub.roleId)
+  );
+};
+
+export const isDirectorOfServices = () => {
+  const state = useAuthState.getState();
+  console.log("isDirectorOfServices check:", state);
+  return state.decodedDto && state.decodedDto.sub.roleId === 53;
+};

@@ -3,15 +3,15 @@ import { getAxiosError } from "@/lib/api/error";
 import type { HODStatsUserResponse } from "@/service/interfaces/user.interface";
 import { useQuery } from "@tanstack/react-query";
 
-export async function getUserForHOD(
-  roleId: number,
+export async function getUserForDean(
+  departmentId: number,
   page = 1,
   limit = 5,
   searchTerm = ""
 ) {
   try {
-    const response = await client.get(`/users/hod/stats`, {
-      params: { roleId, page, limit, search: searchTerm },
+    const response = await client.get(`/users/dean/stats`, {
+      params: { departmentId, page, limit, search: searchTerm },
     });
     return response.data as HODStatsUserResponse;
   } catch (error) {
@@ -20,15 +20,15 @@ export async function getUserForHOD(
   }
 }
 
-export function useGetUserForHOD(
-  roleId: number,
+export function useGetUserForDean(
+  departmentId: number,
   page: number,
   limit: number,
   searchTerm: string
 ) {
   return useQuery({
-    queryKey: ["hod-user", roleId, page, limit, searchTerm],
-    queryFn: () => getUserForHOD(roleId, page, limit, searchTerm),
+    queryKey: ["dean-user", departmentId, page, limit, searchTerm],
+    queryFn: () => getUserForDean(departmentId, page, limit, searchTerm),
     placeholderData: (previousData) => previousData,
   });
 }

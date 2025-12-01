@@ -21,6 +21,9 @@ import { Users, Search, Eye, Award } from "lucide-react";
 //import { useDeleteUser } from "./api/delete-user";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthState } from "@/store/auth.store";
+import { useGetUserForDean } from "./api/get-user-stats-dean";
+import { isDean, isDirectorOfServices, isHOD } from "@/utils/auth-extension";
+import { useGetUserForDOS } from "./api/get-user-stats-dos";
 
 export function Staff() {
   const navigate = useNavigate();
@@ -32,12 +35,35 @@ export function Staff() {
   const { decodedDto, user } = useAuthState();
   const roleName = user?.role.name ?? 0;
   const roleId = decodedDto?.sub.roleId ?? 0;
-  const { data, isLoading } = useGetUserForHOD(
-    roleId,
+  const departmentId = user?.role.department?.id ?? 0;
+
+  // Always call all hooks to preserve the rules of hooks
+  const hodResult = useGetUserForHOD(roleId, page, limit, debouncedSearch);
+
+  const deanResult = useGetUserForDean(
+    departmentId,
     page,
     limit,
     debouncedSearch
   );
+
+  const dosResult = useGetUserForDOS(page, limit, debouncedSearch);
+
+  // Call the role-checking functions (with parentheses) and select the appropriate result
+  const isHod = isHOD();
+  const isDeanUser = isDean();
+  const isDoS = isDirectorOfServices();
+
+  const data = isHod
+    ? hodResult.data
+    : isDeanUser
+      ? deanResult.data
+      : isDoS
+        ? dosResult.data
+        : hodResult.data;
+  const isLoading =
+    (hodResult.isLoading || deanResult.isLoading || dosResult.isLoading) ??
+    false;
 
   console.log("Staff member data: ", data);
 

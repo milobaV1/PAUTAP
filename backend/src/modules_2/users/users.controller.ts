@@ -218,6 +218,43 @@ export class UsersController {
     );
   }
 
+  @SkipThrottle()
+  @Get('dean/stats')
+  async getDeanStatsUser(
+    @Query('departmentId') departmentIdStr: string,
+    @Query('page') pageStr?: string,
+    @Query('limit') limitStr?: string,
+    @Query('search') search?: string,
+  ) {
+    const departmentId = parseInt(departmentIdStr, 10);
+
+    // Validate roleId
+    if (isNaN(departmentId)) {
+      throw new BadRequestException('Invalid roleId parameter');
+    }
+
+    return this.usersService.getDeanStatsUsers(
+      departmentId,
+      pageStr ? parseInt(pageStr, 10) : 1,
+      limitStr ? parseInt(limitStr, 10) : 5,
+      search || '',
+    );
+  }
+
+  @SkipThrottle()
+  @Get('director-of-services/stats')
+  async getDOSStatsUser(
+    @Query('page') pageStr?: string,
+    @Query('limit') limitStr?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.usersService.getDirectorOfServicesStatsUsers(
+      pageStr ? parseInt(pageStr, 10) : 1,
+      limitStr ? parseInt(limitStr, 10) : 5,
+      search || '',
+    );
+  }
+
   @Patch(':id/update-password')
   @ApiOperation({ summary: 'Update user password' })
   @ApiParam({

@@ -1198,7 +1198,7 @@ export class UsersService {
    * Soft delete user (mark as inactive or add deleted_at field)
    */
   async remove(id: string): Promise<void> {
-    const user = await this.findById(id, false);
+    const user = await this.findById(id, true);
     if (user.role.id === 1) {
       throw new ForbiddenException('Cannot delete super admin users');
     }
@@ -1564,6 +1564,144 @@ export class UsersService {
 
     console.log(query.getSql());
     console.log(query.getParameters());
+
+    const [users, totalUsers] = await query
+      .orderBy('user.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    const formattedUsers: UserWithStats[] = users.map((u: any) => {
+      return {
+        id: u.id,
+        first_name: u.first_name,
+        last_name: u.last_name,
+        email: u.email,
+        createdAt: u.created_at,
+        role: u.role?.name || 'N/A',
+        department: u.role?.department?.name || 'N/A',
+        totalCertificates: u.totalCertificates || 0,
+      };
+    });
+
+    return {
+      totalUsers,
+      totalCertificates,
+      users: formattedUsers,
+      page,
+      limit,
+    };
+  }
+
+  async getDeanStatsUsers(
+    departmentId: number,
+    page = 1,
+    limit = 5,
+    search = '',
+  ): Promise<HODStatsUserResponse> {
+    // Count total certificates in the department
+    const totalCertificates = await this.certificateRepo
+      .createQueryBuilder('certificate')
+      .innerJoin('certificate.user', 'user')
+      .innerJoin('user.role', 'role')
+      .where('role.department_id = :departmentId', { departmentId })
+      .getCount();
+
+    // Get all users in the department
+    const query = this.userRepo
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'role')
+      .leftJoinAndSelect('role.department', 'department')
+      .leftJoin('user.certificates', 'certificate')
+      .loadRelationCountAndMap('user.totalCertificates', 'user.certificates')
+      .where('role.department_id = :departmentId', { departmentId })
+      .select([
+        'user.id',
+        'user.first_name',
+        'user.last_name',
+        'user.email',
+        'user.created_at',
+        'role.name',
+        'department.name',
+      ]);
+
+    if (search && search.trim() !== '') {
+      query.andWhere(
+        `LOWER(CONCAT(user.first_name, ' ', user.last_name)) LIKE LOWER(:search)
+       OR LOWER(user.email) LIKE LOWER(:search)`,
+        { search: `%${search}%` },
+      );
+    }
+
+    const [users, totalUsers] = await query
+      .orderBy('user.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    const formattedUsers: UserWithStats[] = users.map((u: any) => {
+      return {
+        id: u.id,
+        first_name: u.first_name,
+        last_name: u.last_name,
+        email: u.email,
+        createdAt: u.created_at,
+        role: u.role?.name || 'N/A',
+        department: u.role?.department?.name || 'N/A',
+        totalCertificates: u.totalCertificates || 0,
+      };
+    });
+
+    return {
+      totalUsers,
+      totalCertificates,
+      users: formattedUsers,
+      page,
+      limit,
+    };
+  }
+
+  async getDirectorOfServicesStatsUsers(
+    page = 1,
+    limit = 5,
+    search = '',
+  ): Promise<HODStatsUserResponse> {
+    // Role IDs for ICT, Cafeteria, and Facility Attendant
+    const roleIds = [18, 7, 2]; // ICT: 18, Cafeteria: 7, Facility Attendant: 2
+
+    // Count total certificates across these roles
+    const totalCertificates = await this.certificateRepo
+      .createQueryBuilder('certificate')
+      .innerJoin('certificate.user', 'user')
+      .innerJoin('user.role', 'role')
+      .where('role.id IN (:...roleIds)', { roleIds })
+      .getCount();
+
+    // Get all users in these roles
+    const query = this.userRepo
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'role')
+      .leftJoinAndSelect('role.department', 'department')
+      .leftJoin('user.certificates', 'certificate')
+      .loadRelationCountAndMap('user.totalCertificates', 'user.certificates')
+      .where('role.id IN (:...roleIds)', { roleIds })
+      .select([
+        'user.id',
+        'user.first_name',
+        'user.last_name',
+        'user.email',
+        'user.created_at',
+        'role.name',
+        'department.name',
+      ]);
+
+    if (search && search.trim() !== '') {
+      query.andWhere(
+        `LOWER(CONCAT(user.first_name, ' ', user.last_name)) LIKE LOWER(:search)
+       OR LOWER(user.email) LIKE LOWER(:search)`,
+        { search: `%${search}%` },
+      );
+    }
 
     const [users, totalUsers] = await query
       .orderBy('user.created_at', 'DESC')

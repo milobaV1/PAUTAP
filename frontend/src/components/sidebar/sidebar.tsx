@@ -11,7 +11,12 @@ import {
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { isAdmin, isHOD } from "@/utils/auth-extension";
+import {
+  isAdmin,
+  isDean,
+  isDirectorOfServices,
+  isHOD,
+} from "@/utils/auth-extension";
 import { useAuthState } from "@/store/auth.store";
 import Logo from "../../assets/logo2.png";
 
@@ -49,6 +54,8 @@ export function Sidebar({
 
   const admin = isAdmin();
   const HOD = isHOD();
+  const Dean = isDean();
+  const DOS = isDirectorOfServices();
   return (
     <div>
       {/* Mobile sidebar overlay */}
@@ -118,7 +125,7 @@ export function Sidebar({
             ""
           )}
 
-          {HOD ? (
+          {HOD || Dean || DOS ? (
             <div className="pt-4 border-t">
               <Button
                 variant="ghost"
