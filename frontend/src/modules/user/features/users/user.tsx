@@ -109,10 +109,8 @@ export function Staff() {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <div>
-          <h1>{`${roleName} Department`}</h1>
-          <p className="text-muted-foreground mt-1">
-            View staff members in this department
-          </p>
+          <h1>{`${roleName}`}</h1>
+          <p className="text-muted-foreground mt-1">View staff members</p>
         </div>
       </div>
 

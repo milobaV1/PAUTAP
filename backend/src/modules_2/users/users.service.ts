@@ -493,6 +493,7 @@ export class UsersService {
       relations: [
         //'sessions',
         'role',
+        'role.department',
         'certificates',
       ],
     });
