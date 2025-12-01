@@ -24,11 +24,13 @@ export function useGetUserForHOD(
   roleId: number,
   page: number,
   limit: number,
-  searchTerm: string
+  searchTerm: string,
+  enabled: boolean = true
 ) {
   return useQuery({
     queryKey: ["hod-user", roleId, page, limit, searchTerm],
     queryFn: () => getUserForHOD(roleId, page, limit, searchTerm),
     placeholderData: (previousData) => previousData,
+    enabled: enabled && roleId > 0,
   });
 }

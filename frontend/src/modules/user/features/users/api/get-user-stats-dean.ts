@@ -24,11 +24,13 @@ export function useGetUserForDean(
   departmentId: number,
   page: number,
   limit: number,
-  searchTerm: string
+  searchTerm: string,
+  enabled: boolean = true
 ) {
   return useQuery({
     queryKey: ["dean-user", departmentId, page, limit, searchTerm],
     queryFn: () => getUserForDean(departmentId, page, limit, searchTerm),
     placeholderData: (previousData) => previousData,
+    enabled: enabled && departmentId > 0,
   });
 }

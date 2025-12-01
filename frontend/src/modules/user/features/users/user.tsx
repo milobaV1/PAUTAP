@@ -33,22 +33,33 @@ export function Staff() {
   const [page, setPage] = useState(1);
   const limit = 5;
   const { decodedDto, user } = useAuthState();
-  const roleName = user?.role.name ?? 0;
-  const roleId = decodedDto?.sub.roleId ?? 0;
-  const departmentId = user?.role.department?.id ?? 0;
+  const roleName = user?.role.name;
+  const roleId = decodedDto?.sub.roleId;
+  const departmentId = user?.role.department?.id;
 
   // Always call all hooks to preserve the rules of hooks
-  const hodResult = useGetUserForHOD(roleId, page, limit, debouncedSearch);
-
-  const deanResult = useGetUserForDean(
-    departmentId,
+  const hodResult = useGetUserForHOD(
+    roleId ?? 0,
     page,
     limit,
-    debouncedSearch
+    debouncedSearch,
+    isHOD() && !!roleId // Add enabled flag
   );
 
-  const dosResult = useGetUserForDOS(page, limit, debouncedSearch);
+  const deanResult = useGetUserForDean(
+    departmentId ?? 0,
+    page,
+    limit,
+    debouncedSearch,
+    isDean() && !!departmentId // Add enabled flag
+  );
 
+  const dosResult = useGetUserForDOS(
+    page,
+    limit,
+    debouncedSearch,
+    isDirectorOfServices() // Add enabled flag
+  );
   // Call the role-checking functions (with parentheses) and select the appropriate result
   const isHod = isHOD();
   const isDeanUser = isDean();

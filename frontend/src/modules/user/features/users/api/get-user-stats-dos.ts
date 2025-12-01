@@ -18,11 +18,13 @@ export async function getUserForDOS(page = 1, limit = 5, searchTerm = "") {
 export function useGetUserForDOS(
   page: number,
   limit: number,
-  searchTerm: string
+  searchTerm: string,
+  enabled: boolean = true
 ) {
   return useQuery({
     queryKey: ["dos-user", page, limit, searchTerm],
     queryFn: () => getUserForDOS(page, limit, searchTerm),
     placeholderData: (previousData) => previousData,
+    enabled: enabled,
   });
 }
