@@ -8,7 +8,9 @@ import {
   IsBoolean,
   IsNumber,
   MinLength,
+  IsEnum,
 } from 'class-validator';
+import { UserLevel } from 'src/core/enums/user.enum';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'John', description: 'First name of the user' })
@@ -28,6 +30,13 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsEmail()
   email: string;
+
+  @ApiProperty({
+    example: 'normal',
+    description: 'User level',
+  })
+  @IsEnum(UserLevel)
+  level?: UserLevel;
 
   @ApiProperty({
     example: true,
@@ -57,6 +66,7 @@ export class CreateUserDto {
 }
 
 export class UpdatePasswordDto {
+  @IsString()
   newPassword: string;
 }
 

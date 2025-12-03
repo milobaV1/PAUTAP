@@ -25,6 +25,7 @@ import { useMutation } from "@tanstack/react-query";
 
 export const sessionApi = {
   syncProgress: async (sessionId: string, syncData: any) => {
+    console.log("SyncData: ", syncData);
     const { data } = await client.post(`/session/${sessionId}/sync`, syncData);
     return data;
   },
@@ -96,7 +97,8 @@ export const useProgressSync = () => {
           status,
         },
       };
-      console.log("sync Data: ", syncData);
+      console.log("Sending syncData:", JSON.stringify(syncData, null, 2)); // ADD THIS
+
       return sessionApi.syncProgress(sessionId, syncData);
     },
     // onSuccess: (data, variables) => {
@@ -123,8 +125,10 @@ export const useProgressSync = () => {
 
       console.log("✅ Progress synced successfully");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("❌ Failed to sync progress:", error);
+      console.log("Response data:", error.response?.data); // ADD THIS
+      console.log("Status:", error.response?.status);
     },
   });
 };

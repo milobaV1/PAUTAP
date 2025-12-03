@@ -12,7 +12,6 @@ export const axiosClient = (
   const headers = {
     ...(token && { Authorization: `Bearer ${token}` }),
     "Content-Type": useMultipart ? "multipart/form-data" : "application/json",
-    "User-Agent": "PautapApp/1.0", // ADD THIS
     Accept: "application/json", // ADD THIS
   };
 

@@ -29,7 +29,7 @@ import { type Cache } from 'cache-manager';
 import {
   SessionCompletionResult,
   CompletionMetrics,
-  AnswerBatch,
+  AnswerBatchDto,
   SyncResult,
   ProgressSummary,
   ValidatedAnswer,
@@ -965,7 +965,7 @@ export class SessionService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    const { userId, answerBatch, currentState, status } = syncSessionDto;
+    const { userId, answerBatch, currentState } = syncSessionDto;
 
     try {
       // 1) Get current progress
@@ -992,10 +992,10 @@ export class SessionService {
       await this.saveAnswerBatch(validatedAnswers, queryRunner.manager);
 
       // 4) Determine final status
-      let finalStatus = status || currentState.status || progress.status;
+      let finalStatus = currentState.status || progress.status;
 
       // If status is 'completed', check if all questions are actually answered
-      if (finalStatus === 'completed') {
+      if (finalStatus === ProgressStatus.COMPLETED) {
         const isActuallyComplete = await this.verifySessionCompletion(
           userId,
           sessionId,
@@ -1006,7 +1006,7 @@ export class SessionService {
           console.warn(
             'Session marked as completed but not all questions answered',
           );
-          finalStatus = 'in_progress';
+          finalStatus = ProgressStatus.IN_PROGRESS;
         }
       }
 
@@ -1167,7 +1167,7 @@ export class SessionService {
     }
   }
   private async validateAnswerBatch(
-    answerBatch: AnswerBatch[],
+    answerBatch: AnswerBatchDto[],
     progress: UserSessionProgress,
     manager: any,
   ): Promise<ValidatedAnswer[]> {
@@ -1233,7 +1233,7 @@ export class SessionService {
             question.correctAnswer,
             answer.userAnswer,
           ),
-          answeredAt: answer.answeredAt,
+          answeredAt: new Date(answer.answeredAt),
           isUpdated: true, // Add flag for updates
         });
 
@@ -1246,7 +1246,7 @@ export class SessionService {
         sessionRoleCategoryQuestionId: categoryData.id,
         userAnswer: answer.userAnswer,
         isCorrect: this.checkAnswer(question.correctAnswer, answer.userAnswer),
-        answeredAt: answer.answeredAt,
+        answeredAt: new Date(answer.answeredAt),
       });
     }
 

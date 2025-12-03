@@ -1,3 +1,11 @@
+import {
+  IsUUID,
+  IsNumber,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+} from 'class-validator';
 import { CRISP } from '../enums/training.enum';
 import { ProgressStatus } from '../enums/user.enum';
 
@@ -20,16 +28,30 @@ export interface SessionCompletionResult {
 }
 
 // Interfaces
-export interface AnswerBatch {
+export class AnswerBatchDto {
+  @IsUUID()
   questionId: string;
+
+  @IsNumber()
   userAnswer: number;
-  answeredAt: Date;
-  category: string;
+
+  @IsDateString()
+  answeredAt: string;
+
+  @IsEnum(CRISP)
+  category: CRISP;
 }
 
-export interface ProgressState {
-  currentCategory: CRISP | undefined;
+export class ProgressStateDto {
+  @IsEnum(CRISP)
+  @IsOptional()
+  currentCategory?: CRISP;
+
+  @IsInt()
   currentQuestionIndex: number;
+
+  @IsEnum(ProgressStatus)
+  @IsOptional()
   status?: ProgressStatus;
 }
 

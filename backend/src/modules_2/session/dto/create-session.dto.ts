@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
@@ -6,14 +7,16 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
 //import { Difficulty } from 'src/core/enums/question.enum';
 import {
-  AnswerBatch,
-  type ProgressState,
+  AnswerBatchDto,
+  ProgressStateDto,
 } from 'src/core/interfaces/session.interface';
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateSessionDto {
   @ApiProperty({
@@ -94,23 +97,28 @@ export class SyncSessionDto {
 
   @ApiProperty({
     description: 'Batch of answers submitted by the user',
-    type: [Object], // replace Object with AnswerBatch if Swagger can detect it
+    type: [AnswerBatchDto], // replace Object with AnswerBatch if Swagger can detect it
     example: [
       { questionId: 'uuid', answer: 'A' },
       { questionId: 'uuid', answer: 'B' },
     ],
   })
-  answerBatch: AnswerBatch[];
+  @IsArray()
+  @ValidateNested({ each: true }) // ADD THIS
+  @Type(() => AnswerBatchDto)
+  answerBatch: AnswerBatchDto[];
 
   @ApiProperty({
     description: 'Current progress state of the session',
-    example: 'IN_PROGRESS',
+    type: ProgressStateDto,
   })
-  currentState: ProgressState;
+  @ValidateNested() // ADD THIS
+  @Type(() => ProgressStateDto)
+  currentState: ProgressStateDto;
 
-  @IsOptional()
-  @IsEnum(['in_progress', 'completed', 'paused'])
-  status?: string;
+  // @IsOptional()
+  // @IsEnum(['in_progress', 'completed', 'paused'])
+  // status?: string;
 }
 
 export class CompleteSessionDto {
