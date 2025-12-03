@@ -24,19 +24,14 @@ export const axiosClient = (
 
   client.interceptors.request.use((config: any) => {
     // Pull latest token from zustand store instead of localStorage
+    console.log("Request payload:", config.data); // ADD THIS
+    console.log("Request headers:", config.headers);
     const authToken = useAuthState.getState().authToken;
     config.headers = config.headers || {};
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
     }
 
-    if (
-      config.data &&
-      typeof config.data === "object" &&
-      config.headers["Content-Type"] === "application/json"
-    ) {
-      config.data = JSON.stringify(config.data);
-    }
     return config;
   });
 
