@@ -12,6 +12,8 @@ export const axiosClient = (
   const headers = {
     ...(token && { Authorization: `Bearer ${token}` }),
     "Content-Type": useMultipart ? "multipart/form-data" : "application/json",
+    "User-Agent": "PautapApp/1.0", // ADD THIS
+    Accept: "application/json", // ADD THIS
   };
 
   const client = axios.create({
@@ -29,6 +31,13 @@ export const axiosClient = (
       config.headers.Authorization = `Bearer ${authToken}`;
     }
 
+    if (
+      config.data &&
+      typeof config.data === "object" &&
+      config.headers["Content-Type"] === "application/json"
+    ) {
+      config.data = JSON.stringify(config.data);
+    }
     return config;
   });
 
