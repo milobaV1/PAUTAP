@@ -12,7 +12,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { join } from 'path';
 import { CertificateService } from './certificate.service';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';

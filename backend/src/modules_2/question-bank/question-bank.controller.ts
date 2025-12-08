@@ -22,7 +22,6 @@ import { AdminQuestionsResponse } from 'src/core/interfaces/question.interface';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { SystemAdminOnly } from 'src/core/metadata/role.metadata';
 import { SkipThrottle } from '@nestjs/throttler';
-import { cursorTo } from 'readline';
 
 @ApiBearerAuth('access-token')
 @Controller('question-bank')

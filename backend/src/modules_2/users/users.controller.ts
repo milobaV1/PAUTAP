@@ -142,11 +142,13 @@ export class UsersController {
     return this.usersService.findByIdWithDetails(id, queryParams);
   }
 
+  @SystemAdminOnly()
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
+  @SystemAdminOnly()
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
