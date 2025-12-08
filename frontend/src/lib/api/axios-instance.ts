@@ -19,7 +19,7 @@ export const axiosClient = (
     baseURL: import.meta.env.VITE_API_BASE_URL,
     headers,
     timeout: 60000,
-    withCredentials: true,
+    //withCredentials: true,
   });
 
   client.interceptors.request.use((config: any) => {
