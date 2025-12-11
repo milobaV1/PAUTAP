@@ -1,11 +1,11 @@
 import { client } from "@/lib/api/client";
 import { getAxiosError } from "@/lib/api/error";
-import type { addQuestionDto } from "@/service/interfaces/question.interface";
+import type { editQuestionDto } from "@/service/interfaces/question.interface";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export async function updateQuestion(
   id: string,
-  data: Partial<addQuestionDto>
+  data: Partial<editQuestionDto>
 ) {
   try {
     const response = await client.patch(`/question-bank/${id}`, data);
@@ -19,8 +19,13 @@ export async function updateQuestion(
 export function useUpdateQuestion() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<addQuestionDto> }) =>
-      updateQuestion(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<editQuestionDto>;
+    }) => updateQuestion(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-questions"] });
       queryClient.invalidateQueries({ queryKey: ["question-details"] });

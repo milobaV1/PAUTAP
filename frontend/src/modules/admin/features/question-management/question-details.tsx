@@ -120,7 +120,10 @@ export function QuestionDetailsModal({
       const payload = {
         crispCategory: values.crispType,
         questionText: values.questionText,
-        options: values.options ? values.options.map((opt) => opt.text) : [],
+        //options: values.options ? values.options.map((opt) => opt.text) : [],
+        options: values.options
+          ? values.options.map((opt) => opt.text).join(",")
+          : "",
         correctAnswer: values.correctAnswer ?? 0,
         explanation: values.explanation,
         //roleIds,

@@ -17,6 +17,22 @@ export interface addQuestionDto {
   //roles?: number[];
 }
 
+export interface editQuestionDto {
+  crispCategory?: CRISP;
+
+  questionText?: string;
+
+  options?: string;
+
+  correctAnswer?: number;
+
+  explanation?: string;
+
+  // difficultyLevel?: Difficulty;
+
+  //roles?: number[];
+}
+
 // src/modules_2/question-bank/dto/admin-question-response.dto.ts
 
 export interface QuestionWithUsageDto {
