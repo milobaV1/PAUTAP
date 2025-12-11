@@ -112,10 +112,6 @@ export function QuestionDetailsModal({
 
   const handleSave = async (values: QuestionFormValues) => {
     if (!question) return;
-
-    // const { roles: selectedRoles, ...rest } = values;
-    // const roleIds = getRoleIds(selectedRoles);
-
     try {
       const payload = {
         crispCategory: values.crispType,
@@ -126,8 +122,8 @@ export function QuestionDetailsModal({
           : "",
         correctAnswer: values.correctAnswer ?? 0,
         explanation: values.explanation,
-        //roleIds,
       };
+      console.log("Payload: ", payload);
 
       await updateQuestion({ id: question.id, data: payload });
       toast.success("Question updated successfully!");
