@@ -1115,8 +1115,8 @@ export class UsersService {
    * Update user
    */
   async update(id: string, updateUserDto: UpdateUserDto): Promise<void> {
-    console.log('Data from update service: ', updateUserDto);
-    console.log('id from update service: ', id);
+    // console.log('Data from update service: ', updateUserDto);
+    // console.log('id from update service: ', id);
     const user = await this.findById(id, true);
 
     // Check email uniqueness if email is being updated
@@ -1427,8 +1427,8 @@ export class UsersService {
         'department.name',
       ])
       .where('role.id != :excludedRole', { excludedRole: 1 }); // Add this line
-    console.log(query.getSql());
-    console.log(query.getParameters());
+    // console.log(query.getSql());
+    // console.log(query.getParameters());
 
     if (search && search.trim() !== '') {
       query.andWhere(
@@ -1438,8 +1438,8 @@ export class UsersService {
       );
     }
 
-    console.log(query.getSql());
-    console.log(query.getParameters());
+    // console.log(query.getSql());
+    // console.log(query.getParameters());
 
     const [users, totalUsers] = await query
       .orderBy('user.created_at', 'DESC')
@@ -1563,8 +1563,8 @@ export class UsersService {
       );
     }
 
-    console.log(query.getSql());
-    console.log(query.getParameters());
+    // console.log(query.getSql());
+    // console.log(query.getParameters());
 
     const [users, totalUsers] = await query
       .orderBy('user.created_at', 'DESC')
@@ -1608,10 +1608,10 @@ export class UsersService {
       .where('role.department_id = :departmentId', { departmentId })
       .getCount();
 
-    console.log(
-      'This is the total no of certificates during dean check: ',
-      totalCertificates,
-    );
+    // console.log(
+    //   'This is the total no of certificates during dean check: ',
+    //   totalCertificates,
+    // );
 
     // Get all users in the department
     const query = this.userRepo

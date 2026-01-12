@@ -7,11 +7,11 @@ export async function getAdminQuestions(
   limit = 5,
   searchTerm = ""
 ): Promise<AdminQuestionsResponse> {
-  console.log("Get questions 2");
+  //  console.log("Get questions 2");
   const response = await client.get("/question-bank/admin", {
     params: { page, limit, search: searchTerm },
   });
-  console.log("Get questions 3 with data: ", response.data);
+  //  console.log("Get questions 3 with data: ", response.data);
   return response.data;
 }
 
@@ -20,7 +20,7 @@ export function useAdminQuestions(
   limit: number,
   searchTerm: string
 ) {
-  console.log("Get questions 1");
+  //  console.log("Get questions 1");
   return useQuery<AdminQuestionsResponse, Error>({
     queryKey: ["admin-questions", page, limit, searchTerm],
     queryFn: () => getAdminQuestions(page, limit, searchTerm),

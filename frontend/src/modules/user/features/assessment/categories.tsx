@@ -47,7 +47,7 @@ export function CategorySelection() {
   const [isTimeUp, setIsTimeUp] = useState(false);
   const progressSync = useProgressSync();
 
-  console.log("Current session data: ", currentSessionData);
+  //  console.log("Current session data: ", currentSessionData);
 
   useEffect(() => {
     if (id && !currentSessionData && decodedDto) {
@@ -159,7 +159,7 @@ export function CategorySelection() {
   );
 
   const handleStartCategory = (categoryId: string) => {
-    console.log("Start category", categoryId);
+    //  console.log("Start category", categoryId);
     // navigate to category-taking page here
     navigate({
       to: "/session/$id/category/$categoryId",

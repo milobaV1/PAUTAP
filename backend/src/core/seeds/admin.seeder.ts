@@ -30,7 +30,7 @@ export class AdminSeeder implements OnApplicationBootstrap {
     const userCount = await userRepo.count();
     if (userCount > 0) return;
 
-    console.log('🌱 No users found. Seeding initial data...');
+    //console.log('🌱 No users found. Seeding initial data...');
 
     let superDepartment = await departmentRepo.findOne({
       where: { name: 'System Administration' },
@@ -41,7 +41,7 @@ export class AdminSeeder implements OnApplicationBootstrap {
         name: 'System Administration',
       });
       await departmentRepo.save(superDepartment);
-      console.log('System Administration department created');
+      //console.log('System Administration department created');
     }
 
     let adminRole = await roleRepo.findOne({ where: { name: 'System Admin' } });
@@ -51,7 +51,7 @@ export class AdminSeeder implements OnApplicationBootstrap {
         department: superDepartment,
       });
       await roleRepo.save(adminRole);
-      console.log('Created System Admin role.');
+      //console.log('Created System Admin role.');
     }
 
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
@@ -66,8 +66,8 @@ export class AdminSeeder implements OnApplicationBootstrap {
 
     await userRepo.save(adminUser);
 
-    console.log('✅ Admin user created:');
-    console.log('   Email: admin@example.com');
-    console.log('   Password: Admin123!');
+    // console.log('✅ Admin user created:');
+    // console.log('   Email: admin@example.com');
+    // console.log('   Password: Admin123!');
   }
 }

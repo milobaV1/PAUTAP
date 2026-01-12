@@ -4,8 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 
 export async function getOneQuestion(id: string): Promise<Question> {
   const response = await client.get(`/question-bank/${id}`);
-  console.log("Full API response:", response.data);
-  console.log("Roles in response:", response.data.roles);
+  // console.log("Full API response:", response.data);
+  // console.log("Roles in response:", response.data.roles);
   return response.data;
 }
 

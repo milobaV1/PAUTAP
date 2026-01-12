@@ -30,23 +30,23 @@ export class AuthService {
   //   return null;
   // }
   async validateUser(email: string, pass: string): Promise<any> {
-    console.log('Validating user:', email);
+    //console.log('Validating user:', email);
     const user = await this.userService.findOne('email', email);
-    console.log('User found:', !!user);
-    console.log('User password type:', typeof user?.password); // Add this
-    console.log('User password length:', user?.password?.length); // Add this
+    //console.log('User found:', !!user);
+    //console.log('User password type:', typeof user?.password); // Add this
+    //console.log('User password length:', user?.password?.length); // Add this
 
     if (user) {
       const passwordMatch = await bcrypt.compare(pass, user.password);
-      console.log('Password match:', passwordMatch);
+      //console.log('Password match:', passwordMatch);
 
       if (passwordMatch) {
         const { password, ...result } = user;
-        console.log('Returning user');
+        // console.log('Returning user');
         return result;
       }
     }
-    console.log('Validation failed');
+    //console.log('Validation failed');
     return null;
   }
   login(user: any) {

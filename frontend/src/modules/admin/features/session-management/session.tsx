@@ -125,7 +125,7 @@ export function TrainingSessionManagement() {
   };
 
   async function onSubmit(values: z.infer<typeof sessionSchema>) {
-    console.log(values);
+    //  console.log(values);
     toast(`Session creation attempt: ${values.title}`);
 
     try {

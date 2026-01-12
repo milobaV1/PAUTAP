@@ -42,17 +42,17 @@ export function sessions() {
 
   const isOnboardingUser = user?.is_onboarding ?? false;
 
-  console.log("Onboarding user check? ", isOnboardingUser);
+  //  console.log("Onboarding user check? ", isOnboardingUser);
 
   const { data } = isOnboardingUser
     ? useGetOnboardingSession(sessionData)
     : useGetSessions(sessionData);
   //const { data, isLoading, isError, error } = useGetSessions(sessionData);
-  console.log("Data: ", data);
+  //  console.log("Data: ", data);
   //const allSessions: UsersessionData[] = data || [];
   const allSessions: SessionSummary[] = data || [];
 
-  console.log("All Sessions: ", allSessions);
+  //  console.log("All Sessions: ", allSessions);
 
   const { mutateAsync: retakeSession } = useRetakeSession();
 

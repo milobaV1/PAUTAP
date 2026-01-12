@@ -109,9 +109,9 @@ export class CertificateService {
     const savedCert = await this.certRepo.save(cert);
 
     // 11. Log certificate issuance for audit
-    console.log(
-      `Certificate ${certificateId} issued to user ${userId} for session ${sessionId} with score ${score}`,
-    );
+    // console.log(
+    //   `Certificate ${certificateId} issued to user ${userId} for session ${sessionId} with score ${score}`,
+    // );
 
     return savedCert;
   }
@@ -495,9 +495,9 @@ export class CertificateService {
 
     const savedCert = await this.certRepo.save(cert);
 
-    console.log(
-      `External certificate ${certificateId} uploaded for user ${userId}`,
-    );
+    // console.log(
+    //   `External certificate ${certificateId} uploaded for user ${userId}`,
+    // );
 
     return savedCert;
   }

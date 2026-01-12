@@ -6,8 +6,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 // accepts partial update (PATCH), or full replacement (PUT) depending on backend
 export async function updateUser(id: string, data: Partial<CreateUser>) {
   try {
-    console.log("Data from update: ", data);
-    console.log("id from update: ", id);
+    // console.log("Data from update: ", data);
+    // console.log("id from update: ", id);
     const response = await client.patch(`/users/${id}`, data);
     return response.data;
   } catch (error) {

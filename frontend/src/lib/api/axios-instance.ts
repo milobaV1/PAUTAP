@@ -30,11 +30,11 @@ export const axiosClient = (
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
     }
-    console.log("Full request config:", config);
-    console.log("URL:", config.url);
-    console.log("Method:", config.method);
-    console.log("Headers:", config.headers);
-    console.log("Data:", config.data);
+    // console.log("Full request config:", config);
+    // console.log("URL:", config.url);
+    // console.log("Method:", config.method);
+    // console.log("Headers:", config.headers);
+    // console.log("Data:", config.data);
     return config;
   });
 
@@ -50,7 +50,7 @@ export const axiosClient = (
           useAuthState.getState().logOut();
         }
       } catch (e) {
-        console.log(e);
+        //  console.log(e);
       }
       throw error;
     }

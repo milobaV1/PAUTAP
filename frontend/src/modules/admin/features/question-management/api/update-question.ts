@@ -8,7 +8,7 @@ export async function updateQuestion(
   data: Partial<editQuestionDto>
 ) {
   try {
-    console.log("Update questions data: ", data);
+    //  console.log("Update questions data: ", data);
     const response = await client.patch(`/question-bank/${id}`, data);
     return response.data;
   } catch (error) {

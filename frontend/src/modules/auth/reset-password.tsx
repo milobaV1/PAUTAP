@@ -120,7 +120,7 @@ export function ResetPassword() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    //  console.log(values);
     if (!token) {
       toast.error("Token needed");
       return;

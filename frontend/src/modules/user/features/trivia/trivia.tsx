@@ -57,7 +57,7 @@ export function Trivia() {
   const { decodedDto } = useAuthState();
   const navigate = useNavigate();
 
-  console.log("Trivia data: ", triviaData);
+  //  console.log("Trivia data: ", triviaData);
 
   // Timer effect for trivia expiration
   useEffect(() => {

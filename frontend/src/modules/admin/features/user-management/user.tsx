@@ -155,7 +155,7 @@ export function UserManagement() {
   }
 
   const users = data?.users ?? [];
-  console.log("Users: ", users);
+  //  console.log("Users: ", users);
   const totalUsers = data?.totalUsers ?? 0;
   const totalCertificates = data?.totalCertificates ?? 0;
   const totalPages = Math.ceil(data.totalUsers / data.limit);

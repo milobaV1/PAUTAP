@@ -112,7 +112,7 @@ const initializer: StateCreator<SessionState & SessionActions> = (set) => ({
 
   // Full session data actions
   initializeSessionData: (sessionData) => {
-    console.log("🔵 Initializing session data:", sessionData);
+    //  console.log("🔵 Initializing session data:", sessionData);
     const now = new Date();
     const sessionStart = sessionData.progress.startedAt
       ? new Date(sessionData.progress.startedAt)
@@ -152,15 +152,15 @@ const initializer: StateCreator<SessionState & SessionActions> = (set) => ({
   // Answer management
   addAnswer: (answer) =>
     set((state) => {
-      console.log("🔵 addAnswer called with:", answer);
-      console.log("🔍 Current state before update:", {
-        localAnswersCount: Object.keys(state.localAnswers).length,
-        unsyncedAnswersCount: state.unsyncedAnswers.length,
-        existingLocalAnswer: state.localAnswers[answer.questionId],
-        existingUnsyncedAnswer: state.unsyncedAnswers.find(
-          (a) => a.questionId === answer.questionId
-        ),
-      });
+      // console.log("🔵 addAnswer called with:", answer);
+      // console.log("🔍 Current state before update:", {
+      //   localAnswersCount: Object.keys(state.localAnswers).length,
+      //   unsyncedAnswersCount: state.unsyncedAnswers.length,
+      //   existingLocalAnswer: state.localAnswers[answer.questionId],
+      //   existingUnsyncedAnswer: state.unsyncedAnswers.find(
+      //     (a) => a.questionId === answer.questionId
+      //   ),
+      // });
 
       // Filter out existing unsynced answer for this question
       const filteredUnsynced = state.unsyncedAnswers.filter(
@@ -172,17 +172,17 @@ const initializer: StateCreator<SessionState & SessionActions> = (set) => ({
         unsyncedAnswers: [...filteredUnsynced, answer],
       };
 
-      console.log("✅ New state after update:", {
-        localAnswersCount: Object.keys(newState.localAnswers).length,
-        unsyncedAnswersCount: newState.unsyncedAnswers.length,
-        addedToLocal: !!newState.localAnswers[answer.questionId],
-        addedToUnsynced: newState.unsyncedAnswers.some(
-          (a) => a.questionId === answer.questionId
-        ),
-        wasReplaced: !!state.localAnswers[answer.questionId],
-        removedDuplicates:
-          state.unsyncedAnswers.length - filteredUnsynced.length,
-      });
+      // console.log("✅ New state after update:", {
+      //   localAnswersCount: Object.keys(newState.localAnswers).length,
+      //   unsyncedAnswersCount: newState.unsyncedAnswers.length,
+      //   addedToLocal: !!newState.localAnswers[answer.questionId],
+      //   addedToUnsynced: newState.unsyncedAnswers.some(
+      //     (a) => a.questionId === answer.questionId
+      //   ),
+      //   wasReplaced: !!state.localAnswers[answer.questionId],
+      //   removedDuplicates:
+      //     state.unsyncedAnswers.length - filteredUnsynced.length,
+      // });
 
       return newState;
     }),

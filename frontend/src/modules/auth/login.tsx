@@ -60,11 +60,11 @@ export function LoginPage() {
   const { setUser, setAuthToken, setDecodedToken } = useAuthState();
   const navigate = useNavigate();
   async function onSubmit(values: z.infer<typeof loginSchema>) {
-    console.log(values);
+    //  console.log(values);
     toast(`Login attempt with email: ${values.email}`);
     const data = values as LoginInterface;
     const token = await getLogin(data);
-    console.log("This is the token", token);
+    //  console.log("This is the token", token);
     if (token) {
       const payload = decodeToken(
         token.access_token
@@ -74,16 +74,16 @@ export function LoginPage() {
       const user = await getUser(payload.sub.id);
       if (user) setUser(user);
       if (payload.sub.roleId === 1) {
-        console.log(
-          "About to navigate to admin, current state:",
-          useAuthState.getState()
-        );
+        // console.log(
+        //   "About to navigate to admin, current state:",
+        //   useAuthState.getState()
+        // );
         navigate({ to: "/admin" });
       } else {
-        console.log(
-          "About to navigate to user route, current state:",
-          useAuthState.getState()
-        );
+        // console.log(
+        //   "About to navigate to user route, current state:",
+        //   useAuthState.getState()
+        // );
         navigate({ to: "/" });
       }
     }

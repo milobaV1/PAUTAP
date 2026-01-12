@@ -6,6 +6,7 @@
 import { client } from "@/lib/api/client";
 import { useSessionStore } from "@/store/session.store";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 // export async function StartSession(data: addQuestionDto) {
 //   try {
@@ -25,7 +26,7 @@ import { useMutation } from "@tanstack/react-query";
 
 export const sessionApi = {
   syncProgress: async (sessionId: string, syncData: any) => {
-    console.log("SyncData: ", syncData);
+    //  console.log("SyncData: ", syncData);
     const { data } = await client.post(`/session/${sessionId}/sync`, syncData);
     return data;
   },
@@ -97,7 +98,7 @@ export const useProgressSync = () => {
           status,
         },
       };
-      console.log("Sending syncData:", JSON.stringify(syncData, null, 2)); // ADD THIS
+      //  console.log("Sending syncData:", JSON.stringify(syncData, null, 2)); // ADD THIS
 
       return sessionApi.syncProgress(sessionId, syncData);
     },
@@ -123,12 +124,13 @@ export const useProgressSync = () => {
         updateProgressFromSync(variables.sessionId, data.progressSummary);
       }
 
-      console.log("✅ Progress synced successfully");
+      //  console.log("✅ Progress synced successfully");
     },
-    onError: (error: any) => {
-      console.error("❌ Failed to sync progress:", error);
-      console.log("Response data:", error.response?.data); // ADD THIS
-      console.log("Status:", error.response?.status);
+    onError: () => {
+      toast.error("Failed to sync progress");
+      // console.error("❌ Failed to sync progress:", error);
+      // console.log("Response data:", error.response?.data); // ADD THIS
+      // console.log("Status:", error.response?.status);
     },
   });
 };

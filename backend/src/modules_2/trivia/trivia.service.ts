@@ -187,10 +187,10 @@ export class TriviaService {
   // Cron job to activate scheduled trivias - runs every minute
   @Cron(CronExpression.EVERY_MINUTE)
   async activateScheduledTrivias(): Promise<void> {
-    console.log('[CRON] Checking for scheduled trivias to activate…');
+    //  console.log('[CRON] Checking for scheduled trivias to activate…');
     const now = new Date();
-    console.log('Current time:', now.toISOString()); // Better logging
-    console.log('Current time UTC:', now.toUTCString());
+    //  console.log('Current time:', now.toISOString()); // Better logging
+    //  console.log('Current time UTC:', now.toUTCString());
     const scheduledTrivias = await this.triviaRepository.find({
       where: {
         status: TriviaStatus.SCHEDULED,
@@ -198,7 +198,7 @@ export class TriviaService {
       },
     });
 
-    console.log('Scheduled Trivias: ', scheduledTrivias);
+    //  console.log('Scheduled Trivias: ', scheduledTrivias);
 
     for (const trivia of scheduledTrivias) {
       trivia.status = TriviaStatus.ACTIVE;
@@ -269,12 +269,12 @@ export class TriviaService {
     triviaId: string,
     userId: string,
   ): Promise<TriviaParticipation> {
-    console.log('Trivia Id: ', triviaId);
+    //  console.log('Trivia Id: ', triviaId);
     const trivia = await this.triviaRepository.findOne({
       where: { id: triviaId },
     });
 
-    console.log('Found Trivia: ', trivia);
+    //  console.log('Found Trivia: ', trivia);
 
     if (!trivia) {
       throw new NotFoundException('Trivia not found');

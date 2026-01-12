@@ -6,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 export async function retakeSession(data: RetakeSessionDto) {
   const { sessionId, userId } = data;
   try {
-    console.log("This is point 1 of the api call");
+    //  console.log("This is point 1 of the api call");
     const response = await client.post(`/session/${sessionId}/reset-progress`, {
       userId,
     });
@@ -24,7 +24,7 @@ export function useRetakeSession() {
     mutationFn: retakeSession,
 
     onSuccess: () => {
-      console.log("This is point 4 of the api call");
+      //  console.log("This is point 4 of the api call");
     },
 
     onError: (error) => {

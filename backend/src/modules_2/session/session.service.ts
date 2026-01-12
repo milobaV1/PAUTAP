@@ -133,7 +133,7 @@ export class SessionService {
       .orderBy('session.createdAt', 'DESC')
       .getMany();
 
-    console.log('This is the session with progress: ', sessionsWithProgress);
+    //console.log('This is the session with progress: ', sessionsWithProgress);
 
     return sessionsWithProgress.map((session) => {
       const progress = session.userProgress?.[0];
@@ -145,10 +145,10 @@ export class SessionService {
           0,
         ) || 0;
 
-      console.log(
-        'This is the Total question count: ',
-        totalQuestionsAvailable,
-      );
+      // console.log(
+      //   'This is the Total question count: ',
+      //   totalQuestionsAvailable,
+      // );
 
       return {
         sessionId: session.id,
@@ -285,7 +285,7 @@ export class SessionService {
     // ... existing code until return statement
     const session = await this.getSession(sessionId);
 
-    console.log('Session from start or resume session', session);
+    //console.log('Session from start or resume session', session);
 
     // 2) Load role categories (cached if possible)
     const roleCategories = await this.getCategoriesCached(sessionId);
@@ -296,7 +296,7 @@ export class SessionService {
       userId,
       roleCategories,
     );
-    console.log('Progress created: from start or resume session ', progress);
+    //console.log('Progress created: from start or resume session ', progress);
 
     if (!progress) throw new Error('No progress');
 
@@ -495,10 +495,10 @@ export class SessionService {
       const totalQuestionsAvailable =
         roleCategories?.reduce((sum, rcq) => sum + rcq.questionsCount, 0) || 0;
 
-      console.log(
-        'This is the Total question count: ',
-        totalQuestionsAvailable,
-      );
+      // console.log(
+      //   'This is the Total question count: ',
+      //   totalQuestionsAvailable,
+      // );
       progress = this.userSessionProgressRepo.create({
         userId,
         sessionId,
@@ -509,7 +509,7 @@ export class SessionService {
         currentQuestionIndex: 0,
         totalQuestions: totalQuestionsAvailable,
       });
-      console.log('Progress created: ', progress);
+      //console.log('Progress created: ', progress);
       return this.userSessionProgressRepo.save(progress);
     }
     // progress.lastActiveAt = new Date();
@@ -616,7 +616,7 @@ export class SessionService {
         passingScore: number;
       } | null = null;
 
-      console.log('This is the certi 1 info: ', certificateInfo);
+      // console.log('This is the certi 1 info: ', certificateInfo);
 
       if (isEligibleForCertificate) {
         const certificateId = `CERT_${progress.sessionId}_${progress.userId}_${Date.now()}`;
@@ -650,7 +650,7 @@ export class SessionService {
         };
       }
 
-      console.log('This is the certi 2 info: ', certificateInfo);
+      // console.log('This is the certi 2 info: ', certificateInfo);
 
       // 5) Trigger notifications/events
       // await this.triggerCompletionEvents(progress, completionData);
@@ -973,7 +973,7 @@ export class SessionService {
         where: { userId, sessionId },
       });
 
-      console.log('This is the progress before syncing: ', progress);
+      //  console.log('This is the progress before syncing: ', progress);
 
       if (!progress) {
         throw new NotFoundException('User progress not found');
@@ -986,7 +986,7 @@ export class SessionService {
         queryRunner.manager,
       );
 
-      console.log('Validated Answers: ', validatedAnswers);
+      //  console.log('Validated Answers: ', validatedAnswers);
 
       // 3) Save new answers (avoid duplicates)
       await this.saveAnswerBatch(validatedAnswers, queryRunner.manager);
@@ -1087,9 +1087,9 @@ export class SessionService {
       .andWhere('usp.sessionId = :sessionId', { sessionId })
       .getCount();
 
-    console.log(
-      `Session completion check - Total: ${totalQuestions}, Answered: ${answeredCount}`,
-    );
+    // console.log(
+    //   `Session completion check - Total: ${totalQuestions}, Answered: ${answeredCount}`,
+    // );
 
     return answeredCount >= totalQuestions && totalQuestions > 0;
   }
@@ -1171,8 +1171,8 @@ export class SessionService {
     progress: UserSessionProgress,
     manager: any,
   ): Promise<ValidatedAnswer[]> {
-    console.log('Answer Batch received for validating: ', answerBatch);
-    console.log('Progress received for validating: ', progress);
+    // console.log('Answer Batch received for validating: ', answerBatch);
+    // console.log('Progress received for validating: ', progress);
     const validated: ValidatedAnswer[] = [];
 
     // Get existing answers to avoid duplicates
@@ -1185,20 +1185,20 @@ export class SessionService {
       select: ['question'],
     });
 
-    console.log('existing Answers: ', existingAnswers);
+    //  console.log('existing Answers: ', existingAnswers);
     const existingQuestionIds = new Set(
       existingAnswers.map((a) => a.questionId),
     );
 
-    console.log('existing questions ids: ', existingQuestionIds);
+    //  console.log('existing questions ids: ', existingQuestionIds);
 
     // Get questions for validation
     const questionIds = answerBatch.map((a) => a.questionId);
-    console.log('new question ids: ', questionIds);
+    //  console.log('new question ids: ', questionIds);
     const questions = await this.getQuestionsCached(questionIds);
-    console.log('new question: ', questions);
+    //  console.log('new question: ', questions);
     const questionMap = new Map(questions.map((q) => [q.id, q]));
-    console.log('new question map: ', questionMap);
+    //  console.log('new question map: ', questionMap);
 
     for (const answer of answerBatch) {
       // Skip if already answered
@@ -1215,10 +1215,10 @@ export class SessionService {
         manager,
       );
 
-      console.log(
-        `Get category data for the question ${answer.questionId}: `,
-        categoryData,
-      );
+      // console.log(
+      //   `Get category data for the question ${answer.questionId}: `,
+      //   categoryData,
+      // );
 
       if (!categoryData) {
         continue; // Question not in user's assigned set
@@ -1314,7 +1314,7 @@ export class SessionService {
       where: { sessionId },
     });
 
-    console.log(`Get categories for the question ${questionId}: `, categories);
+    //  console.log(`Get categories for the question ${questionId}: `, categories);
 
     return (
       categories.find((cat) => cat.questionIds.includes(questionId)) || null
@@ -1383,7 +1383,7 @@ export class SessionService {
     const progress = await this.userSessionProgressRepo.findOne({
       where: { userId: dto.userId, sessionId },
     });
-    console.log('Retake 3: ', progress);
+    // console.log('Retake 3: ', progress);
 
     if (!progress) {
       throw new Error('Progress not found');

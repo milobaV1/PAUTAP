@@ -4,6 +4,7 @@ import type {
   SessionCompletionResult,
 } from "@/service/interfaces/session.interface";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const completeSession = async (
   sessionId: string,
@@ -22,11 +23,11 @@ export const useCompleteSession = () => {
       sessionId: string;
       payload: CompleteSessionPayload;
     }) => completeSession(sessionId, payload),
-    onSuccess: (data) => {
-      console.log("Session completed successfully:", data);
+    onSuccess: () => {
+      toast.success("Session completed!");
     },
-    onError: (error) => {
-      console.error("Failed to complete session:", error);
+    onError: () => {
+      toast.error("Failed to complete session");
     },
   });
 };

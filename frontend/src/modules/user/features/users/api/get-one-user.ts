@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export async function getOneUser(id: string): Promise<User> {
   const response = await client.get(`/users/${id}`);
-  console.log("Users from the api call: ", response.data);
+  //  console.log("Users from the api call: ", response.data);
   return response.data;
 }
 
@@ -44,7 +44,7 @@ export async function getOneUserWithDetails(
   const response = await client.get(
     `/users/${id}/details${queryString ? `?${queryString}` : ""}`
   );
-  console.log("Users from the api call: ", response.data);
+  //  console.log("Users from the api call: ", response.data);
   return response.data;
 }
 

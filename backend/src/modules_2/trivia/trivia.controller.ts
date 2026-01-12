@@ -50,7 +50,7 @@ export class TriviaController {
 
   @Post('start')
   async startTrivia(@Body() startTriviaDto: StartTriviaDto) {
-    console.log('This is the start trivia dto: ', startTriviaDto);
+    //  console.log('This is the start trivia dto: ', startTriviaDto);
     const participation = await this.triviaService.startTrivia(
       startTriviaDto.triviaId,
       startTriviaDto.userId,

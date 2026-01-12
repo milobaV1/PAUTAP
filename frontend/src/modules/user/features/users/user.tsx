@@ -76,7 +76,7 @@ export function Staff() {
     (hodResult.isLoading || deanResult.isLoading || dosResult.isLoading) ??
     false;
 
-  console.log("Staff member data: ", data);
+  //  console.log("Staff member data: ", data);
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(searchTerm), 300);
@@ -96,7 +96,7 @@ export function Staff() {
   }
 
   const users = data?.users ?? [];
-  console.log("Users: ", users);
+  //  console.log("Users: ", users);
   const totalUsers = data?.totalUsers ?? 0;
   const totalCertificates = data?.totalCertificates ?? 0;
   const totalPages = Math.ceil(data.totalUsers / data.limit);

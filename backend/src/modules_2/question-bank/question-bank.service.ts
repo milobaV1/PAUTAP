@@ -71,8 +71,8 @@ export class QuestionBankService {
   }
 
   async findOne(id: string): Promise<QuestionBank> {
-    console.log('=== FINDING QUESTION ===');
-    console.log('Question ID:', id);
+    // console.log('=== FINDING QUESTION ===');
+    // console.log('Question ID:', id);
 
     const question = await this.questionRepo
       .createQueryBuilder('question')
@@ -80,15 +80,15 @@ export class QuestionBankService {
       .where('question.id = :id', { id })
       .getOne();
 
-    console.log('Question found:', !!question);
+    //console.log('Question found:', !!question);
 
     if (!question) throw new NotFoundException('Question not found');
     return question;
   }
 
   async update(id: string, updateQuestionBankDto: UpdateQuestionBankDto) {
-    console.log('=== UPDATE QUESTION ===');
-    console.log('Update data:', updateQuestionBankDto);
+    // console.log('=== UPDATE QUESTION ===');
+    // console.log('Update data:', updateQuestionBankDto);
     const question = await this.findOne(id);
     if (!question) throw new NotFoundException('Question not found');
 
@@ -112,7 +112,7 @@ export class QuestionBankService {
     limit = 5,
     search = '',
   ): Promise<AdminQuestionsResponse> {
-    console.log('SERVICE CALLED with', { page, limit });
+    // console.log('SERVICE CALLED with', { page, limit });
 
     const whereClause = search
       ? { questionText: ILike(`%${search}%`) } // <-- case-insensitive partial match
@@ -125,7 +125,7 @@ export class QuestionBankService {
       order: { createdAt: 'DESC' },
     });
 
-    console.log('questions:', questions, 'totalQuestions:', totalQuestions);
+    // console.log('questions:', questions, 'totalQuestions:', totalQuestions);
 
     // total usage across all questions
     const totalUsage = await this.questionUsageRepo

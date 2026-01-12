@@ -147,8 +147,8 @@ export function UserDetailsPage({ onBack }: UserDetailsPageProps) {
 
   useEffect(() => {
     if (data) {
-      console.log("User role from API:", data.user.role?.name);
-      console.log("Available roles:", roles);
+      // console.log("User role from API:", data.user.role?.name);
+      // console.log("Available roles:", roles);
 
       const roleValue =
         roles.find(
@@ -157,7 +157,7 @@ export function UserDetailsPage({ onBack }: UserDetailsPageProps) {
             (data.user.role?.name?.toLowerCase() || "")
         )?.value || "";
 
-      console.log("Found role value:", roleValue);
+      //  console.log("Found role value:", roleValue);
       form.reset({
         first_name: data.user.firstName,
         last_name: data.user.lastName,
@@ -179,7 +179,7 @@ export function UserDetailsPage({ onBack }: UserDetailsPageProps) {
         role_id: roleMap[values.role],
       } as Partial<CreateUser>;
 
-      console.log("User Id from update: ", userId);
+      //  console.log("User Id from update: ", userId);
       await updateUser({ id: userId, data: payload });
       toast.success("User updated successfully!");
       setEditMode(false);

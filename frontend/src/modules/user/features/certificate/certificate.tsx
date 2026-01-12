@@ -110,7 +110,7 @@ export function Certificates() {
   };
 
   const download = async (id: string) => {
-    console.log("Certi Id: ", id);
+    //  console.log("Certi Id: ", id);
     return await downloadCertificate(id);
   };
 

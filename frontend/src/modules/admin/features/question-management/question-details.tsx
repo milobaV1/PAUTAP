@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/form";
 import { Edit, CheckCircle, XCircle, Eye, Target } from "lucide-react";
 import { CRISP } from "@/service/enums/crisp.enum";
-import { roles } from "@/lib/roles";
+//import { roles } from "@/lib/roles";
 
 interface QuestionDetailsModalProps {
   questionId: string | null;
@@ -83,8 +83,8 @@ export function QuestionDetailsModal({
   useEffect(() => {
     if (question) {
       // Map role names to role values using case-insensitive matching
-      console.log("Question roles from API:", question.roles);
-      console.log("Available roles array:", roles);
+      // console.log("Question roles from API:", question.roles);
+      // console.log("Available roles array:", roles);
 
       // const questionRoles =
       //   question.roles
@@ -123,7 +123,7 @@ export function QuestionDetailsModal({
         correctAnswer: values.correctAnswer ?? 0,
         explanation: values.explanation,
       };
-      console.log("Payload: ", payload);
+      //  console.log("Payload: ", payload);
 
       await updateQuestion({ id: question.id, data: payload });
       toast.success("Question updated successfully!");

@@ -86,7 +86,7 @@ export class SessionController {
     @Param('id') id: string,
     @Body() startSessionDto: StartSessionDto,
   ) {
-    console.log('API call went through: ', startSessionDto);
+    //console.log('API call went through: ', startSessionDto);
     return this.sessionService.startOrResumeSession(id, startSessionDto);
   }
 
@@ -98,7 +98,7 @@ export class SessionController {
     @Param('id') id: string,
     @Body() syncSessionDto: SyncSessionDto,
   ) {
-    console.log('Sync Data Received: ', syncSessionDto);
+    //console.log('Sync Data Received: ', syncSessionDto);
     return this.sessionService.syncUserProgress(id, syncSessionDto);
   }
 
@@ -160,7 +160,7 @@ export class SessionController {
     @Body() body: { userId: string; status: string },
   ) {
     const { userId, status } = body;
-    console.log('Received payload for updating status: ', body);
+    //console.log('Received payload for updating status: ', body);
     return await this.sessionService.updateSessionStatus(
       sessionId,
       userId,
@@ -192,8 +192,8 @@ export class SessionController {
     }
 
     try {
-      console.log('Retake 1: ', dto);
-      console.log('Retake 2: ', sessionId);
+      // console.log('Retake 1: ', dto);
+      // console.log('Retake 2: ', sessionId);
       const result = await this.sessionService.resetUserProgress(
         sessionId,
         dto,

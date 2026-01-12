@@ -208,7 +208,7 @@ export function SessionTaking() {
   }
 
   const currentQ = questions[currentQuestion];
-  console.log("This is the current Q: ", currentQ);
+  //  console.log("This is the current Q: ", currentQ);
 
   const answeredCount = Object.keys(localAnswers).filter((questionId) =>
     currentCategory.questions.some((q) => q.id === questionId)
