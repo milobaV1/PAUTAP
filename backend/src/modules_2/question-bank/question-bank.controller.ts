@@ -22,6 +22,7 @@ import { AdminQuestionsResponse } from 'src/core/interfaces/question.interface';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { SystemAdminOnly } from 'src/core/metadata/role.metadata';
 import { SkipThrottle } from '@nestjs/throttler';
+import { base64ToUuid } from 'src/core/utils/base64-uuid-decoder';
 
 @ApiBearerAuth('access-token')
 @Controller('question-bank')
@@ -106,6 +107,7 @@ export class QuestionBankController {
   @SystemAdminOnly()
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.questionBankService.remove(id);
+    const decodedId = base64ToUuid(id);
+    return this.questionBankService.remove(decodedId);
   }
 }

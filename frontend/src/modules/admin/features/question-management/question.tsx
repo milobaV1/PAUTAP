@@ -93,7 +93,7 @@ export function QuestionManagement() {
   const { mutate: addQuestion, isPending, isError, error } = useAddQuestion();
   const { mutate: deleteQuestion } = useDeleteQuestion();
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(
-    null
+    null,
   );
 
   const form = useForm<z.infer<typeof questionSchema>>({
@@ -146,7 +146,7 @@ export function QuestionManagement() {
     );
 
   const filteredQuestions = data.questions.filter((q) =>
-    q.questionText.toLowerCase().includes(searchTerm.toLowerCase())
+    q.questionText.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const totalPages = Math.ceil(data.totalQuestions / data.limit);
