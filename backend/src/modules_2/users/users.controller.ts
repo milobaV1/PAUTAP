@@ -258,7 +258,7 @@ export class UsersController {
     );
   }
 
-  @Patch(':id/update-password')
+  @Post(':id/update-password')
   @ApiOperation({ summary: 'Update user password' })
   @ApiParam({
     name: 'id',

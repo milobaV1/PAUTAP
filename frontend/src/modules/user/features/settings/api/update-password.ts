@@ -5,9 +5,9 @@ import { useMutation } from "@tanstack/react-query";
 
 export async function updatePassword(id: string, password: UpdatePasswordDto) {
   try {
-    const response = await client.patch(
+    const response = await client.post(
       `/users/${id}/update-password`,
-      password
+      password,
     );
     return response.data;
   } catch (error) {
