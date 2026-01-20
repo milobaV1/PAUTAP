@@ -33,16 +33,13 @@ export const sessionApi = {
   updateOnlyStatus: async (
     userId: string,
     sessionId: string,
-    status: string
+    status: string,
   ) => {
     const payload = {
       userId,
       status,
     };
-    const { data } = await client.patch(
-      `/session/${sessionId}/status`,
-      payload
-    );
+    const { data } = await client.post(`/session/${sessionId}/status`, payload);
     return data;
   },
 };
@@ -73,7 +70,7 @@ export const useProgressSync = () => {
           const response = await sessionApi.updateOnlyStatus(
             userId,
             sessionId,
-            status
+            status,
           );
 
           // if (!response.ok) {

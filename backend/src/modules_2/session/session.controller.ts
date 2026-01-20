@@ -154,7 +154,7 @@ export class SessionController {
     return sessionStatuses;
   }
 
-  @Patch(':sessionId/status')
+  @Post(':sessionId/status')
   async updateSessionStatus(
     @Param('sessionId') sessionId: string,
     @Body() body: { userId: string; status: string },

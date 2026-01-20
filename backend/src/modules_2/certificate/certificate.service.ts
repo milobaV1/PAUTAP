@@ -74,12 +74,14 @@ export class CertificateService {
         'Session not completed or progress not found',
       );
     }
+
+    const roundedScore = Math.round(score);
     // 1. Create DB entry
     const cert = this.certRepo.create({
       userId,
       sessionId,
       filePath: '',
-      score,
+      score: roundedScore,
       certificateId,
     });
 

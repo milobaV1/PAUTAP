@@ -5,9 +5,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 
 export async function deleteQuestion(id: string) {
   try {
-    //console.log("Original UUID:", id);
     const encodedId = uuidToBase64(id);
-    //console.log("Encoded base64:", encodedId);
     const response = await client.delete(`/question-bank/${encodedId}`);
     return response.data;
   } catch (error) {
