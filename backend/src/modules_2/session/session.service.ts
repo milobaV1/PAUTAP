@@ -601,6 +601,7 @@ export class SessionService {
         completedAt: new Date(),
         overallScore: completionData.overallScore,
         categoryScores: completionData.categoryScores,
+        status: ProgressStatus.COMPLETED,
       });
 
       // await queryRunner.manager.update(User, user.id, {
