@@ -555,8 +555,23 @@ export class SessionService {
         relations: ['user', 'session'],
       });
 
-      if (!progress || progress.status !== 'completed') {
-        throw new BadRequestException('Session not completed');
+      // if (!progress || progress.status !== 'completed') {
+      //   throw new BadRequestException('Session not completed');
+      // }
+      if (!progress) {
+        throw new NotFoundException('User progress not found');
+      }
+
+      if (progress.status === 'completed') {
+        throw new BadRequestException(
+          'Session already completed. Please retake the session to submit again.',
+        );
+      }
+
+      if (progress.status !== 'in_progress') {
+        throw new BadRequestException(
+          `Cannot complete session with status: ${progress.status}`,
+        );
       }
 
       const user = await queryRunner.manager.findOne(User, {
@@ -966,7 +981,6 @@ export class SessionService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     const { userId, answerBatch, currentState } = syncSessionDto;
-
     try {
       // 1) Get current progress
       const progress = await queryRunner.manager.findOne(UserSessionProgress, {
@@ -1035,7 +1049,6 @@ export class SessionService {
       );
 
       await queryRunner.commitTransaction();
-
       return {
         success: true,
         syncedAnswers: validatedAnswers.length,
@@ -1095,6 +1108,77 @@ export class SessionService {
   }
 
   // Add this new method for status-only updates
+  // async updateSessionStatus(
+  //   sessionId: string,
+  //   userId: string,
+  //   status: string,
+  // ): Promise<{
+  //   success: boolean;
+  //   newStatus: string;
+  //   currentProgress: ProgressSummary;
+  // }> {
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
+
+  //   try {
+  //     // Get current progress
+  //     const progress = await queryRunner.manager.findOne(UserSessionProgress, {
+  //       where: { userId, sessionId },
+  //     });
+
+  //     if (!progress) {
+  //       throw new NotFoundException('User progress not found');
+  //     }
+
+  //     // Verify completion if status is 'completed'
+  //     let finalStatus = status;
+  //     if (status === 'completed') {
+  //       const isActuallyComplete = await this.verifySessionCompletion(
+  //         userId,
+  //         sessionId,
+  //         queryRunner.manager,
+  //       );
+
+  //       if (!isActuallyComplete) {
+  //         console.warn(
+  //           'Attempted to mark session as completed but not all questions answered',
+  //         );
+  //         finalStatus = 'in_progress';
+  //       }
+  //     }
+
+  //     // Update status
+  //     const updateData: any = {
+  //       status: finalStatus,
+  //       lastActiveAt: new Date(),
+  //     };
+
+  //     // Add completion timestamp if newly completed
+  //     if (finalStatus === 'completed' && progress.status !== 'completed') {
+  //       updateData.completedAt = new Date();
+  //     }
+
+  //     await queryRunner.manager.update(
+  //       UserSessionProgress,
+  //       progress.id,
+  //       updateData,
+  //     );
+
+  //     await queryRunner.commitTransaction();
+
+  //     return {
+  //       success: true,
+  //       newStatus: finalStatus,
+  //       currentProgress: await this.getProgressSummary(userId, sessionId),
+  //     };
+  //   } catch (error) {
+  //     await queryRunner.rollbackTransaction();
+  //     throw error;
+  //   } finally {
+  //     await queryRunner.release();
+  //   }
+  // }
   async updateSessionStatus(
     sessionId: string,
     userId: string,
@@ -1109,7 +1193,6 @@ export class SessionService {
     await queryRunner.startTransaction();
 
     try {
-      // Get current progress
       const progress = await queryRunner.manager.findOne(UserSessionProgress, {
         where: { userId, sessionId },
       });
@@ -1118,33 +1201,18 @@ export class SessionService {
         throw new NotFoundException('User progress not found');
       }
 
-      // Verify completion if status is 'completed'
-      let finalStatus = status;
+      // ✅ Simple guard: Don't allow status updates to 'completed' via this endpoint
       if (status === 'completed') {
-        const isActuallyComplete = await this.verifySessionCompletion(
-          userId,
-          sessionId,
-          queryRunner.manager,
+        throw new BadRequestException(
+          'Use the /complete endpoint to finish the session',
         );
-
-        if (!isActuallyComplete) {
-          console.warn(
-            'Attempted to mark session as completed but not all questions answered',
-          );
-          finalStatus = 'in_progress';
-        }
       }
 
-      // Update status
+      // ✅ Just update the status - no validation, no auto-completion
       const updateData: any = {
-        status: finalStatus,
+        status: status,
         lastActiveAt: new Date(),
       };
-
-      // Add completion timestamp if newly completed
-      if (finalStatus === 'completed' && progress.status !== 'completed') {
-        updateData.completedAt = new Date();
-      }
 
       await queryRunner.manager.update(
         UserSessionProgress,
@@ -1156,7 +1224,7 @@ export class SessionService {
 
       return {
         success: true,
-        newStatus: finalStatus,
+        newStatus: status,
         currentProgress: await this.getProgressSummary(userId, sessionId),
       };
     } catch (error) {

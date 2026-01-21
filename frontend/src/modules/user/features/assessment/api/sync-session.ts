@@ -64,13 +64,14 @@ export const useProgressSync = () => {
       sessionId: string;
       status?: string;
     }) => {
+      const safeStatus = status === "completed" ? "in_progress" : status;
       if (unsyncedAnswers.length === 0) {
         // If no unsynced answers but status update needed
-        if (status !== "in_progress") {
+        if (safeStatus !== "in_progress") {
           const response = await sessionApi.updateOnlyStatus(
             userId,
             sessionId,
-            status,
+            safeStatus,
           );
 
           // if (!response.ok) {
@@ -92,7 +93,7 @@ export const useProgressSync = () => {
         currentState: {
           currentCategory,
           currentQuestionIndex,
-          status,
+          status: safeStatus,
         },
       };
       //  console.log("Sending syncData:", JSON.stringify(syncData, null, 2)); // ADD THIS

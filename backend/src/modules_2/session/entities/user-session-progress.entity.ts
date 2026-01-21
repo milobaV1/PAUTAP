@@ -119,28 +119,47 @@ export class UserSessionProgress {
     return (this.correctlyAnsweredQuestions / this.answeredQuestions) * 100;
   }
 
+  // isCompleted(): boolean {
+  //   return (
+  //     this.status === 'completed' ||
+  //     this.answeredQuestions === this.totalQuestions
+  //   );
+  // }
   isCompleted(): boolean {
-    return (
-      this.status === 'completed' ||
-      this.answeredQuestions === this.totalQuestions
-    );
+    return this.status === ProgressStatus.COMPLETED;
   }
 
   // In user-session-progress.entity.ts
 
+  // resetProgress(): void {
+  //   this.status = ProgressStatus.NOT_STARTED;
+  //   this.currentCategory = CRISP.C;
+  //   this.currentQuestionIndex = 0;
+  //   this.answeredQuestions = 0;
+  //   this.correctlyAnsweredQuestions = 0;
+  //   this.overallScore = 0;
+  //   this.categoryScores = {};
+
+  //   this.startedAt = new Date();
+  //   this.lastActiveAt = new Date();
+  //   this.completedAt = null;
+
+  //   // keep createdAt, updatedAt untouched (updatedAt will auto-update when saved)
+  // }
   resetProgress(): void {
-    this.status = ProgressStatus.NOT_STARTED;
+    this.status = ProgressStatus.IN_PROGRESS;
+
     this.currentCategory = CRISP.C;
     this.currentQuestionIndex = 0;
+
     this.answeredQuestions = 0;
     this.correctlyAnsweredQuestions = 0;
+
     this.overallScore = 0;
     this.categoryScores = {};
 
     this.startedAt = new Date();
     this.lastActiveAt = new Date();
     this.completedAt = null;
-
-    // keep createdAt, updatedAt untouched (updatedAt will auto-update when saved)
   }
 }
