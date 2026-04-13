@@ -218,6 +218,7 @@ export interface AdminSessionSummary {
   title: string;
   description: string | null;
   totalQuestions: number;
+  completedUsersCount: number;
   createdAt: Date;
 }
 

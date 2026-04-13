@@ -39,6 +39,7 @@ import { Queue } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
 import { Session } from '../session/entities/session.entity';
 import { GetUserDetailsDto } from './dto/get-user-details.dto';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class UsersService {
@@ -1769,5 +1770,121 @@ export class UsersService {
       totalAttempts,
       averageScore,
     };
+  }
+
+  @Cron('0 9 1 * *')
+  async sendMonthlyEngagementEmail() {
+    const users = await this.findAll();
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const dashboardUrl = `${frontendUrl}/session`;
+
+    const jobs = users.users.map((user) => ({
+      name: 'send engagement email',
+      data: {
+        to: user.email,
+        subject: 'Complete Your Training Sessions',
+        html: `
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <style>
+        body { font-family: Arial, sans-serif; background-color: #f9fafb; margin: 0; padding: 0; }
+        .container {
+          max-width: 600px;
+          margin: 40px auto;
+          background: #ffffff;
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .header {
+          background-color: #2e3f6f;
+          padding: 30px;
+          text-align: center;
+        }
+        .header h1 {
+          color: #ffffff;
+          margin: 0;
+          font-size: 22px;
+          letter-spacing: 0.5px;
+        }
+        .header p {
+          color: #a8b8e8;
+          margin: 6px 0 0;
+          font-size: 13px;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+        }
+        .body {
+          padding: 36px 40px;
+        }
+        .body p {
+          font-size: 15px;
+          line-height: 1.7;
+          color: #444;
+          margin: 0 0 20px;
+        }
+        .divider {
+          border: none;
+          border-top: 1px solid #eee;
+          margin: 24px 0;
+        }
+        .button-wrap { text-align: center; margin-top: 10px; }
+        .button {
+          display: inline-block;
+          padding: 14px 32px;
+          background-color: #2e3f6f;
+          color: #ffffff !important;
+          text-decoration: none;
+          font-weight: bold;
+          font-size: 15px;
+          border-radius: 6px;
+          letter-spacing: 0.3px;
+        }
+        .footer {
+          background-color: #f4f6fb;
+          padding: 18px 40px;
+          text-align: center;
+          font-size: 12px;
+          color: #999;
+          border-top: 1px solid #eee;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>PAU Training Platform</h1>
+          <p>Monthly Reminder</p>
+        </div>
+        <div class="body">
+          <p>Hi ${user.first_name || 'there'},</p>
+          <p>
+            This is a reminder to log on to the PAU training platform and complete a session.
+          </p>
+          <hr class="divider" />
+          <div class="button-wrap">
+            <a href="${dashboardUrl}" class="button">Start a Session</a>
+          </div>
+        </div>
+        <div class="footer">
+          <p>You're receiving this because you're part of the PAU Training Application.</p>
+        </div>
+      </div>
+    </body>
+  </html>
+`,
+      },
+      opts: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: 10,
+        removeOnFail: 5,
+      },
+    }));
+
+    await this.emailQueue.addBulk(jobs);
   }
 }

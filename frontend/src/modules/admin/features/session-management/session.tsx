@@ -37,6 +37,7 @@ import {
   FileText,
   HelpCircle,
   BookOpen,
+  Users,
 } from "lucide-react";
 import { useGetSessionsForAdmin } from "./api/get-session-stats";
 import type {
@@ -70,7 +71,7 @@ export function TrainingSessionManagement() {
   const { mutateAsync: createSession, isPending } = useCreateSession();
   const { mutate: deleteSession } = useDeleteSession();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
-    null
+    null,
   );
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -89,7 +90,7 @@ export function TrainingSessionManagement() {
   const { data, isLoading } = useGetSessionsForAdmin(
     page,
     limit,
-    debouncedSearch
+    debouncedSearch,
   );
 
   useEffect(() => {
@@ -109,7 +110,7 @@ export function TrainingSessionManagement() {
       session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (session.description || "")
         .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+        .includes(searchTerm.toLowerCase()),
   );
 
   const handleDelete = (sessionId: string) => {
@@ -354,12 +355,22 @@ export function TrainingSessionManagement() {
                       {session.description}
                     </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 gap-4 text-sm">
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4 text-[#2e3f6f]" />
                         <span>
                           Created:{" "}
                           {new Date(session.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4 text-[#2e3f6f]" />
+                        <span>
+                          Completed by:{" "}
+                          <span className="font-medium text-[#2e3f6f]">
+                            {session.completedUsersCount ?? 0}
+                          </span>{" "}
+                          {session.completedUsersCount === 1 ? "user" : "users"}
                         </span>
                       </div>
                     </div>

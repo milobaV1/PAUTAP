@@ -1488,6 +1488,7 @@ export class SessionService {
       take: limit,
       relations: ['roleCategoryQuestions'],
       order: { createdAt: 'DESC' },
+      where: whereClause,
     });
 
     // total number of questions across ALL sessions
@@ -1495,6 +1496,23 @@ export class SessionService {
       .createQueryBuilder('rcq')
       .select('SUM(rcq.questionsCount)', 'totalQuestions')
       .getRawOne<{ totalQuestions: string }>();
+
+    // Get count of users who have completed each session at least once
+    const completionCounts = await this.userSessionProgressRepo
+      .createQueryBuilder('usp')
+      .select('usp.sessionId', 'sessionId')
+      .addSelect('COUNT(DISTINCT usp.userId)', 'completedUsers')
+      .where('usp.status = :status', { status: ProgressStatus.COMPLETED })
+      .andWhere('usp.sessionId IN (:...sessionIds)', {
+        sessionIds: sessions.map((s) => s.id),
+      })
+      .groupBy('usp.sessionId')
+      .getRawMany<{ sessionId: string; completedUsers: string }>();
+
+    // Build a lookup map for O(1) access
+    const completionMap = new Map(
+      completionCounts.map((c) => [c.sessionId, Number(c.completedUsers)]),
+    );
 
     // map session summaries
     const sessionSummaries: AdminSessionSummary[] = sessions.map((s) => {
@@ -1507,6 +1525,7 @@ export class SessionService {
         title: s.title,
         description: s.description,
         totalQuestions,
+        completedUsersCount: completionMap.get(s.id) ?? 0,
         createdAt: s.createdAt,
       };
     });
