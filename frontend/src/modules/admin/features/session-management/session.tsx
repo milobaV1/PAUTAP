@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import { useDeleteSession } from "./api/delete-session";
 import { SessionDetailsModal } from "./session-details";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useGetSessionCompletedUsers } from "./api/get-session-completed-users";
 
 const sessionSchema = z.object({
   title: z.string().min(1, "Session title is required"),
@@ -65,11 +66,17 @@ const sessionSchema = z.object({
 });
 
 export function TrainingSessionManagement() {
+  const [completedUsersSessionId, setCompletedUsersSessionId] = useState<
+    string | null
+  >(null);
+  const [completedUsersPage, setCompletedUsersPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateSession, setShowCreateSession] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
   const { mutateAsync: createSession, isPending } = useCreateSession();
   const { mutate: deleteSession } = useDeleteSession();
+  const { data: completedUsersData, isLoading: loadingCompletedUsers } =
+    useGetSessionCompletedUsers(completedUsersSessionId, completedUsersPage, 5);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
   );
@@ -365,13 +372,12 @@ export function TrainingSessionManagement() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Users className="w-4 h-4 text-[#2e3f6f]" />
-                        <span>
-                          Completed by:{" "}
-                          <span className="font-medium text-[#2e3f6f]">
-                            {session.completedUsersCount ?? 0}
-                          </span>{" "}
-                          {session.completedUsersCount === 1 ? "user" : "users"}
-                        </span>
+                        <button
+                          className="text-sm text-[#2e3f6f] underline underline-offset-2 hover:opacity-80"
+                          onClick={() => setCompletedUsersSessionId(session.id)}
+                        >
+                          View completed users
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -472,6 +478,87 @@ export function TrainingSessionManagement() {
           </div>
         </CardContent>
       </Card>
+      <Dialog
+        open={!!completedUsersSessionId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCompletedUsersSessionId(null);
+            setCompletedUsersPage(1);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Completed Users</DialogTitle>
+            <DialogDescription>
+              Users who have completed this session, ranked by score.
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingCompletedUsers ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Loading...
+            </div>
+          ) : !completedUsersData || completedUsersData.data.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              No users have completed this session yet.
+            </div>
+          ) : (
+            <>
+              <div className="overflow-auto max-h-96">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground">
+                      <th className="pb-2 font-medium">Name</th>
+                      <th className="pb-2 font-medium">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {completedUsersData.data.map((user) => (
+                      <tr key={user.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3">
+                          {user.firstName} {user.lastName}
+                        </td>
+                        <td className="py-3">
+                          <span className="font-medium text-[#2e3f6f]">
+                            {Number(user.overallScore).toFixed(1)}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              <div className="flex justify-between items-center mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={completedUsersPage === 1}
+                  onClick={() =>
+                    setCompletedUsersPage((p) => Math.max(1, p - 1))
+                  }
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {completedUsersPage} of{" "}
+                  {Math.ceil(completedUsersData.total / 5)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={completedUsersPage * 5 >= completedUsersData.total}
+                  onClick={() => setCompletedUsersPage((p) => p + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
       {selectedSessionId && (
         <SessionDetailsModal
           sessionId={selectedSessionId}

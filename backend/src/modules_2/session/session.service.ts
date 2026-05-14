@@ -1625,4 +1625,29 @@ export class SessionService {
       relations: ['roleCategoryQuestions', 'roleCategoryQuestions.role'],
     });
   }
+
+  async getSessionCompletedUsers(sessionId: string, page = 1, limit = 5) {
+    const [completedProgress, total] = await this.userSessionProgressRepo
+      .createQueryBuilder('usp')
+      .leftJoinAndSelect('usp.user', 'user')
+      .leftJoinAndSelect('user.role', 'role')
+      .where('usp.sessionId = :sessionId', { sessionId })
+      .andWhere('usp.status = :status', { status: ProgressStatus.COMPLETED })
+      .orderBy('usp.overallScore', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      total,
+      page,
+      limit,
+      data: completedProgress.map((progress) => ({
+        id: progress.user.id,
+        firstName: progress.user.first_name,
+        lastName: progress.user.last_name,
+        overallScore: progress.overallScore,
+      })),
+    };
+  }
 }

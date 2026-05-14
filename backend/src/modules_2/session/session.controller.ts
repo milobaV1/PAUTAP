@@ -78,6 +78,22 @@ export class SessionController {
     );
   }
 
+  @SystemAdminOnly()
+  @SkipThrottle()
+  @Get(':id/completed-users')
+  async getCompletedUsers(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 5,
+    //@Query('search') search = '',
+  ) {
+    return this.sessionService.getSessionCompletedUsers(
+      id,
+      Number(page),
+      Number(limit),
+    );
+  }
+
   @Post(':id/start')
   @ApiOperation({ summary: 'Start or resume a session' })
   @ApiParam({ name: 'id', description: 'Session ID' })
