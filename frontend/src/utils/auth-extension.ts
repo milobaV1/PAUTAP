@@ -3,16 +3,29 @@ import { useAuthState } from "@/store/auth.store";
 
 // In your auth-extension.ts
 export const isUser = () => {
-  const state = useAuthState.getState();
-  //  console.log("isUser check:", state);
-  return !!state.user; // or however you check
+  const { user, decodedDto, logOut } = useAuthState.getState();
+
+  if (!user || !decodedDto?.exp) return false;
+
+  if (Date.now() >= decodedDto.exp * 1000) {
+    logOut();
+    return false;
+  }
+
+  return true;
 };
 
 export const isAdmin = () => {
-  const state = useAuthState.getState();
-  //  console.log("isAdmin check:", state);
-  // Your admin check logic here
-  return state.decodedDto && state.decodedDto.sub.roleId === 1;
+  const { decodedDto, logOut } = useAuthState.getState();
+
+  if (!decodedDto?.exp) return false;
+
+  if (Date.now() >= decodedDto.exp * 1000) {
+    logOut();
+    return false;
+  }
+
+  return decodedDto.sub.roleId === 1;
 };
 
 export const isHOD = () => {

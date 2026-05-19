@@ -7,7 +7,7 @@ import axios, {
 
 export const axiosClient = (
   token: string | null = null,
-  useMultipart: boolean = false
+  useMultipart: boolean = false,
 ): AxiosInstance => {
   const headers = {
     ...(token && { Authorization: `Bearer ${token}` }),
@@ -25,7 +25,12 @@ export const axiosClient = (
   client.interceptors.request.use((config: any) => {
     // Pull latest token from zustand store instead of localStorage
 
-    const authToken = useAuthState.getState().authToken;
+    const { authToken, decodedDto, logOut } = useAuthState.getState();
+    if (decodedDto?.exp && Date.now() >= decodedDto.exp * 1000) {
+      logOut();
+      window.location.href = "/login";
+      return Promise.reject(new Error("Token expired"));
+    }
     config.headers = config.headers || {};
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
@@ -48,12 +53,13 @@ export const axiosClient = (
         if (response?.status === 401) {
           // Clear store on 401
           useAuthState.getState().logOut();
+          window.location.href = "/login";
         }
       } catch (e) {
         //  console.log(e);
       }
       throw error;
-    }
+    },
   );
 
   return client;

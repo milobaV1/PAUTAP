@@ -67,7 +67,7 @@ export function LoginPage() {
     //  console.log("This is the token", token);
     if (token) {
       const payload = decodeToken(
-        token.access_token
+        token.access_token,
       ) as unknown as DecodedToken;
       setAuthToken(token.access_token);
       setDecodedToken(payload as unknown as DecodedToken);
@@ -180,6 +180,7 @@ export function LoginPage() {
                   render={() => (
                     <FormItem className="flex items-center justify-between">
                       <Button
+                        type="button"
                         variant="link"
                         className="p-0 h-auto text-[#2e3f6f]"
                         onClick={() => navigate({ to: "/forgot-password" })}
